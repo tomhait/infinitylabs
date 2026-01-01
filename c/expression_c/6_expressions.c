@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-void swapTwoNums(double *first, double *second){
+void SwapTwoNums(double *first, double *second){
 	*first = *first - *second;
 	*second = *first + *second;
 	*first = *second - *first;
@@ -12,7 +12,7 @@ int main(){
 	scanf("%lf",&first);
 	printf("Enter b: ");
 	scanf("%lf",&second);
-	swapTwoNums(&first, &second);
+	SwapTwoNums(&first, &second);
 	printf("After swapping\n");
 	printf("a = %.2lf\n", first);
 	printf("b = %.2lf\n", second);

@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-float myTenPow(int n){
+float MyTenPow(int n){
 	float result = 1.0;
 	int i;
 	int abs_n = (n<0) ? -n : n;
@@ -21,7 +21,7 @@ int main(){
 	float result;
 	printf("Enter exponent n: ");
 	scanf("%d",&n);
-	result = myTenPow(n);
+	result = MyTenPow(n);
 	printf("10 to the power of %d is: %.2f\n",n,result);
 	return 0;
 }

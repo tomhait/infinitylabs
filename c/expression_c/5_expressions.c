@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-int flipDigitOrder(int digits){
+int FlipDigitOrder(int digits){
 	int digitsReversed = 0;
 	int abs_digits = (digits<0) ? -digits : digits;
 	while(abs_digits>0){
@@ -16,7 +16,7 @@ int main(){
 	int digits, digitsReversed;
 	printf("Enter an int number to flip order: ");
 	scanf("%d",&digits);
-	digitsReversed = flipDigitOrder(digits);
+	digitsReversed = FlipDigitOrder(digits);
 	printf("The flipped order of %d is: %d\n", digits, digitsReversed);
 	return 0;
 }
