@@ -13,7 +13,7 @@ char *strcpy(char *source, const char *target);
 char *strdup(const char *str);
 
 /*Advanced Exercises*/
-char *strstr(const char *haystack, const char *needle);
+char *strstrNaive(const char *haystack, const char *needle);
 char *strstrKMP(const char *haystack, const char *needle);
 
 

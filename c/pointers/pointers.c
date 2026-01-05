@@ -39,7 +39,7 @@ char *strdup(const char *s){
 }
 
 /*Advanced Exercises*/
-char *strstr(const char *haystack, const char *needle){
+char *strstrNaive(const char *haystack, const char *needle){
 	assert(haystack!=NULL);
 	assert(needle!=NULL);
 	
