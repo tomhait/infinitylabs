@@ -27,5 +27,11 @@ int main(){
 		free(duplicate);
 	}else printf("strdup: failed to allocate memory\n");
 	
+	printf("Advanced exercise 1, Naive strstr:\n");
+	char *needle = "test";
+	char *haystack= "findMytestBla";
+	char *h = strstrNaive(haystack, needle);
+	printf("First occurence of %s found in: %s\n", needle, h);
+	 
 	return 0;
 }

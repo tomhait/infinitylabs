@@ -48,14 +48,14 @@ char *strstrNaive(const char *haystack, const char *needle){
 	const char *h = haystack;
 	
 	while(*h!='\0'){
-		char *h_ptr = h;
-		char *n_ptr = needle;
+		const char *h_ptr = h;
+		const char *n_ptr = needle;
 		
 		while(*h_ptr!='\0' && *n_ptr!='\0' && *h_ptr == *n_ptr){
 			h_ptr++;
 			n_ptr++;
 		}
-		if(*n_ptr=='\0') return (chr*)h; //match
+		if(*n_ptr=='\0') return (char*)h; //match
 		h++;
 	}
 	return NULL;
