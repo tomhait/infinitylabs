@@ -27,7 +27,6 @@ char *strcpy(char* dest, const char* source){
 char *strdup(const char *s){
 	assert(s!=NULL);
 	
-	//string len
 	int len = 0;
 	while(s[len]!='\0') len++;
 	
@@ -39,4 +38,29 @@ char *strdup(const char *s){
 	return strcpy(str_cp, s);
 }
 
+/*Advanced Exercises*/
+char *strstr(const char *haystack, const char *needle){
+	assert(haystack!=NULL);
+	assert(needle!=NULL);
+	
+	if(!*needle) return (char*)haystack;
+	
+	const char *h = haystack;
+	
+	while(*h!='\0'){
+		char *h_ptr = h;
+		char *n_ptr = needle;
+		
+		while(*h_ptr!='\0' && *n_ptr!='\0' && *h_ptr == *n_ptr){
+			h_ptr++;
+			n_ptr++;
+		}
+		if(*n_ptr=='\0') return (chr*)h; //match
+		h++;
+	}
+	return NULL;
+}
+char *strstrKMP(const char *haystack, const char *needle){
+	return NULL;
+}
 
