@@ -41,7 +41,6 @@ int main(){
 	printf("Lowercase Enviroment Variables:\n");
 	for(int j=0; j<count; j++) printf("%s\n", low_environ[j]);
 	
-	//cleanup memory
 	for(int j=0; j<count; j++) free(low_environ[j]);
 	free(low_environ);
 	return 0;
