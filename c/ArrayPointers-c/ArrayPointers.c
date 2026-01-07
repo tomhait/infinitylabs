@@ -30,6 +30,7 @@ int FindNextAlive(size_t alive[], size_t cur_soldier, size_t size){
 int LastSoldierNaive(size_t size, size_t k){
 	size_t *alive = (size_t*)calloc(size+1, sizeof(size_t));
 	assert(alive!=NULL);
+	
         size_t lastAlive = 0;
         size_t remaining = size;
         size_t cur_holder = k;
@@ -56,9 +57,27 @@ int LastSoldierNaive(size_t size, size_t k){
 }
 
 int LastSoldierN(size_t size, size_t k){
-
-
+	size_t *alive = (size_t*)calloc(size+1, sizeof(size_t));
+	assert(alive!=NULL);
+	
+	for(size_t i=0; i<size; i++){
+		alive[i] = (i+1)%size;
+	}
+	int prev = k-2;
+	if(prev==0) prev=size-1;
+	int cur_holder = k-1;
+	
+	for(size_t i=0; i< size; i++){
+		prev = cur_holder;
+		cur_holder = alive[cur_holder];
+		alive[prev] = alive[cur_holder];
+		cur_holder = alive[prev];
+	}
+	
+	free(alive);
+	return cur_holder+1;
 }
+
 
 /*********************************Exercise 3**************************************/
 void PrintSizeofDataTypes(){

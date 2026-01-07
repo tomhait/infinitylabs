@@ -12,8 +12,9 @@ int main(){
 	assert(row_sums[1]==15);
 	printf("\n\n\n***************************\n\n\n");
 	printf("Test exercise 2:\n");
-	int size = 100, k = 1;
-	assert(LastSoldierNaive(size,k)==73);
+	assert(LastSoldierN(100,1)==73);
+	assert(LastSoldierN(7,1)==7);
+	assert(LastSoldierN(7,2)==1);
 	printf("\n\n\n***************************\n\n\n");	
 	printf("Run exercise 3:\n");
 	PrintSizeofDataTypes();
