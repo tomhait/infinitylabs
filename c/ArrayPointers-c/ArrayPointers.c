@@ -5,6 +5,13 @@
 
 /*********************************Exercise 1**************************************/
 void SumRows(int rows, int cols, int arr[rows][cols], int *row_sums){
+        for(int i=0;i<rows;i++){
+                int sum_row = 0;
+                for(int j=0;j<cols;j++){
+                        sum_row+=arr[i][j];
+                }
+                row_sums[i] = sum_row;
+        }
 }
 
 /*********************************Exercise 2**************************************/
