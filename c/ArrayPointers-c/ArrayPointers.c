@@ -21,31 +21,31 @@ enum Status {
 	ALIVE
 };
 
-int FindNextAlive(int alive[], int cur_soldier, int size){
-	int next_alive = (cur_soldier % size)+1;
+int FindNextAlive(size_t alive[], size_t cur_soldier, size_t size){
+	size_t next_alive = (cur_soldier % size)+1;
         while(alive[next_alive] == DEAD) next_alive = (next_alive % size)+1;
         return next_alive;
 }
 
-int LastSoldierNaive(int size, int k){
-	int *alive = (int*)calloc(size+1, sizeof(int));
+int LastSoldierNaive(size_t size, size_t k){
+	size_t *alive = (size_t*)calloc(size+1, sizeof(size_t));
 	assert(alive!=NULL);
-        int lastAlive = 0;
-        int remaining = size;
-        int cur_holder = k;
+        size_t lastAlive = 0;
+        size_t remaining = size;
+        size_t cur_holder = k;
 
-        for(int i=1; i<=size; i++){
+        for(size_t i=1; i<=size; i++){
                 alive[i] = ALIVE;
         }
         
         while(remaining > 1){
-        	int victim = FindNextAlive(alive, cur_holder, size);
+        	size_t victim = FindNextAlive(alive, cur_holder, size);
         	alive[victim] = DEAD;
         	remaining--;
         	if(remaining==1) break;
         	cur_holder = FindNextAlive(alive, victim, size);
         }
-        for(int i=1; i<=size; i++){
+        for(size_t i=1; i<=size; i++){
                 if(alive[i] == 1){
                         lastAlive=i;
                         break;
@@ -55,7 +55,7 @@ int LastSoldierNaive(int size, int k){
         return lastAlive;
 }
 
-int LastSoldierN(int size, int k){
+int LastSoldierN(size_t size, size_t k){
 
 
 }
