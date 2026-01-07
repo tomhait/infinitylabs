@@ -15,6 +15,7 @@ void SumRows(int rows, int cols, int arr[rows][cols], int *row_sums);
 */
 int LastSoldierNaive(size_t size, size_t k);
 int LastSoldierN(size_t size, size_t k);
+size_t Josephus(size_t size, size_t first_soldier);
 int FindNextAlive(size_t alive[], size_t cur_soldier, size_t size);
 
 

@@ -12,9 +12,9 @@ int main(){
 	assert(row_sums[1]==15);
 	printf("\n\n\n***************************\n\n\n");
 	printf("Test exercise 2:\n");
-	assert(LastSoldierN(100,1)==73);
-	assert(LastSoldierN(7,1)==7);
-	assert(LastSoldierN(7,2)==1);
+	assert(Josephus(100,1)==73);
+	assert(Josephus(7,1)==7);
+	assert(Josephus(7,2)==1);
 	printf("\n\n\n***************************\n\n\n");	
 	printf("Run exercise 3:\n");
 	PrintSizeofDataTypes();

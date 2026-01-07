@@ -78,7 +78,15 @@ int LastSoldierN(size_t size, size_t k){
 	return cur_holder+1;
 }
 
-
+size_t Josephus(size_t size, size_t first_soldier){
+#if defined(N2)
+	return LastSoldierNaive(size, first_soldier);
+#elif defined(N)
+	return LastSoldierN(size, first_soldier);
+#else
+	#error "Please choose either -DN2 or -DN"
+#endif
+}
 /*********************************Exercise 3**************************************/
 void PrintSizeofDataTypes(){
     printf("Now int types:\n");
