@@ -2,6 +2,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <assert.h>
 
 /*********************************Exercise 1**************************************/
 void SumRows(int rows, int cols, int arr[rows][cols], int *row_sums){
@@ -15,6 +16,49 @@ void SumRows(int rows, int cols, int arr[rows][cols], int *row_sums){
 }
 
 /*********************************Exercise 2**************************************/
+enum Status {
+	DEAD,
+	ALIVE
+};
+
+int FindNextAlive(int alive[], int cur_soldier, int size){
+	int next_alive = (cur_soldier % size)+1;
+        while(alive[next_alive] == DEAD) next_alive = (next_alive % size)+1;
+        return next_alive;
+}
+
+int LastSoldierNaive(int size, int k){
+	int *alive = (int*)calloc(size+1, sizeof(int));
+	assert(alive!=NULL);
+        int lastAlive = 0;
+        int remaining = size;
+        int cur_holder = k;
+
+        for(int i=1; i<=size; i++){
+                alive[i] = ALIVE;
+        }
+        
+        while(remaining > 1){
+        	int victim = FindNextAlive(alive, cur_holder, size);
+        	alive[victim] = DEAD;
+        	remaining--;
+        	if(remaining==1) break;
+        	cur_holder = FindNextAlive(alive, victim, size);
+        }
+        for(int i=1; i<=size; i++){
+                if(alive[i] == 1){
+                        lastAlive=i;
+                        break;
+                }
+        }
+        free(alive);
+        return lastAlive;
+}
+
+int LastSoldierN(int size, int k){
+
+
+}
 
 /*********************************Exercise 3**************************************/
 void PrintSizeofDataTypes(){

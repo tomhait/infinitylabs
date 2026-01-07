@@ -12,6 +12,9 @@ void SumRows(int rows, int cols, int arr[rows][cols], int *row_sums);
 /*
 *Exercise 2 functions:
 */
+int LastSoldierNaive(int size, int k);
+int LastSoldierN(int size, int k);
+int FindNextAlive(int alive[], int cur_soldier, int size);
 
 
 /*
