@@ -1,19 +1,5 @@
 #include <stddef.h>
 
-/*
-// this is an optional implementation in c file, not API !
-
-struct vector_t {
-    size_t elements_size;
-    size_t allocation;
-    size_t len;
-    void* vector[1];
-    .
-    .
-};
-*/
-
-// the h file:
 
 typedef struct vector_t vector_t;
 
