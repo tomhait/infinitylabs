@@ -48,7 +48,7 @@ static int ExtendVector(vector_t *vec){
 	return 0;	
 }
 
-void vec_push(vector_t* vec, const void* new_element){
+void vec_push(vector_t* vec, void* new_element){
 	if(vec->occupied_size == vec->capacity){
 		if(ExtendVector(vec)==EMPTY){
 			return;
