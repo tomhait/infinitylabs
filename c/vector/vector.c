@@ -44,6 +44,7 @@ static int ExtendVector(vector_t *vec){
 		perror("Memory alloacation failed");
 		return EMPTY;
 	}
+	vec->capacity = vec->capacity*GROWTH_FACTOR;
 	return 0;	
 }
 
@@ -59,7 +60,7 @@ void vec_push(vector_t* vec, const void* new_element){
 
 
 void* vec_pop(vector_t* vec){
-	if(vec->occupied_size!=0){
+	if(vec->occupied_size==0){
 		printf("Nothing to pop\n");
 		return NULL;
 	}
