@@ -3,6 +3,11 @@
 #include <stdlib.h>
 #include <assert.h>
 
+enum Status{
+	FAIL,
+	PASS
+};
+
 struct sll_t{
 	size_t count,
 	node_t* head,
@@ -94,9 +99,16 @@ size_t sll_get_count(const sll_t* list){
 	return list->count;
 }
 
-int sll_remove(sll_t* list, node_t* node);
+int sll_remove(sll_t* list, node_t* node){
+	node_t* tmp = node->next;
+	node->data = tmp->data;
+	node->next = tmp->next;
+	free(tmp);
+	list->count--;
+	return PASS;
+}
 
-int sll_forEach(sll_t* list, for_each_func func);
+int sll_for_each(sll_t* list, for_each_func func);
 
 node_t* sll_find(sll* list, void* param, match_func func); // returns NULL for failure
 

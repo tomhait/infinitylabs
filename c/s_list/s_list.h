@@ -3,7 +3,7 @@
 typedef struct sll_t sll_t;
 typedef struct node_t node_t;
 typedef void (*for_each_func)(void*);
-typedef int (*match_func)(void*, ...);
+typedef int (*match_func)();
 
 sll_t* sll_create(void);
 node_t* sll_append(sll_t* lst, void* data); // returns NULL for failure
@@ -15,7 +15,7 @@ node_t* sll_get_next(node_t* node);
 void sll_destroy(sll_t* lst);
 size_t sll_get_count(const sll_t* lst);
 int sll_remove(sll_t* lst, node_t* node);
-int sll_forEach(sll_t* lst, for_each_func func);
+int sll_for_each(sll_t* lst, for_each_func func);
 node_t* sll_find(sll* list, void* param, match_func func); // returns NULL for failure
 
 
