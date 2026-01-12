@@ -4,30 +4,37 @@
 typedef struct vector_t vector_t;
 
 /* 
-*  creates a vector starting with "capacity" elements 
+*  creates a vector starting with "capacity" elements
+*  Returns: 
+*  Pointer to vector_t
+*  NULL if couldn't create a vector 
 */
 vector_t* vec_create(const size_t capacity);                             
 
 /* 
-* return a void pointer to element located at position idx of our void vector 
+* Returns a void pointer to element located at position idx of our void vector
+* Returns NULL if idx is larger than the number of occupied slots
 * O(1) time complexity
 */
 void* vec_get_element(const vector_t* vec, const size_t idx);            
 
 /* 
-* add a new element to the end of void vector 
+* add a new element to the end of void vector
+* Returns nothing if couldn't extend the vector 
 * O(1) Amortized time complexity (O(n) for resizing, O(1) for push without resizing)
 */
 void vec_push(vector_t* vec, void* new_element);
 
 /* 
-* remove last element from end of void vector & return value it holds (also void pointer) 
+* remove last element from end of void vector & return value it holds (also void pointer)
+* Returns a pointer to the popped element 
 * O(1) time complexity
 */
 void* vec_pop(vector_t* vec);
 
 /* 
-* Switch the element at index idx with a new element 
+* Switch the element at index idx with a new element
+* Returns nothing if idx > vector occupied size 
 * O(1) time complexity
 */
 void vec_set_element(vector_t* vec, const size_t idx, void* element); 
