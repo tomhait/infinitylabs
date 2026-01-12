@@ -13,6 +13,7 @@ int main(){
 	vec_push(vec, &x3);
 	vec_push(vec, s1);
 	vec_push(vec, s2);
+	assert(vec_get_element(vec, 6)==NULL);
 	assert(vec_get_capacity(vec)==8);
 	assert(vec_get_size(vec)==5);
 	assert(strcmp(s2,(char*)vec_pop(vec))==0);

@@ -15,15 +15,12 @@ struct vector_t{
 
 vector_t* vec_create(const size_t capacity){
 	vector_t *vec = (vector_t*)malloc(sizeof(vector_t));
-	if(vec == NULL){
-		perror("Memory alloacation failed");
-		return NULL;
-	}	
+	if(vec == NULL) return NULL;	
 	vec->occupied_size = 0;
 	vec->capacity=capacity;
 	vec->vals = (void**)malloc(vec->capacity*sizeof(void*));
-	if(vec->vals == NULL){
-		perror("Memory alloacation failed");
+	if(vec->vals == NULL)
+	{
 		free(vec);
 		return NULL;
 	}
@@ -31,19 +28,13 @@ vector_t* vec_create(const size_t capacity){
 }
 
 void* vec_get_element(const vector_t* vec, const size_t idx){
-	if(vec->capacity < idx){
-		printf("Out of capacity\n");
-		return NULL;
-	}
+	if(vec->occupied_size < idx) return NULL;
 	return vec->vals[idx];
 }
 
 static int ExtendVector(vector_t *vec){
 	vec->vals = realloc(vec->vals, vec->capacity*GROWTH_FACTOR*sizeof(void*));
-	if(vec->vals == NULL){
-		perror("Memory alloacation failed");
-		return EMPTY;
-	}
+	if(vec->vals == NULL) return EMPTY;
 	vec->capacity = vec->capacity*GROWTH_FACTOR;
 	return 0;	
 }
@@ -60,10 +51,7 @@ void vec_push(vector_t* vec, void* new_element){
 
 
 void* vec_pop(vector_t* vec){
-	if(vec->occupied_size==0){
-		printf("Nothing to pop\n");
-		return NULL;
-	}
+	if(vec->occupied_size==0) return NULL;
 	void* ret_val = vec_get_element(vec, vec->occupied_size-1);
 	vec->vals[vec->occupied_size-1] = NULL;
 	vec->occupied_size--;
@@ -71,10 +59,7 @@ void* vec_pop(vector_t* vec){
 }
 
 void vec_set_element(vector_t* vec, const size_t idx, void* element){
-	if(idx > vec->occupied_size){
-		printf("Cannot set unoccupied position, Vector is continuous\n");
-		return;  
-	}
+	if(idx > vec->occupied_size) return;
 	vec->vals[idx] = element;
 }
 
