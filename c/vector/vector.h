@@ -5,6 +5,7 @@ typedef struct vector_t vector_t;
 
 /* 
 *  creates a vector starting with "capacity" elements
+*  capacity > 0
 *  Returns: 
 *  Pointer to vector_t
 *  NULL if couldn't create a vector 
