@@ -34,7 +34,7 @@ void* vec_pop(vector_t* vec);
 
 /* 
 * Switch the element at index idx with a new element
-* Returns nothing if idx > vector occupied size 
+* Returns nothing if idx >= vector occupied size 
 * O(1) time complexity
 */
 void vec_set_element(vector_t* vec, const size_t idx, void* element); 
