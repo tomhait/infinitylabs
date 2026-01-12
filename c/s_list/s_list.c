@@ -36,7 +36,6 @@ node_t* sll_append(sll_t* list, void* data){
 	if(!list->head){
 		list->head = node;
 		list->tail = node;
-		list->head->next = list->tail;
 	} else {
 		list->tail->next = node;
 		list->tail = node;
@@ -69,7 +68,8 @@ void sll_set_data(node_t* node, void* data){
 	node->data = data;
 }
 
-void* sll_pop(sll_tt* list){
+void* sll_pop(sll_t* list){
+	if(list->count == 0) return NULL;
 	node_t* tmp = list->head;
 	for(size_t i=1; i < list->count-1; i++){
 		tmp = tmp->next;
@@ -78,7 +78,7 @@ void* sll_pop(sll_tt* list){
 	free(list->tail);
 	list->tail = tmp;
 	list->count--;
-	return data;
+	return pop_data;
 }
 
 node_t* sll_get_next(node_t* node){
@@ -86,12 +86,12 @@ node_t* sll_get_next(node_t* node){
 }
 
 void sll_destroy(sll_t* list){
-	node_t* tmp = list->head;
-	while(tmp!=list->tail){
-		list->head = tmp->next;
-		free(tmp); 
+	while(list->count != 0){
+		node_t* tmp = list->head;
+		list->head = list->head->next;
+		free(tmp);
+		list->count--;
 	}
-	free(list->tail);
 	free(list);
 }
 
