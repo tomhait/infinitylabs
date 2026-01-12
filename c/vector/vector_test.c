@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include "vector.h"
+#include <string.h>
+#include <assert.h>
 
 int main(){
 	vector_t *vec = vec_create(2);
@@ -11,12 +13,14 @@ int main(){
 	vec_push(vec, &x3);
 	vec_push(vec, s1);
 	vec_push(vec, s2);
-	printf("Vector size and occupation are: %ld %ld\n", vec_get_capacity(vec), vec_get_size(vec));
-	printf("Popped the variable: %s\n",(char*)vec_pop(vec));
-	printf("Vector size and occupation are: %ld %ld\n", vec_get_capacity(vec), vec_get_size(vec));
+	assert(vec_get_capacity(vec)==8);
+	assert(vec_get_size(vec)==5);
+	assert(strcmp(s2,(char*)vec_pop(vec))==0);
+	assert(vec_get_capacity(vec)==8);
+	assert(vec_get_size(vec)==4);	
 	vec_set_element(vec, 0, s2);
-	printf("Element at 0 position is: %s\n",(char*)vec_get_element(vec, 0));
-	printf("Element at 1 position is: %d\n",*((int*)vec_get_element(vec, 1)));
+	assert(strcmp(s2,(char*)vec_get_element(vec, 0))==0);
+	assert(*((int*)vec_get_element(vec, 1))==x2);
 	vec_destroy(vec);
 	return 0;
 }
