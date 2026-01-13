@@ -60,6 +60,8 @@ int main(){
 	sll_append(list2, &arr2[0]);
 	assert(*((int*)sll_pop(list2))==1);
 	assert(sll_get_count(list2)==0);
+	sll_append(list2, &arr2[0]);
+	assert(*((int*)sll_pop(list2))==1);
 	sll_destroy(list2);
 	
 	return 0;
