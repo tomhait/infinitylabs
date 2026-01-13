@@ -3,11 +3,6 @@
 #include <stdlib.h>
 #include <assert.h>
 
-enum Status{
-	FAIL,
-	OK
-};
-
 struct sll_t{
 	size_t count;
 	node_t* head;

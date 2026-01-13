@@ -5,6 +5,11 @@ typedef struct node_t node_t;
 typedef void (*for_each_func)(void*);
 typedef int (*match_func)(void*, void*);
 
+enum Status{
+	FAIL,
+	OK
+};
+
 /*
 * Creates a singly linked list and return a pointer to it 
 * Returns: sll_t* to the list (NULL if failed to create)
