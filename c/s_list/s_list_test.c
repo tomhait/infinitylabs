@@ -31,7 +31,7 @@ int main(){
 	printf("\n\n\n");
 	sll_for_each(list, printData);
 	printf("\n\n\n");
-	node_t* where = nodes[4];
+	node_t* where = nodes[0];
 	node_t* insertedNode = sll_insert(list, where, &dataForInsert);
 	assert(*((int*)sll_get_data(insertedNode)) == dataForInsert);
 	sll_for_each(list, printData);
