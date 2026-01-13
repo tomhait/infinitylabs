@@ -21,7 +21,6 @@ two_ind_t* IsSumFound(int* arr, int size, int sum){
 		if(sum==tmp) break;
 		if(sum<arr[ind1]+arr[ind2]){
 			ind2--;
-			continue;
 		} else {
 			ind1++;
 		}
@@ -37,7 +36,7 @@ two_ind_t* IsSumFound(int* arr, int size, int sum){
 int main(){
 	int arr[] = {2,4,7,10,12,14,23};
 	int sum = 21;
-	two_ind_t *ret_val = IsSumFound(arr,7,sum);
+	two_ind_t *ret_val = IsSumFound(arr, 7, sum);
 	printf("%d %d\n", ret_val->ind1, ret_val->ind2);
 	free(ret_val);	
 	
