@@ -71,11 +71,10 @@ void sll_set_data(node_t* node, void* data){
 void* sll_pop(sll_t* list){
 	if(list->count == 0) return NULL;
 	node_t* tmp = list->head;
-	for(size_t i=1; i < list->count-1; i++){
-		tmp = tmp->next;
-	}
+	while(tmp->next->next != NULL) tmp = tmp->next;
 	void* pop_data = list->tail->data;
 	free(list->tail);
+	tmp->next = NULL;
 	list->tail = tmp;
 	list->count--;
 	return pop_data;
@@ -120,7 +119,10 @@ int sll_for_each(sll_t* list, for_each_func func){
 node_t* sll_find(sll_t* list, void* param, match_func func){
 	node_t *current = list->head;
 	while(current != NULL){
-		if(func(current->data, param)) return current;
+		if(func(current->data, param)){
+			return current;
+		}
+		current = current->next;
 	}
 	return NULL;
 }
