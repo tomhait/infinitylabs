@@ -86,7 +86,6 @@ void sll_destroy(sll_t* list){
 		node_t* tmp = list->head;
 		list->head = list->head->next;
 		free(tmp);
-		tmp = NULL;
 		list->count--;
 	}
 	free(list);
