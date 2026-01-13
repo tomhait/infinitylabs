@@ -40,18 +40,12 @@ node_t* sll_append(sll_t* list, void* data){
 }
 
 node_t* sll_insert(sll_t* list, node_t* where, void* data){
-	node_t* tmp = list->head;
-	while(tmp!=where){
-		if(!tmp) return NULL;
-		tmp = tmp->next;
-	}
-	if(!tmp) return NULL;
 	node_t* node = (node_t*)malloc(sizeof(node_t));
 	if(!node) return NULL;
 	node->data = data;
-	node->next = tmp->next;
-	tmp->next = node;
-	list->count++;	
+	node->next = where->next;
+	where->next = node;
+	list->count++;
 	return node;
 }
 
