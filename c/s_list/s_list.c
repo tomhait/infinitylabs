@@ -117,7 +117,7 @@ int sll_for_each(sll_t* list, for_each_func func){
 	return OK;
 }
 
-node_t* sll_find(sll* list, void* param, match_func func){
+node_t* sll_find(sll_t* list, void* param, match_func func){
 	node_t *current = list->head;
 	while(current != NULL){
 		if(func(current->data, param)) return current;
