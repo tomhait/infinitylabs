@@ -102,6 +102,7 @@ size_t sll_get_count(const sll_t* list){
 }
 
 int sll_remove(sll_t* list, node_t* node){
+	if(list->count==0) return FAIL;
 	node_t* tmp = node->next;
 	node->data = tmp->data;
 	node->next = tmp->next;
