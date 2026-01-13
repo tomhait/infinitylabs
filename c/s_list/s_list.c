@@ -71,12 +71,15 @@ void sll_set_data(node_t* node, void* data){
 void* sll_pop(sll_t* list){
 	if(list->count == 0) return NULL;
 	node_t* tmp = list->head;
-	while(tmp->next->next != NULL) tmp = tmp->next;
+	if(list->count > 1){
+		while(tmp->next->next != NULL) tmp = tmp->next;
+	}
 	void* pop_data = list->tail->data;
-	free(list->tail);
+	node_t *prev_tail = list->tail;
 	tmp->next = NULL;
 	list->tail = tmp;
 	list->count--;
+	free(prev_tail);
 	return pop_data;
 }
 

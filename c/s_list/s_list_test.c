@@ -53,5 +53,14 @@ int main(){
 	assert(*((int*)sll_get_data(nd))==dataForInsert);	
 	sll_destroy(list);
 	free(nodes);
+	
+	//Testing a list of one element - boundary value
+	int arr2[] = {1};
+	sll_t* list2 = sll_create();
+	sll_append(list2, &arr2[0]);
+	assert(*((int*)sll_pop(list2))==1);
+	assert(sll_get_count(list2)==0);
+	sll_destroy(list2);
+	
 	return 0;
 }
