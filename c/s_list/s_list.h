@@ -21,6 +21,7 @@ node_t* sll_append(sll_t* lst, void* data); // returns NULL for failure
 
 /*
 * Inserts a new node with "data" after the "where" node in the list
+* The function verifies that the "where" node exists in the list (if not a NULL is returned)
 * Returns: node_t* of the new inserted node (NULL if failed) 
 * O(n) time complexity
 */
