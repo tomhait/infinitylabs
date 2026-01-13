@@ -3,7 +3,7 @@
 typedef struct sll_t sll_t;
 typedef struct node_t node_t;
 typedef void (*for_each_func)(void*);
-typedef int (*match_func)();
+typedef int (*match_func)(void*, void*);
 
 sll_t* sll_create(void);
 node_t* sll_append(sll_t* lst, void* data); // returns NULL for failure

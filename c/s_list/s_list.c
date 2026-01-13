@@ -5,18 +5,18 @@
 
 enum Status{
 	FAIL,
-	PASS
+	OK
 };
 
 struct sll_t{
-	size_t count,
-	node_t* head,
-	node_t* tail
+	size_t count;
+	node_t* head;
+	node_t* tail;
 };
 
 struct node_t{
-	void* data,
-	node_t* next
+	void* data;
+	node_t* next;
 };
 
 sll_t* sll_create(void){
@@ -105,10 +105,23 @@ int sll_remove(sll_t* list, node_t* node){
 	node->next = tmp->next;
 	free(tmp);
 	list->count--;
-	return PASS;
+	return OK;
 }
 
-int sll_for_each(sll_t* list, for_each_func func);
+int sll_for_each(sll_t* list, for_each_func func){
+	node_t *current = list->head;
+	while(current != NULL){
+		func(current->data);
+		current = current->next;
+	}
+	return OK;
+}
 
-node_t* sll_find(sll* list, void* param, match_func func); // returns NULL for failure
+node_t* sll_find(sll* list, void* param, match_func func){
+	node_t *current = list->head;
+	while(current != NULL){
+		if(func(current->data, param)) return current;
+	}
+	return NULL;
+}
 
