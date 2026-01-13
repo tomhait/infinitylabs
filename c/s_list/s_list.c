@@ -69,6 +69,7 @@ void* sll_pop(sll_t* list){
 	list->tail = tmp;
 	list->count--;
 	free(prev_tail);
+	prev_tail = NULL;
 	return pop_data;
 }
 
@@ -81,6 +82,7 @@ void sll_destroy(sll_t* list){
 		node_t* tmp = list->head;
 		list->head = list->head->next;
 		free(tmp);
+		tmp = NULL;
 		list->count--;
 	}
 	free(list);
@@ -96,6 +98,7 @@ int sll_remove(sll_t* list, node_t* node){
 	node->data = tmp->data;
 	node->next = tmp->next;
 	free(tmp);
+	tmp = NULL;
 	list->count--;
 	return OK;
 }
