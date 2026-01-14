@@ -5,6 +5,7 @@
 
 struct sll_t{
 	size_t count;
+	node_t* dummy;
 	node_t* head;
 	node_t* tail;
 };
@@ -14,23 +15,36 @@ struct node_t{
 	node_t* next;
 };
 
-sll_t* sll_create(void){
-	sll_t* list = (sll_t*)malloc(sizeof(sll_t));
-	if(!list) return NULL;
-	list->count = 0;
-	list->head = NULL;
-	list->tail = NULL;
-	return list;
-}
-
-node_t* sll_append(sll_t* list, void* data){
+static node_t* CreateNode(void* data){
 	node_t* node = (node_t*)malloc(sizeof(node_t));
 	if(!node) return NULL;
 	node->data = data;
 	node->next = NULL;
+	return node;
+}
+
+sll_t* sll_create(void){
+	sll_t* list = (sll_t*)malloc(sizeof(sll_t));
+	if(!list) return NULL;
+	node_t *dummy = CreateNode(NULL);
+	if(!dummy){
+		free(list);
+		return NULL;
+	}
+	list->dummy = dummy;
+	list->head = NULL;
+	list->tail = NULL;
+	list->count = 0;
+	return list;
+}
+
+node_t* sll_append(sll_t* list, void* data){
+	node_t* node = CreateNode(data);
+	if(!node) return NULL;
 	if(!list->head){
 		list->head = node;
 		list->tail = node;
+		list->dummy->next = list->head;
 	} else {
 		list->tail->next = node;
 		list->tail = node;
@@ -40,12 +54,18 @@ node_t* sll_append(sll_t* list, void* data){
 }
 
 node_t* sll_insert(sll_t* list, node_t* where, void* data){
-	node_t* node = (node_t*)malloc(sizeof(node_t));
+	node_t* node = CreateNode(data);
 	if(!node) return NULL;
-	node->data = data;
-	node->next = where->next;
-	where->next = node;
+	if(where == list->head){
+		node->next = list->head;
+		list->dummy->next = node;
+		list->head = node;
+	}else{
+		node->next = where->next;
+		where->next = node;
+	}
 	list->count++;
+	if(list->tail == where) list->tail = node;
 	return node;
 }
 
@@ -58,26 +78,18 @@ void sll_set_data(node_t* node, void* data){
 }
 
 void* sll_pop(sll_t* list){
-	if(list->count == 0) return NULL;
-	node_t* tmp = list->head;
-	if(list->count > 1){
-		while(tmp->next->next != NULL) tmp = tmp->next;
-	}
-	void* pop_data = list->tail->data;
-	node_t *prev_tail = list->tail;
-	tmp->next = NULL;
-	list->tail = tmp;
+	void* outData = list->head->data;
+	node_t *tmp = list->head;
+	list->head = list->head->next;
+	list->dummy->next = list->head;
 	list->count--;
-	if(list->count==0){
-		list->head = NULL;
-		list->tail = NULL;
-	}
-	free(prev_tail);
-	prev_tail = NULL;
-	return pop_data;
+	free(tmp);
+	tmp = NULL;
+	return outData;
 }
 
 node_t* sll_get_next(node_t* node){
+	if(!node) return NULL;
 	return node->next;
 }
 
@@ -88,6 +100,7 @@ void sll_destroy(sll_t* list){
 		free(tmp);
 		list->count--;
 	}
+	free(list->dummy);
 	free(list);
 }
 
@@ -104,6 +117,7 @@ int sll_remove(sll_t* list, node_t* node){
 	tmp = NULL;
 	list->count--;
 	if(list->count==0){
+		list->dummy->next = NULL;
 		list->head = NULL;
 		list->tail = NULL;
 	}

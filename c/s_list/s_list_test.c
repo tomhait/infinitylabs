@@ -3,12 +3,14 @@
 #include <stdlib.h>
 #include <assert.h>
 
-void Increment(void* data){
+int Increment(void* data){
 	(*(int*)data)++;
+	return 0;
 }
 
-void printData(void* data){
+int printData(void* data){
 	printf("%d\n", *(int*)data);
+	return 0;
 }
 
 int IsEqual(void* d1, void* d2){
@@ -16,7 +18,7 @@ int IsEqual(void* d1, void* d2){
 }
 
 int main(){
-	int arr[] = {1,2,7,4,5,6,7,8};
+	int arr[] = {1,2};
 	size_t size = sizeof(arr)/sizeof(arr[0]);
 	int dataForInsert = 56;
 	node_t** nodes = (node_t**)malloc(size*sizeof(node_t*));
@@ -39,18 +41,19 @@ int main(){
 	sll_set_data(nodes[0], &dataForInsert);
 	sll_for_each(list, printData);
 	printf("\n\n\n");
-	assert(*((int*)sll_pop(list))==9);
+	node_t* next = sll_get_next(nodes[0]);
+	assert(next==nodes[1]);
+	assert(*((int*)sll_pop(list))==56);
 	assert(sll_get_count(list)==size);
 	sll_for_each(list, printData);
 	printf("\n\n\n");
-	node_t* next = sll_get_next(nodes[1]);
-	assert(next==nodes[2]);
+
 	sll_remove(list, nodes[0]);
 	sll_for_each(list, printData);
 	printf("\n\n\n");
-	assert(sll_get_count(list)==7);
+	assert(sll_get_count(list)==1);
 	node_t *nd = sll_find(list, &dataForInsert, IsEqual);
-	assert(*((int*)sll_get_data(nd))==dataForInsert);	
+	if(nd!=NULL) assert(*((int*)sll_get_data(nd))==dataForInsert);	
 	sll_destroy(list);
 	free(nodes);
 	

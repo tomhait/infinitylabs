@@ -2,7 +2,7 @@
 
 typedef struct sll_t sll_t;
 typedef struct node_t node_t;
-typedef void (*for_each_func)(void*);
+typedef int (*for_each_func)(void*);
 typedef int (*match_func)(void*, void*);
 
 enum Status{
