@@ -47,7 +47,7 @@ void sll_set_data(node_t* node, void* data);
 /*
 * Removes the last node in the list
 * Returns the data of the removed node
-* O(n) time complexity
+* O(1) time complexity
 */
 void* sll_pop(sll_t* lst);
 
@@ -64,7 +64,7 @@ node_t* sll_get_next(node_t* node);
 void sll_destroy(sll_t* lst);
 
 /*
-* Retuns the number of nodes in the list
+* Returns the number of nodes in the list
 * O(1) time complexity
 */
 size_t sll_get_count(const sll_t* lst);
@@ -90,4 +90,15 @@ int sll_for_each(sll_t* lst, for_each_func func);
 */
 node_t* sll_find(sll_t* list, void* param, match_func func);
 
+/*
+* Returns the head of the list
+* O(1) time complexity
+*/
+node_t* sll_get_head(sll_t* list);
+
+/*
+* Returns the tail of the list
+* O(1) time complexity
+*/
+node_t* sll_get_tail(sll_t* list);
 

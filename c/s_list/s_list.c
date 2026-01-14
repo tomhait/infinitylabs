@@ -44,11 +44,11 @@ node_t* sll_append(sll_t* list, void* data){
 	if(!list->head){
 		list->head = node;
 		list->tail = node;
-		list->dummy->next = list->head;
 	} else {
 		list->tail->next = node;
 		list->tail = node;
 	}
+	list->tail->next = list->dummy;
 	list->count++;
 	return node;
 }
@@ -58,14 +58,16 @@ node_t* sll_insert(sll_t* list, node_t* where, void* data){
 	if(!node) return NULL;
 	if(where == list->head){
 		node->next = list->head;
-		list->dummy->next = node;
 		list->head = node;
 	}else{
 		node->next = where->next;
 		where->next = node;
 	}
+	if(list->tail == where){
+		list->tail = node;
+		list->tail->next = list->dummy;
+	}
 	list->count++;
-	if(list->tail == where) list->tail = node;
 	return node;
 }
 
@@ -81,8 +83,11 @@ void* sll_pop(sll_t* list){
 	void* outData = list->head->data;
 	node_t *tmp = list->head;
 	list->head = list->head->next;
-	list->dummy->next = list->head;
 	list->count--;
+	if(list->count==0){
+		list->head = NULL;
+		list->tail = NULL;
+	}
 	free(tmp);
 	tmp = NULL;
 	return outData;
@@ -113,11 +118,13 @@ int sll_remove(sll_t* list, node_t* node){
 	node_t* tmp = node->next;
 	node->data = tmp->data;
 	node->next = tmp->next;
+	if(node == list->tail){
+		list->dummy = node;
+	}
 	free(tmp);
 	tmp = NULL;
 	list->count--;
 	if(list->count==0){
-		list->dummy->next = NULL;
 		list->head = NULL;
 		list->tail = NULL;
 	}
@@ -126,7 +133,7 @@ int sll_remove(sll_t* list, node_t* node){
 
 int sll_for_each(sll_t* list, for_each_func func){
 	node_t *current = list->head;
-	while(current != NULL){
+	while(current != list->dummy){
 		func(current->data);
 		current = current->next;
 	}
@@ -135,7 +142,7 @@ int sll_for_each(sll_t* list, for_each_func func){
 
 node_t* sll_find(sll_t* list, void* param, match_func func){
 	node_t *current = list->head;
-	while(current != NULL){
+	while(current != list->dummy){
 		if(func(current->data, param)){
 			return current;
 		}
@@ -144,3 +151,10 @@ node_t* sll_find(sll_t* list, void* param, match_func func){
 	return NULL;
 }
 
+node_t* sll_get_head(sll_t* list){
+	return list->head;
+}
+
+node_t* sll_get_tail(sll_t* list){
+	return list->tail;
+}
