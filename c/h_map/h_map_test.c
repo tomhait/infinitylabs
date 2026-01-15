@@ -37,9 +37,9 @@ int main(){
 	hm_insert(hm, &p2);
 	hm_insert(hm, &p3);
 	assert(hm_size(hm) == 3);
-	pair_t* p = hm_find(hm, p2.key);
-	assert(p);
-	assert(p->value == p2.value);
+	int *value = (int*)(hm_find(hm, p2.key));
+	assert(value);
+	assert(value == p2.value);
 	hm_foreach(hm, PrintPair, NULL);
 	pair_t p4 = {"tom", &ages[3]};
 	hm_insert(hm, &p4);

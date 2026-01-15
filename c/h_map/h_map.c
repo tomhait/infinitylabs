@@ -59,17 +59,16 @@ void* hm_remove(hash_map_t* hash, void* key){
 	return NULL;		
 }
 
-//insert of the same key twice cause the value to be updated
-int hm_insert(hash_map_t* hash, pair_t* pair){
+int hm_insert(hash_map_t* hash, pair_t* key_value){
 	assert(hash);
-	assert(pair);
-	//pair_t pair = {key, value};
-	size_t ind = ComputeHashIndex(hash->hfunc(pair->key), hash->num_of_buckets);
+	assert(key_value);
+	void *non_const_key = (void*)(key_value->key);
+	size_t ind = ComputeHashIndex(hash->hfunc(non_const_key), hash->num_of_buckets);
 	sll_t* list = hash->buckets[ind];
 	if(!list){
 		list = sll_create();
 		if(!list) return FAIL;
-		node_t* node = sll_append(list, pair);
+		node_t* node = sll_append(list, key_value);
 		if(!node){
 			free(list);
 			return FAIL;
@@ -77,14 +76,13 @@ int hm_insert(hash_map_t* hash, pair_t* pair){
 		hash->buckets[ind] = list;
 		return OK;	
 	}
-	//fix it#####
-	node_t* node = sll_find(list, pair, hash->cfunc);
+	node_t* node = sll_find(list, key_value, hash->cfunc);
 	if(!node){
 		node_t* head = sll_get_head(list);
-		sll_insert(list, head, pair);
+		sll_insert(list, head, key_value);
 	}else{
 		pair_t* old_pair = (pair_t*)sll_get_data(node);
-		old_pair->value = pair->value;
+		old_pair->value = key_value->value;
 	}
 	return OK;
 }
@@ -112,7 +110,7 @@ void* hm_find(const hash_map_t* hash, const void* key){
 	for(size_t j=0; j<list_count; j++){
 		pair_t* pair = (pair_t*)sll_get_data(node);
 		pair_t ref = {non_const_key,NULL};
-		if(hash->cfunc(pair,&ref)) return pair;
+		if(hash->cfunc(pair,&ref)) return pair->value;
 		node = sll_get_next(node);
 	}
 	return NULL;
