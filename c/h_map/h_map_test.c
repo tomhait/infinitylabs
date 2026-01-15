@@ -32,7 +32,6 @@ int main(){
 	pair_t p2 = {"gabi", &ages[1]};
 	pair_t p3 = {"moshe", &ages[2]};
 	hash_map_t* hm = hm_create(3, djb2_hash, StrCompare);
-	//assert(hm_is_empty(hm) == 3);
 	hm_insert(hm, &p1);
 	hm_insert(hm, &p2);
 	hm_insert(hm, &p3);
