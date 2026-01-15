@@ -27,7 +27,7 @@ int StrCompare(void* pair1, void* pair2){
 }
 
 int main(){
-	int ages[] = {30, 27, 26};
+	int ages[] = {30, 27, 26, 40};
 	pair_t p1 = {"tom", &ages[0]};
 	pair_t p2 = {"gabi", &ages[1]};
 	pair_t p3 = {"moshe", &ages[2]};
@@ -40,6 +40,14 @@ int main(){
 	pair_t* p = hm_find(hm, p2.key);
 	assert(p);
 	assert(p->value == p2.value);
+	hm_foreach(hm, PrintPair, NULL);
+	pair_t p4 = {"tom", &ages[3]};
+	hm_insert(hm, &p4);
+	printf("\n\n\n");
+	hm_foreach(hm, PrintPair, NULL);
+	pair_t p5 = {"Hertzel", &ages[3]};
+	hm_insert(hm, &p5);
+	printf("\n\n\n");
 	hm_foreach(hm, PrintPair, NULL);
 	hm_destroy(hm);
 	return 0;
