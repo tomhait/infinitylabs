@@ -31,6 +31,7 @@ hash_map_t* hm_create(size_t num_of_buckets, hash_func hfunc, compare_func cfunc
 	hash->hfunc = hfunc;
 	hash->cfunc = cfunc;
 	hash->buckets = CreateBuckets(num_of_buckets);
+	return hash;
 }
 
 void hm_destroy(hash_map_t* hash){
@@ -38,7 +39,7 @@ void hm_destroy(hash_map_t* hash){
 	for(size_t i=0; i<hash->num_of_buckets; i++){
 		sll_t *list = hash->buckets[i];
 		if(list!=NULL){
-			int list_count = sll_get_count(list);
+			size_t list_count = sll_get_count(list);
 			node_t *node = sll_get_head(list);
 			for(size_t j=0; j<list_count; j++){
 				free(sll_get_data(node));

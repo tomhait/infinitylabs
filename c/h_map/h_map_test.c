@@ -6,6 +6,7 @@
 
 #define DICT_PATH "/usr/share/dict/words"
 #define WORD_LEN 50
+#define UNUSED(x) (void)(x)
 
 void load_linux_dic(hash_map_t *dict){
 	FILE *fp = fopen(DICT_PATH,"r");
@@ -41,7 +42,9 @@ int spell_checker(hash_map_t *dict, const char *word){
 }
 
 int PrintPair(void* pair, void* params){
+	UNUSED(params);
 	printf("Key: %s, Value: %d\n",(char*)(((pair_t*)pair)->key), *(int*)(((pair_t*)pair)->value));
+	return 0;
 }
 
 size_t djb2_hash(void *key){
