@@ -6,6 +6,7 @@
 
 #define DICT_PATH "/usr/share/dict/words"
 #define WORD_LEN 50
+#define HASH_DICT_SIZE 200
 #define UNUSED(x) (void)(x)
 
 void load_linux_dic(hash_map_t *dict){
@@ -30,7 +31,6 @@ void free_dict(hash_map_t *dict){
 		void *key = hm_remove(dict, word);
 		if(key!=NULL){
 			free(key);
-			//pair = NULL;
 		}
 	}	
 }
@@ -66,7 +66,7 @@ int StrCompare(void* pair1, void* pair2){
 }
 
 int main(){
-	hash_map_t *dict = hm_create(200, djb2_hash, StrCompare);
+	hash_map_t *dict = hm_create(HASH_DICT_SIZE, djb2_hash, StrCompare);
 	load_linux_dic(dict);
 	char word[WORD_LEN];
 	printf("Type a word to verify if it's in the Linux dictionary: ");

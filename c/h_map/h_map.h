@@ -32,14 +32,14 @@ void hm_destroy(hash_map_t* hash);
 /*
 * Removes a key-value pair by searching the key in the hash map
 * Returns the removed value (NULL key-value not found in the hash)
-* O(1) Amortizes time complexity (O(n) worst case)
+* O(1) Amortized time complexity (O(n) worst case)
 */
 void* hm_remove(hash_map_t* hash, void* key);
 
 /*
 * Inserts a key-value pair to the hash map
 * If the key is already in the hash map - replaces its associated value with the new value in key_value
-* O(1) Amortizes time complexity (O(n) worst case)
+* O(1) Amortized time complexity (O(n) worst case)
 */
 int hm_insert(hash_map_t* hash, pair_t* key_value);
 
@@ -51,13 +51,13 @@ size_t hm_size(const hash_map_t* hash);
 
 /*
 * Returns TRUE is at least one key-value pair is in the hash map
-* O(1) Amortizes time complexity (O(n) worst case)
+* O(1) Amortized time complexity (O(n) worst case)
 */
 int hm_is_empty(const hash_map_t* hash);
 
 /*
 * Returns the associated value of the key in the hash map (NULL is key not found in the hash map)
-* O(1) Amortizes time complexity (O(n) worst case)
+* O(1) Amortized time complexity (O(n) worst case)
 */
 void* hm_find(const hash_map_t* hash, const void* key);
 
