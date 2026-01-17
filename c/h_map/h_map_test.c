@@ -59,13 +59,48 @@ size_t djb2_hash(void *key){
 	return hash;
 }
 
+size_t Int_hash(void *key){
+	return (size_t)(*(int*)key);
+}
+
 int StrCompare(void* pair1, void* pair2){
 	pair_t *p1 = (pair_t*)pair1;
 	pair_t *p2 = (pair_t*)pair2;	
 	return strcmp((char*)(p1->key), (char*)(p2->key))==0;
 }
 
-int main(){
+int IntCompare(void* pair1, void* pair2){
+	int val1 = *(int*)((pair_t*)pair1)->key;
+	int val2 = *(int*)((pair_t*)pair2)->key;
+	return val1 == val2;
+}
+
+int IsSumFound(int arr[], size_t size, int target){
+	hash_map_t *hash = hm_create(size, Int_hash, IntCompare);
+	int flag = FALSE;
+	int *ind = (int*)malloc(size*sizeof(int));
+	if(!ind) return FALSE;
+	for(size_t j = 0; j<size; j++) ind[j] = j;
+	for(size_t i=0; i<size; i++){
+		int diff = target - arr[i];
+		int *value = (int*)hm_find(hash, &diff);
+		if( value != NULL){
+			printf("The indices are: %d (%d) and %ld (%d)\n", *value, arr[*value], i, arr[i]);
+			flag = TRUE;
+			break;
+		}
+		pair_t pair = {&arr[i], &ind[i]};
+		hm_insert(hash, &pair);
+	}
+	free(ind);
+	hm_destroy(hash);
+	if(!flag) printf("No indices found\n");
+	return flag;	
+
+}
+
+
+void testDict(){
 	hash_map_t *dict = hm_create(HASH_DICT_SIZE, djb2_hash, StrCompare);
 	load_linux_dic(dict);
 	char word[WORD_LEN];
@@ -78,6 +113,16 @@ int main(){
 	}
 	free_dict(dict);
 	hm_destroy(dict);
+}
+
+void testIsSumFound(){
+	int arr[] = {2, 4, 7, 10, 12, 14, 23};
+	size_t size = sizeof(arr)/sizeof(arr[0]);
+	int target = 21;
+	IsSumFound(arr, size, target);
+}
+
+void testHash(){
 	int ages[] = {30, 27, 26, 40};
 	pair_t p1 = {"tom", &ages[0]};
 	pair_t p2 = {"gabi", &ages[1]};
@@ -100,5 +145,11 @@ int main(){
 	printf("\n\n\n");
 	hm_foreach(hm, PrintPair, NULL);
 	hm_destroy(hm);
+}
+
+int main(){
+	//testDict();
+	testIsSumFound();
+	//testHash();
 	return 0;
 }
