@@ -4,6 +4,42 @@
 #include <assert.h>
 #include <string.h>
 
+#define DICT_PATH "/usr/share/dict/words"
+#define WORD_LEN 50
+
+void load_linux_dic(hash_map_t *dict){
+	FILE *fp = fopen(DICT_PATH,"r");
+	if(!fp) return;
+	char word[WORD_LEN];
+	while(fgets(word, sizeof(word), fp)){
+		word[strcspn(word, "\n")] = 0;
+		char *key = strdup(word);
+		pair_t pair = {key, key};
+		hm_insert(dict, &pair);
+	}
+	fclose(fp);
+}
+
+void free_dict(hash_map_t *dict){
+	FILE *fp = fopen(DICT_PATH,"r");
+	if(!fp) return;
+	char word[WORD_LEN];
+	while(fgets(word, sizeof(word), fp)){
+		word[strcspn(word, "\n")] = 0;
+		void *key = hm_remove(dict, word);
+		if(key!=NULL){
+			free(key);
+			//pair = NULL;
+		}
+	}	
+}
+
+int spell_checker(hash_map_t *dict, const char *word){
+	char *value = hm_find(dict, word);
+	if(!value) return FALSE;
+	return TRUE;
+}
+
 int PrintPair(void* pair, void* params){
 	printf("Key: %s, Value: %d\n",(char*)(((pair_t*)pair)->key), *(int*)(((pair_t*)pair)->value));
 }
@@ -27,7 +63,19 @@ int StrCompare(void* pair1, void* pair2){
 }
 
 int main(){
-	int ages[] = {30, 27, 26, 40};
+	hash_map_t *dict = hm_create(200, djb2_hash, StrCompare);
+	load_linux_dic(dict);
+	char word[WORD_LEN];
+	printf("Type a word to verify if it's in the Linux dictionary: ");
+	if(fgets(word, sizeof(word), stdin)) word[strcspn(word, "\n")] = 0;
+	if(spell_checker(dict,word)){
+		printf("%s is in the dictionary\n", word);
+	} else {
+		printf("%s is not in the dictionary\n", word);
+	}
+	free_dict(dict);
+	hm_destroy(dict);
+	/*int ages[] = {30, 27, 26, 40};
 	pair_t p1 = {"tom", &ages[0]};
 	pair_t p2 = {"gabi", &ages[1]};
 	pair_t p3 = {"moshe", &ages[2]};
@@ -48,6 +96,6 @@ int main(){
 	hm_insert(hm, &p5);
 	printf("\n\n\n");
 	hm_foreach(hm, PrintPair, NULL);
-	hm_destroy(hm);
+	hm_destroy(hm);*/
 	return 0;
 }

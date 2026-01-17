@@ -36,7 +36,16 @@ hash_map_t* hm_create(size_t num_of_buckets, hash_func hfunc, compare_func cfunc
 void hm_destroy(hash_map_t* hash){
 	assert(hash);
 	for(size_t i=0; i<hash->num_of_buckets; i++){
-		if(hash->buckets[i]!=NULL) sll_destroy(hash->buckets[i]);
+		sll_t *list = hash->buckets[i];
+		if(list!=NULL){
+			int list_count = sll_get_count(list);
+			node_t *node = sll_get_head(list);
+			for(size_t j=0; j<list_count; j++){
+				free(sll_get_data(node));
+				node = sll_get_next(node);
+			}
+			sll_destroy(list);
+		}
 	}
 	free(hash->buckets);
 	free(hash);
@@ -46,15 +55,19 @@ void* hm_remove(hash_map_t* hash, void* key){
 	size_t ind = ComputeHashIndex(hash->hfunc(key), hash->num_of_buckets);
 	if(!hash->buckets[ind]) return NULL;
 	sll_t* list = hash->buckets[ind];
-	node_t* node = sll_find(list, key, hash->cfunc);
-	if(!node){
+	pair_t find_pair = {key, key};
+	node_t* node = sll_find(list, &find_pair, hash->cfunc);
+	if(node!=NULL){
 		pair_t* pair = sll_get_data(node);
+		void *value = pair->value;
+		free(pair);
+		pair = NULL;
 		sll_remove(list, node);
 		if(sll_get_count(list)==0){
 			sll_destroy(list);
 			hash->buckets[ind] = NULL;
 		}
-		return pair->value;
+		return value;
 	}
 	return NULL;		
 }
@@ -64,11 +77,15 @@ int hm_insert(hash_map_t* hash, pair_t* key_value){
 	assert(key_value);
 	void *non_const_key = (void*)(key_value->key);
 	size_t ind = ComputeHashIndex(hash->hfunc(non_const_key), hash->num_of_buckets);
+	pair_t *pair = (pair_t*)malloc(sizeof(pair_t));
+	if(!pair) return FAIL;
+	pair->key = key_value->key;
+	pair->value = key_value->value;
 	sll_t* list = hash->buckets[ind];
 	if(!list){
 		list = sll_create();
 		if(!list) return FAIL;
-		node_t* node = sll_append(list, key_value);
+		node_t* node = sll_append(list, pair);
 		if(!node){
 			free(list);
 			return FAIL;
@@ -76,13 +93,14 @@ int hm_insert(hash_map_t* hash, pair_t* key_value){
 		hash->buckets[ind] = list;
 		return OK;	
 	}
-	node_t* node = sll_find(list, key_value, hash->cfunc);
+	node_t* node = sll_find(list, pair, hash->cfunc);
 	if(!node){
 		node_t* head = sll_get_head(list);
-		sll_insert(list, head, key_value);
+		sll_insert(list, head, pair);
 	}else{
 		pair_t* old_pair = (pair_t*)sll_get_data(node);
-		old_pair->value = key_value->value;
+		old_pair->value = pair->value;
+		free(pair);
 	}
 	return OK;
 }
