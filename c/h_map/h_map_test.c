@@ -75,7 +75,7 @@ int main(){
 	}
 	free_dict(dict);
 	hm_destroy(dict);
-	/*int ages[] = {30, 27, 26, 40};
+	int ages[] = {30, 27, 26, 40};
 	pair_t p1 = {"tom", &ages[0]};
 	pair_t p2 = {"gabi", &ages[1]};
 	pair_t p3 = {"moshe", &ages[2]};
@@ -96,6 +96,6 @@ int main(){
 	hm_insert(hm, &p5);
 	printf("\n\n\n");
 	hm_foreach(hm, PrintPair, NULL);
-	hm_destroy(hm);*/
+	hm_destroy(hm);
 	return 0;
 }
