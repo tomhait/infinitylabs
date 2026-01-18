@@ -4,8 +4,12 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#define LOAD_FACTOR 0.75
+#define GROWTH_FACTOR 2
+
 struct hash_map_t{
     size_t num_of_buckets;
+    size_t current_filled_buckets;
     hash_func hfunc;
     compare_func cfunc;
     sll_t** buckets;
@@ -28,6 +32,7 @@ hash_map_t* hm_create(size_t num_of_buckets, hash_func hfunc, compare_func cfunc
 	hash_map_t* hash = (hash_map_t*)malloc(sizeof(hash_map_t));
 	if(!hash) return NULL;
 	hash->num_of_buckets = num_of_buckets;
+	hash->current_filled_buckets=0;
 	hash->hfunc = hfunc;
 	hash->cfunc = cfunc;
 	hash->buckets = CreateBuckets(num_of_buckets);
@@ -67,10 +72,38 @@ void* hm_remove(hash_map_t* hash, void* key){
 		if(sll_get_count(list)==0){
 			sll_destroy(list);
 			hash->buckets[ind] = NULL;
+			hash->current_filled_buckets--;
 		}
 		return value;
 	}
 	return NULL;		
+}
+
+static int resize_hash(hash_map_t *hash){
+	size_t old_capacity = hash->num_of_buckets;
+	size_t new_capacity = old_capacity * GROWTH_FACTOR;
+	sll_t **new_buckets = CreateBuckets(new_capacity);
+	if(!new_buckets) return FAIL;
+	sll_t **old_buckets = hash->buckets;
+	hash->buckets = new_buckets;
+	hash->current_filled_buckets = 0;
+	hash->num_of_buckets = new_capacity;
+	for(size_t i=0; i<old_capacity; i++){
+		sll_t *list = old_buckets[i];
+		if(list!=NULL){
+			size_t list_count = sll_get_count(list);
+			node_t *node = sll_get_head(list);
+			for(size_t j=0; j<list_count; j++){
+				pair_t* pair = sll_get_data(node);
+				hm_insert(hash, pair);
+				free(pair);
+				node = sll_get_next(node);
+			}
+			sll_destroy(list);
+		}
+	}
+	free(old_buckets);
+	return OK;
 }
 
 int hm_insert(hash_map_t* hash, pair_t* key_value){
@@ -92,6 +125,11 @@ int hm_insert(hash_map_t* hash, pair_t* key_value){
 			return FAIL;
 		}
 		hash->buckets[ind] = list;
+		hash->current_filled_buckets++;
+		double curr_load_factor = (double)hash->current_filled_buckets / hash->num_of_buckets;
+		if(curr_load_factor > LOAD_FACTOR){
+			resize_hash(hash);
+		}
 		return OK;	
 	}
 	node_t* node = sll_find(list, pair, hash->cfunc);
@@ -112,9 +150,7 @@ size_t hm_size(const hash_map_t* hash){
 
 int hm_is_empty(const hash_map_t* hash){
 	assert(hash);
-	for(size_t i=0; i<hash->num_of_buckets; i++){
-		if(hash->buckets[i]!=NULL) return FALSE; 
-	}
+	if(hash->current_filled_buckets > 0) return FALSE;
 	return TRUE;
 }
 
