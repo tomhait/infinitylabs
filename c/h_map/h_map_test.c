@@ -35,12 +35,6 @@ void free_dict(hash_map_t *dict){
 	}	
 }
 
-int spell_checker(hash_map_t *dict, const char *word){
-	char *value = hm_find(dict, word);
-	if(!value) return FALSE;
-	return TRUE;
-}
-
 int PrintPair(void* pair, void* params){
 	UNUSED(params);
 	printf("Key: %s, Value: %d\n",(char*)(((pair_t*)pair)->key), *(int*)(((pair_t*)pair)->value));
@@ -67,6 +61,28 @@ int StrCompare(void* pair1, void* pair2){
 	pair_t *p1 = (pair_t*)pair1;
 	pair_t *p2 = (pair_t*)pair2;	
 	return strcmp((char*)(p1->key), (char*)(p2->key))==0;
+}
+
+int spell_checker(){
+	hash_map_t *dict = hm_create(HASH_DICT_SIZE, djb2_hash, StrCompare);
+	load_linux_dic(dict);
+	char word[WORD_LEN];
+	int userInput = 0;
+	while(1){
+		printf("Enter 0 to terminate\n");
+		scanf("%d", &userInput);
+		if(userInput==0) break;
+		while(getchar() != '\n');
+		printf("Type a word to verify if it's in the Linux dictionary: ");
+		if(fgets(word, sizeof(word), stdin)) word[strcspn(word, "\n")] = 0;
+		char *value = hm_find(dict, word);
+		if(!value){
+			printf("%s is not in the dictionary\n", word);
+		} else printf("%s is in the dictionary\n", word);
+	}
+	free_dict(dict);
+	hm_destroy(dict);
+	return TRUE;
 }
 
 int IntCompare(void* pair1, void* pair2){
@@ -97,22 +113,6 @@ int IsSumFound(int arr[], size_t size, int target){
 	if(!flag) printf("No indices found\n");
 	return flag;	
 
-}
-
-
-void testDict(){
-	hash_map_t *dict = hm_create(HASH_DICT_SIZE, djb2_hash, StrCompare);
-	load_linux_dic(dict);
-	char word[WORD_LEN];
-	printf("Type a word to verify if it's in the Linux dictionary: ");
-	if(fgets(word, sizeof(word), stdin)) word[strcspn(word, "\n")] = 0;
-	if(spell_checker(dict,word)){
-		printf("%s is in the dictionary\n", word);
-	} else {
-		printf("%s is not in the dictionary\n", word);
-	}
-	free_dict(dict);
-	hm_destroy(dict);
 }
 
 void testIsSumFound(){
@@ -148,8 +148,8 @@ void testHash(){
 }
 
 int main(){
-	//testDict();
+	spell_checker();
 	testIsSumFound();
-	//testHash();
+	testHash();
 	return 0;
 }
