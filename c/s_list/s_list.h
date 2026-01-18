@@ -2,7 +2,7 @@
 
 typedef struct sll_t sll_t;
 typedef struct node_t node_t;
-typedef int (*for_each_func)(void*);
+typedef int (*for_each_func)(void*, void*);
 typedef int (*match_func)(void*, void*);
 
 enum Status{
@@ -81,7 +81,7 @@ int sll_remove(sll_t* lst, node_t* node);
 * Returns OK status if succeeded (FAIL if not)
 * O(n) time complexity
 */
-int sll_for_each(sll_t* lst, for_each_func func);
+int sll_for_each(sll_t* lst, for_each_func func, void* params);
 
 /*
 * Applies the match func on each node in the list and compare it with param
