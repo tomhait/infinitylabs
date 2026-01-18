@@ -20,11 +20,7 @@ static size_t ComputeHashIndex(size_t hash, size_t table_size){
 }
 
 static sll_t** CreateBuckets(size_t num_of_buckets){
-	sll_t** buckets = (sll_t**)malloc(num_of_buckets * sizeof(sll_t*));
-	if(!buckets) return NULL;
-	for(size_t i=0; i<num_of_buckets; i++){
-		buckets[i] = NULL;
-	}
+	sll_t** buckets = (sll_t**)calloc(num_of_buckets, sizeof(sll_t*));
 	return buckets;
 }
 
