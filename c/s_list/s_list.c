@@ -67,10 +67,6 @@ node_t* sll_insert(sll_t* list, node_t* where, void* data){
 			list->tail->next = list->dummy;
 		}
 	}
-	/*if(list->tail == where){
-		list->tail = node;
-		list->tail->next = list->dummy;
-	}*/
 	list->count++;
 	return node;
 }
