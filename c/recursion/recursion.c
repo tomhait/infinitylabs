@@ -9,13 +9,13 @@ long int Fibonacci(long int element_index)
 	return Fibonacci(element_index-1)+Fibonacci(element_index-2);
 }
 
-int IterFibonacci(int element_index)
+long int IterFibonacci(long int element_index)
 {
 	if(element_index<=1) return element_index;
-	int a = 0;
-	int b = 1;
-	int c = 0;
-	for(int i=1; i < element_index; i++)
+	long int a = 0;
+	long int b = 1;
+	long int c = 0;
+	for(long int i=1; i < element_index; i++)
 	{
 		c = a + b;
 		a = b;

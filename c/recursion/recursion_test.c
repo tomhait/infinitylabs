@@ -9,9 +9,10 @@ int main()
 	getrlimit (RLIMIT_STACK, &limit);
 	printf("\nStack Limit = %ld and %ld max\n", limit.rlim_cur, limit.rlim_max);
 	//printf("Fibonacci value of index %ld is: %ld\n", limit.rlim_cur, Fibonacci(limit.rlim_cur));
+	printf("Fibonacci value of index %ld is: %ld\n", limit.rlim_cur, IterFibonacci(limit.rlim_cur));
 	long int index = 6;
 	printf("Fibonacci value of index %ld is: %ld\n", index, Fibonacci(index));
-	printf("Fibonacci value of index %ld is: %d\n", index, IterFibonacci(index));
+	printf("Fibonacci value of index %ld is: %ld\n", index, IterFibonacci(index));
 
 	Node nd1 = {1, NULL};
 	Node nd2 = {2, NULL};
