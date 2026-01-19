@@ -3,9 +3,17 @@
 #include <stddef.h>
 #include <assert.h>
 
+static void num_calls(){
+	static long int count = 0;
+	count++;
+	printf("%ld\n", count);
+}
+
+
 long int Fibonacci(long int element_index)
 {
 	if(element_index<=1) return element_index;
+	num_calls();
 	return Fibonacci(element_index-1)+Fibonacci(element_index-2);
 }
 
