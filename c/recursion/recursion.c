@@ -12,16 +12,16 @@ long int Fibonacci(long int element_index)
 long int IterFibonacci(long int element_index)
 {
 	if(element_index<=1) return element_index;
-	long int a = 0;
-	long int b = 1;
-	long int c = 0;
+	long int second_last = 0;
+	long int last = 1;
+	long int next = 0;
 	for(long int i=1; i < element_index; i++)
 	{
-		c = a + b;
-		a = b;
-		b = c;
+		next = second_last + last;
+		second_last = last;
+		last = next;
 	}
-	return b;
+	return last;
 }
 
 Node* FlipList(Node* node){
