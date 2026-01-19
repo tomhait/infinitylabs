@@ -32,6 +32,17 @@ int main()
 	{
 		printf("%s is smaller than %s\n",s1, s2);
 	}
+	
+	int arr[] = {5,7};
+	int target = 28;
+	if(FindMult(arr, sizeof(arr)/sizeof(arr[0]), target))
+	{
+		printf("Found a multiplication\n");
+	} else {
+		printf("Did not find a multiplication\n");
+	}
+	char s[] = "Tom";
+	PrintPermut(s);
 	return 0;
 }
 

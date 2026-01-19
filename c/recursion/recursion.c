@@ -38,4 +38,43 @@ int RecStrcmp(char* s1, char *s2){
 	return *(unsigned char*)s1 - *(unsigned char*)s2;		
 }
 
+int FindMult(int arr[], int size, int target){
+	if(target == 1) return TRUE;
+	for(int i=0; i < size; i++)
+	{
+		if(arr[i] <= 1)
+		{
+			if(arr[i] == target) return TRUE;
+			continue;
+		}
+		if(target % arr[i] == 0)
+		{
+			return FindMult(arr, size, target / arr[i]);
+		}
+	}
+	return FALSE;
+}
+
+static void Swap(char *x, char *y){
+	char temp = *x;
+	*x = *y;
+	*y = temp;
+}
+
+static void PrintPermHelper(char str[], int start, int end){
+	if(start == end) {
+		printf("%s\n", str);
+		return;
+	}
+	for(int i=start; i<end; i++)
+	{
+		Swap(str+start, str+i);
+		PrintPermHelper(str, start+1, end);
+		Swap(str+start, str+i);
+	}
+}
+
+void PrintPermut(char str[]){
+	PrintPermHelper(str, 0, RecStrlen(str));	
+}
 
