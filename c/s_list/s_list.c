@@ -62,11 +62,15 @@ node_t* sll_insert(sll_t* list, node_t* where, void* data){
 	}else{
 		node->next = where->next;
 		where->next = node;
+		if(where == list->tail){
+			list->tail = node;
+			list->tail->next = list->dummy;
+		}
 	}
-	if(list->tail == where){
+	/*if(list->tail == where){
 		list->tail = node;
 		list->tail->next = list->dummy;
-	}
+	}*/
 	list->count++;
 	return node;
 }
@@ -121,9 +125,11 @@ int sll_remove(sll_t* list, node_t* node){
 	if(node == list->tail){
 		list->dummy = node;
 	}
-	free(tmp);
-	tmp = NULL;
-	list->count--;
+	if(tmp!=list->dummy){
+		free(tmp);
+		tmp = NULL;
+		list->count--;
+	}
 	if(list->count==0){
 		list->head = NULL;
 		list->tail = NULL;
@@ -131,10 +137,10 @@ int sll_remove(sll_t* list, node_t* node){
 	return OK;
 }
 
-int sll_for_each(sll_t* list, for_each_func func){
+int sll_for_each(sll_t* list, for_each_func func, void *params){
 	node_t *current = list->head;
 	while(current != list->dummy){
-		func(current->data);
+		func(current->data, params);
 		current = current->next;
 	}
 	return OK;
