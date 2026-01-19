@@ -3,12 +3,16 @@
 #include <stdlib.h>
 #include <assert.h>
 
-int Increment(void* data){
+#define UNUSED(x) (void)(x)
+
+int Increment(void* data, void* params){
+	UNUSED(params);
 	(*(int*)data)++;
 	return 0;
 }
 
-int printData(void* data){
+int printData(void* data, void* params){
+	UNUSED(params);
 	printf("%d\n", *(int*)data);
 	return 0;
 }
@@ -28,28 +32,28 @@ int main(){
 		nodes[i] = sll_append(list, &arr[i]);
 	}
 	assert(sll_get_count(list)==size);
-	sll_for_each(list, printData);
-	sll_for_each(list, Increment);
+	sll_for_each(list, printData, NULL);
+	sll_for_each(list, Increment, NULL);
 	printf("\n\n\n");
-	sll_for_each(list, printData);
+	sll_for_each(list, printData, NULL);
 	printf("\n\n\n");
 	node_t* where = nodes[0];
 	node_t* insertedNode = sll_insert(list, where, &dataForInsert);
 	assert(*((int*)sll_get_data(insertedNode)) == dataForInsert);
-	sll_for_each(list, printData);
+	sll_for_each(list, printData, NULL);
 	printf("\n\n\n");
 	sll_set_data(nodes[0], &dataForInsert);
-	sll_for_each(list, printData);
+	sll_for_each(list, printData, NULL);
 	printf("\n\n\n");
 	node_t* next = sll_get_next(nodes[0]);
 	assert(next==nodes[1]);
 	assert(*((int*)sll_pop(list))==56);
 	assert(sll_get_count(list)==size);
-	sll_for_each(list, printData);
+	sll_for_each(list, printData, NULL);
 	printf("\n\n\n");
 
 	sll_remove(list, nodes[0]);
-	sll_for_each(list, printData);
+	sll_for_each(list, printData, NULL);
 	printf("\n\n\n");
 	assert(sll_get_count(list)==1);
 	node_t *nd = sll_find(list, &dataForInsert, IsEqual);
