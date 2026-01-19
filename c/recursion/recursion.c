@@ -3,11 +3,25 @@
 #include <stddef.h>
 #include <assert.h>
 
-int Fibonacci(int element_index)
+long int Fibonacci(long int element_index)
 {
-	if(element_index==0) return 0;
-	if(element_index==1) return 1;
+	if(element_index<=1) return element_index;
 	return Fibonacci(element_index-1)+Fibonacci(element_index-2);
+}
+
+int IterFibonacci(int element_index)
+{
+	if(element_index<=1) return element_index;
+	int a = 0;
+	int b = 1;
+	int c = 0;
+	for(int i=1; i < element_index; i++)
+	{
+		c = a + b;
+		a = b;
+		b = c;
+	}
+	return b;
 }
 
 Node* FlipList(Node* node){

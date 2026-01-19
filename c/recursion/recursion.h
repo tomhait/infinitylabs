@@ -9,7 +9,8 @@ enum Bool{
 	TRUE
 };
 
-int Fibonacci(int element_index);
+long int Fibonacci(long int element_index);
+int IterFibonacci(int element_index);
 Node* FlipList(Node* node);
 int RecStrlen(char *str);
 int RecStrcmp(char* s1, char *s2);
