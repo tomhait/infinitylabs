@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <math.h>
 
 struct mat_t{
 	size_t nrow;
@@ -163,4 +164,48 @@ double matrix_get_val(const mat_t* matrix, const size_t row_idx, const size_t co
 	assert(matrix->ncol > col_idx);
 	return matrix->matrix[row_idx*matrix->ncol + col_idx];
 }
+
+int matrix_get_submatrix(const mat_t* matrix, size_t row, size_t col, mat_t* result){
+	assert(matrix);
+	assert(result);
+	assert(matrix->nrow-1 == result->nrow);
+	assert(matrix->ncol-1 == result->ncol);
+	double *output = result->matrix;
+	size_t n = matrix->nrow;
+	size_t m= matrix->ncol;
+	size_t dest_i = 0, dest_j = 0;
+	for(size_t i=0; i < n; i++){
+		for(size_t j=0; j < m; j++){
+			if(i==row || j==col) continue;
+			size_t src_ind = i*m+j;
+			size_t dest_ind = dest_i * (n-1) + dest_j;
+			output[dest_ind] = matrix->matrix[src_ind];
+			dest_j++;
+			if(dest_j == n-1){
+				dest_j = 0;
+				dest_i++;
+			}
+		}
+	}
+	return SUCCESS;
+}
+
+double matrix_norm(const mat_t* matrix){
+	assert(matrix);
+	mat_t *trMat = matrix_create(matrix->ncol, matrix->nrow);
+	mat_t *mult = matrix_create(trMat->nrow, matrix->ncol);
+	matrix_transpose(matrix, trMat);
+	matrix_multiply(trMat, matrix, mult);
+	int status = SUCCESS;
+	double trace = matrix_trace(mult, &status);
+	matrix_destroy(trMat);
+	matrix_destroy(mult);
+	return sqrt(trace);
+}
+
+int matrix_determinant(const mat_t* matrix, int* status);
+
+
+int matrix_inverse(const mat_t* matrix, mat_t* result);
+
 

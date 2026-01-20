@@ -24,6 +24,7 @@ int main(){
 	double arr[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 	matrix_set(mat1, arr, sizeof(arr)/sizeof(arr[0]));
 	PrintMat(mat1);
+	printf("The matrix norm is: %.2f\n", matrix_norm(mat1));
 	mat_t *mat2 = matrix_create(3, 3);
 	matrix_set(mat2, arr, sizeof(arr)/sizeof(arr[0]));
 	if(matrix_is_same(mat1, mat2)){
@@ -37,6 +38,7 @@ int main(){
 	mat_t *mat4 = matrix_create(3, 5);
 	matrix_set(mat4, arr, sizeof(arr)/sizeof(arr[0]));
 	PrintMat(mat4);
+	printf("The matrix norm is: %.2f\n", matrix_norm(mat4));
 	mat_t *mat7 = matrix_create(5, 3);
 	matrix_transpose(mat4, mat7);
 	PrintMat(mat7);
@@ -46,6 +48,10 @@ int main(){
 	mat_t *mat6 = matrix_create(3, 5);
 	matrix_scalar_multiply(mat4, 2, mat6);
 	PrintMat(mat6);
+	mat_t *mat8 = matrix_create(2, 4);
+	matrix_get_submatrix(mat6, 2, 4, mat8);
+	PrintMat(mat8);
+	printf("The matrix norm is: %.2f\n", matrix_norm(mat8));
 	matrix_destroy(mat1);
 	matrix_destroy(mat2);
 	matrix_destroy(mat3);
@@ -53,5 +59,6 @@ int main(){
 	matrix_destroy(mat5);
 	matrix_destroy(mat6);
 	matrix_destroy(mat7);
+	matrix_destroy(mat8);
 	return 0;
 }
