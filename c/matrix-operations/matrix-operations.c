@@ -203,9 +203,28 @@ double matrix_norm(const mat_t* matrix){
 	return sqrt(trace);
 }
 
-int matrix_determinant(const mat_t* matrix, int* status);
+static double RecDetHelper(const mat_t* matrix, size_t n){
+	double det = 0; 
+	int sign = 1;
+	if(n == 1) return matrix->matrix[0];
+	if(n == 2) return (matrix->matrix[0] * matrix->matrix[3] - matrix->matrix[1] * matrix->matrix[2]);
+	
+	for(size_t i=0; i < n; i++){
+		mat_t *subMat = matrix_create(n-1, n-1);
+		matrix_get_submatrix(matrix, 0, i, subMat);
+		det += sign * matrix->matrix[i]*RecDetHelper(subMat,n-1);
+		sign = -sign;
+		matrix_destroy(subMat);
+	}
+	return det;
+}
 
-
+double matrix_determinant(const mat_t* matrix, int* status){
+	assert(matrix);
+	assert(matrix->nrow == matrix->ncol);
+	*status = SUCCESS;
+	return RecDetHelper(matrix, matrix->nrow);	
+}
 int matrix_inverse(const mat_t* matrix, mat_t* result);
 
 

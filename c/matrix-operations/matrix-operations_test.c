@@ -21,10 +21,11 @@ void PrintMat(mat_t* mat){
 int main(){
 	int status = SUCCESS;
 	mat_t *mat1 = matrix_create(3, 3);
-	double arr[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+	double arr[] = {1, 9, 3, 4, 5, 6, 7, 8, 9};
 	matrix_set(mat1, arr, sizeof(arr)/sizeof(arr[0]));
 	PrintMat(mat1);
 	printf("The matrix norm is: %.2f\n", matrix_norm(mat1));
+	printf("The deteminant is: %.2f\n", matrix_determinant(mat1, &status));
 	mat_t *mat2 = matrix_create(3, 3);
 	matrix_set(mat2, arr, sizeof(arr)/sizeof(arr[0]));
 	if(matrix_is_same(mat1, mat2)){

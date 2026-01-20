@@ -26,7 +26,7 @@ int matrix_scalar_multiply(const mat_t* matrix, const double scalar, mat_t* resu
 int matrix_is_same(const mat_t* matrix_a, const mat_t* matrix_b);
 int matrix_transpose(const mat_t* matrix, mat_t* result);
 double matrix_trace(const mat_t* matrix, int* status);
-int matrix_determinant(const mat_t* matrix, int* status);
+double matrix_determinant(const mat_t* matrix, int* status);
 int matrix_get_submatrix(const mat_t* matrix, size_t row, size_t col, mat_t* result);
 double matrix_norm(const mat_t* matrix);
 int matrix_inverse(const mat_t* matrix, mat_t* result);
