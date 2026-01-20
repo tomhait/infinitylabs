@@ -225,6 +225,58 @@ double matrix_determinant(const mat_t* matrix, int* status){
 	*status = SUCCESS;
 	return RecDetHelper(matrix, matrix->nrow);	
 }
-int matrix_inverse(const mat_t* matrix, mat_t* result);
+
+static double ComputeMinor(const mat_t* matrix, size_t row, size_t col){
+	size_t n = matrix->nrow;
+	mat_t *minorMat = matrix_create(n-1, n-1);
+	matrix_get_submatrix(matrix, row, col, minorMat);
+	int status = SUCCESS;
+	double minor = matrix_determinant(minorMat, &status);
+	matrix_destroy(minorMat);
+	return minor;
+}
+
+static int ComputeCofactors(const mat_t* matrix, mat_t* result){
+	int sign = 1;
+	size_t n = matrix->nrow;
+	double *output = result->matrix;
+	for(size_t i=0; i < n; i++){
+		for(size_t j = 0; j < n; j++){
+			output[i*n+j] = matrix->matrix[i*n+j] * sign;
+			if(output[i*n+j] == 0) output[i*n+j] = 0;
+			sign = -sign;
+		}
+	}
+	return SUCCESS;
+}
+
+int matrix_inverse(const mat_t* matrix, mat_t* result){
+	assert(matrix);
+	assert(matrix->nrow == matrix->ncol);
+	size_t n = matrix->nrow;
+	int status = SUCCESS;
+	//compute minors
+	mat_t *minorsMat = matrix_create(n, n);
+	for(size_t i=0; i < n; i++){
+		for(size_t j = 0; j < n; j++){
+			minorsMat->matrix[i*n+j] = ComputeMinor(matrix, i, j);
+		}
+	}
+	//compute cofactors
+	mat_t *cofactorMat = matrix_create(n, n);
+	ComputeCofactors(minorsMat, cofactorMat);
+	//compute adjugate - transpose
+	mat_t *adjuMat = matrix_create(n, n);
+	matrix_transpose(cofactorMat, adjuMat);
+	//multiply by 1/det
+	matrix_scalar_multiply(adjuMat, 1 / matrix_determinant(matrix, &status), result);
+	
+	matrix_destroy(minorsMat);
+	matrix_destroy(cofactorMat);
+	matrix_destroy(adjuMat);
+	return SUCCESS;
+}
+
+
 
 
