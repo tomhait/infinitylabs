@@ -119,8 +119,34 @@ int matrix_set(mat_t* matrix, double* elements, size_t size){
 }
 
 int matrix_transpose(const mat_t* matrix, mat_t* result){
+	assert(matrix);
+	assert(result);
+	assert(matrix->nrow == result->ncol);
+	assert(matrix->ncol == result->nrow);
+	
+	double *output = result->matrix;
+	size_t COLS = matrix->ncol;
+	size_t ROWS = matrix->nrow;
+	for(size_t i=0; i < ROWS; i++)
+	{
+		for(size_t j=0; j < COLS; j++)
+		{
+			output[j*ROWS+i] = matrix->matrix[i*COLS+j];
+		}
+	}	
 	return SUCCESS;
 }
+
+double matrix_trace(const mat_t* matrix, int* status){
+	assert(matrix);
+	assert(matrix->nrow == matrix->ncol);
+	double trace = 0;
+	size_t COLS = matrix->ncol;
+	for(size_t i=0; i < matrix->nrow; i++) trace += matrix->matrix[i*COLS + i];
+	*status = SUCCESS;
+	return trace;
+}
+
 size_t matrix_get_num_of_rows(const mat_t* matrix){
 	assert(matrix);
 	return matrix->nrow;

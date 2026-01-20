@@ -19,6 +19,7 @@ void PrintMat(mat_t* mat){
 
 
 int main(){
+	int status = SUCCESS;
 	mat_t *mat1 = matrix_create(3, 3);
 	double arr[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 	matrix_set(mat1, arr, sizeof(arr)/sizeof(arr[0]));
@@ -29,12 +30,16 @@ int main(){
 		printf("Same\n");
 	} else printf("Not the same\n");
 	
+	printf("Trace is: %.2f\n", matrix_trace(mat2, &status));
 	mat_t *mat3 = matrix_create(3, 3);
 	matrix_add(mat1, mat2, mat3);
 	PrintMat(mat3);
 	mat_t *mat4 = matrix_create(3, 5);
 	matrix_set(mat4, arr, sizeof(arr)/sizeof(arr[0]));
 	PrintMat(mat4);
+	mat_t *mat7 = matrix_create(5, 3);
+	matrix_transpose(mat4, mat7);
+	PrintMat(mat7);
 	mat_t *mat5 = matrix_create(3, 3);
 	matrix_multiply(mat1, mat2, mat5);
 	PrintMat(mat5);
@@ -47,5 +52,6 @@ int main(){
 	matrix_destroy(mat4);
 	matrix_destroy(mat5);
 	matrix_destroy(mat6);
+	matrix_destroy(mat7);
 	return 0;
 }

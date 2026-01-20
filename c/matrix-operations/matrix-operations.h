@@ -25,3 +25,5 @@ int matrix_multiply(const mat_t* matrix_a, const mat_t* matrix_b, mat_t* result)
 int matrix_scalar_multiply(const mat_t* matrix, const double scalar, mat_t* result);
 int matrix_is_same(const mat_t* matrix_a, const mat_t* matrix_b);
 int matrix_transpose(const mat_t* matrix, mat_t* result);
+double matrix_trace(const mat_t* matrix, int* status);
+
