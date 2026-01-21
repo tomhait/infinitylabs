@@ -53,11 +53,11 @@ int main(){
 	matrix_get_submatrix(mat6, 2, 4, mat8);
 	PrintMat(mat8);
 	printf("The matrix norm is: %.2f\n", matrix_norm(mat8));
-	double arr2[] = {3, 0, 2, 2, 0, -2, 0, 1, 1};
-	mat_t *mat9 = matrix_create(3, 3);
+	double arr2[] = {5, 0, 0, 0, 0, 5, 0, 0, 0, 0, 5, 0, 0, 0, 0, 5};
+	mat_t *mat9 = matrix_create(4, 4);
 	matrix_set(mat9, arr2, sizeof(arr2)/sizeof(arr2[0]));
 	PrintMat(mat9);
-	mat_t *mat10 = matrix_create(3 ,3);
+	mat_t *mat10 = matrix_create(4 ,4);
 	matrix_inverse(mat9, mat10);
 	PrintMat(mat10);
 	matrix_destroy(mat1);

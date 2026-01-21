@@ -241,6 +241,7 @@ static int ComputeCofactors(const mat_t* matrix, mat_t* result){
 	size_t n = matrix->nrow;
 	double *output = result->matrix;
 	for(size_t i=0; i < n; i++){
+		sign = (i%2==0)?1:-1;
 		for(size_t j = 0; j < n; j++){
 			output[i*n+j] = matrix->matrix[i*n+j] * sign;
 			if(output[i*n+j] == 0) output[i*n+j] = 0;
