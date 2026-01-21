@@ -35,8 +35,8 @@ int matrix_add(const mat_t* matrix_a, const mat_t* matrix_b, mat_t* result)
 {
 	assert(matrix_a);
 	assert(matrix_b);
-	assert(matrix_a->nrow == matrix_b->nrow);
-	assert(matrix_a->ncol == matrix_b->ncol);
+	if(matrix_a->nrow != matrix_b->nrow) return DIMENSIONS_ERROR;
+	if(matrix_a->ncol != matrix_b->ncol) return DIMENSIONS_ERROR;
 	double *output = result->matrix;
 	size_t COLS = matrix_a->ncol;
 	for(size_t i=0; i < matrix_a->nrow; i++)
@@ -49,20 +49,21 @@ int matrix_add(const mat_t* matrix_a, const mat_t* matrix_b, mat_t* result)
 	return SUCCESS;
 }
 
-static void Check_multiplied_matrices(const mat_t* matrix_a, const mat_t* matrix_b, mat_t* result)
+static int Check_multiplied_matrices(const mat_t* matrix_a, const mat_t* matrix_b, mat_t* result)
 {
 	assert(matrix_a);
 	assert(matrix_b);
-	assert(matrix_a->ncol == matrix_b->nrow);
 	assert(result);
-	assert(result->nrow == matrix_a->nrow);
-	assert(result->ncol == matrix_b->ncol);
+	if(matrix_a->ncol != matrix_b->nrow) return DIMENSIONS_ERROR;
+	if(result->nrow != matrix_a->nrow) return DIMENSIONS_ERROR;
+	if(result->ncol != matrix_b->ncol) return DIMENSIONS_ERROR;
+	return SUCCESS;
 }
 
 int matrix_multiply(const mat_t* matrix_a, const mat_t* matrix_b, mat_t* result)
 {
 
-	Check_multiplied_matrices(matrix_a, matrix_b, result);
+	if(Check_multiplied_matrices(matrix_a, matrix_b, result) == DIMENSIONS_ERROR) return DIMENSIONS_ERROR;
 	
 	double *output = result->matrix;
 	size_t n = matrix_a->ncol;
@@ -86,8 +87,8 @@ int matrix_scalar_multiply(const mat_t* matrix, const double scalar, mat_t* resu
 {
 	assert(matrix);
 	assert(result);
-	assert(matrix->nrow == result->nrow);
-	assert(matrix->ncol == result->ncol);
+	if(matrix->nrow != result->nrow) return DIMENSIONS_ERROR;
+	if(matrix->ncol != result->ncol) return DIMENSIONS_ERROR;
 	
 	double *output = result->matrix;
 	size_t COLS = matrix->ncol;
@@ -131,8 +132,8 @@ int matrix_transpose(const mat_t* matrix, mat_t* result)
 {
 	assert(matrix);
 	assert(result);
-	assert(matrix->nrow == result->ncol);
-	assert(matrix->ncol == result->nrow);
+	if(matrix->nrow != result->ncol) return DIMENSIONS_ERROR;
+	if(matrix->ncol != result->nrow) return DIMENSIONS_ERROR;
 	
 	double *output = result->matrix;
 	size_t COLS = matrix->ncol;

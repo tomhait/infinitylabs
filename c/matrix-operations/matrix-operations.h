@@ -5,7 +5,7 @@ typedef struct mat_t mat_t;
 enum Status{
 	FAILURE = 0,
 	SUCCESS = 1,
-	DIMESNIONS_ERROR = -1,
+	DIMENSIONS_ERROR = -1,
 	NULL_PTR_ERROR = 2
 };
 
