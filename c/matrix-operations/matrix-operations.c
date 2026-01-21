@@ -376,6 +376,9 @@ int matrix_inverse(const mat_t* matrix, mat_t* result)
 	return status;
 }
 
-
+void matrix_set_element(mat_t* matrix, size_t row_id, size_t col_id, double value){
+	assert(matrix);
+	matrix->matrix[row_id*matrix->ncol + col_id] = value;
+}
 
 

@@ -17,6 +17,13 @@ void PrintMat(mat_t* mat){
 	printf("\n\n");
 }
 
+void GenerateIdentityMat(mat_t *matrix, double i_val){
+	size_t n = matrix_get_num_of_rows(matrix);
+	for(size_t i = 0; i < n; i++)
+	{
+		matrix_set_element(matrix, i, i, i_val);
+	}
+}
 
 int main(){
 	int status = SUCCESS;
@@ -53,11 +60,10 @@ int main(){
 	matrix_get_submatrix(mat6, 2, 4, mat8);
 	PrintMat(mat8);
 	printf("The matrix norm is: %.2f\n", matrix_norm(mat8));
-	double arr2[] = {5, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0 ,0 ,0 ,0, 5, 0, 0, 0, 0, 0, 0, 0, 5};
-	mat_t *mat9 = matrix_create(7, 7);
-	matrix_set(mat9, arr2, sizeof(arr2)/sizeof(arr2[0]));
+	mat_t *mat9 = matrix_create(20, 20);
+	GenerateIdentityMat(mat9, 5.0);
 	PrintMat(mat9);
-	mat_t *mat10 = matrix_create(7 ,7);
+	mat_t *mat10 = matrix_create(20 ,20);
 	matrix_inverse(mat9, mat10);
 	PrintMat(mat10);
 	matrix_destroy(mat1);
