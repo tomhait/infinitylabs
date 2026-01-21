@@ -103,7 +103,7 @@ double matrix_trace(const mat_t* matrix, int* status);
 * Calculated the determinant of the matrix
 * Requires a square matrix
 * Sets in a status code: SUCCESS or DIMENSIONS_ERROR
-* O(n!) time complexity (n-#rows, n - #columns)
+* O(n^3) time complexity (n-#rows, n - #columns) - using LU decomposition
 */
 double matrix_determinant(const mat_t* matrix, int* status);
 
@@ -126,7 +126,7 @@ double matrix_norm(const mat_t* matrix);
 * Calculates the inverse matrix of matrix and stroes it a result matrix
 * Requires both square matrices with the same dimensions
 * Returns a status code: SUCCESS or DIMENSIONS_ERROR
-* O(n!*n^2) time complexity (n-#rows, n - #columns)
+* O(n^5) time complexity (n-#rows, n - #columns)
 */
 int matrix_inverse(const mat_t* matrix, mat_t* result);
 

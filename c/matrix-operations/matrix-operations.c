@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <math.h>
 
+#define UNUSED_FUNCTION __attribute__((unused))
+
 struct mat_t{
 	size_t nrow;
 	size_t ncol;
@@ -229,6 +231,68 @@ double matrix_norm(const mat_t* matrix)
 	return sqrt(trace);
 }
 
+static void Swap(double *x, double *y)
+{
+	double tmp = *x;
+	*x = *y;
+	*y = tmp;
+}
+
+static void matrix_swap_rows(mat_t* matrix, size_t i, size_t j)
+{
+	size_t n = matrix->ncol;
+	for(size_t k = 0; k < n; k++)
+	{
+		Swap(&(matrix->matrix[i*n+k]),&(matrix->matrix[j*n+k]));
+	}
+}
+
+static double matrix_LU_det(const mat_t* matrix, size_t n)
+{
+	mat_t *tmp = matrix_create(n, n);
+	matrix_set(tmp, matrix->matrix, n*n);
+	
+	double det = 1.0;
+	double tol = 1e-9;
+	int num_swaps = 0;
+	
+	for(size_t i = 0; i < n; i++)
+	{
+		//find the largest element in the current column
+		size_t pivot = i;
+		for(size_t j = i + 1; j < n; j++)
+		{
+			if(fabs(matrix_get_val(tmp, j, i)) > fabs(matrix_get_val(tmp, pivot, i))) pivot = j;
+		}
+		// swap rows to bring pivot to the main diagonal
+		if(pivot != i)
+		{
+			matrix_swap_rows(tmp, i, pivot);
+			num_swaps++;
+		}
+		//if the diagonal element is zero or degenerated. determinant is zero
+		if(fabs(matrix_get_val(tmp, i ,i)) < tol)
+		{
+			matrix_destroy(tmp);
+			return 0;
+		}
+		// elimination - zero out elements below the diagnoal
+		for(size_t j = i + 1; j < n; j++)
+		{
+			double factor = matrix_get_val(tmp, j, i) / matrix_get_val(tmp, i ,i);
+			for(size_t k = i + 1; k < n; k++)
+			{
+				double val = matrix_get_val(tmp, j, k) - factor * matrix_get_val(tmp, i, k);
+				tmp->matrix[j*tmp->ncol + k] = val;
+			}
+		}
+		//determinant is the product of the diagnoal elements
+		det *= matrix_get_val(tmp, i, i);
+	}
+	matrix_destroy(tmp);
+	return (num_swaps%2 == 0)?det:-det;
+}
+
 static double RecDetHelper(const mat_t* matrix, size_t n)
 {
 	if(n == 1) return matrix->matrix[0];
@@ -246,12 +310,15 @@ static double RecDetHelper(const mat_t* matrix, size_t n)
 	return det;
 }
 
+UNUSED_FUNCTION static double RecDetHelper(const mat_t* matrix, size_t n);
+
 double matrix_determinant(const mat_t* matrix, int* status)
 {
 	assert(matrix);
 	assert(matrix->nrow == matrix->ncol);
 	*status = SUCCESS;
-	return RecDetHelper(matrix, matrix->nrow);	
+	//return RecDetHelper(matrix, matrix->nrow);
+	return matrix_LU_det(matrix, matrix->nrow);	
 }
 
 static double ComputeMinor(const mat_t* matrix, size_t row, size_t col)
