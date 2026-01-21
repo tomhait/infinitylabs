@@ -12,6 +12,8 @@ struct mat_t{
 
 mat_t* matrix_create(size_t rows, size_t cols)
 {
+	assert(rows > 0);
+	assert(cols > 0);
 	mat_t *mat = malloc(sizeof(mat_t));
 	if(!mat) return NULL;
 	mat->matrix = calloc(rows*cols, sizeof(double));
@@ -284,7 +286,7 @@ static int ComputeCofactors(const mat_t* matrix, mat_t* result)
 int matrix_inverse(const mat_t* matrix, mat_t* result)
 {
 	assert(matrix);
-	assert(matrix->nrow == matrix->ncol);
+	if(matrix->nrow != matrix->ncol) return DIMENSIONS_ERROR;
 	size_t n = matrix->nrow;
 	int status = SUCCESS;
 	mat_t *minorsMat = matrix_create(n, n);
