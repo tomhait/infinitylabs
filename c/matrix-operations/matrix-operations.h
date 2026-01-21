@@ -131,7 +131,7 @@ double matrix_norm(const mat_t* matrix);
 int matrix_inverse(const mat_t* matrix, mat_t* result);
 
 /*
-* Sets the the (row_id, col_id) cell in the matrix with the value
+* Sets the (row_id, col_id) cell in the matrix with the value
 * O(1) time complexity 
 */
 void matrix_set_element(mat_t* matrix, size_t row_id, size_t col_id, double value);
