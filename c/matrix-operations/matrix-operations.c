@@ -126,6 +126,7 @@ int matrix_is_same(const mat_t* matrix_a, const mat_t* matrix_b)
 int matrix_set(mat_t* matrix, double* elements, size_t size)
 {
 	assert(matrix);
+	assert(elements);
 	size_t mat_size = matrix->nrow * matrix->ncol;
 	if(mat_size > size) mat_size = size;
 	for(size_t i=0; i< mat_size; i++) matrix->matrix[i] = elements[i];
@@ -293,7 +294,7 @@ static double matrix_LU_det(const mat_t* matrix, size_t n)
 	return (num_swaps%2 == 0)?det:-det;
 }
 
-static double RecDetHelper(const mat_t* matrix, size_t n)
+static double Recursive_Det_Helper(const mat_t* matrix, size_t n)
 {
 	if(n == 1) return matrix->matrix[0];
 	if(n == 2) return (matrix->matrix[0] * matrix->matrix[3] - matrix->matrix[1] * matrix->matrix[2]);
@@ -303,30 +304,31 @@ static double RecDetHelper(const mat_t* matrix, size_t n)
 	{
 		mat_t *subMat = matrix_create(n-1, n-1);
 		matrix_get_submatrix(matrix, 0, i, subMat);
-		det += sign * matrix->matrix[i]*RecDetHelper(subMat,n-1);
+		det += sign * matrix->matrix[i]*Recursive_Det_Helper(subMat,n-1);
 		sign = -sign;
 		matrix_destroy(subMat);
 	}
 	return det;
 }
 
-UNUSED_FUNCTION static double RecDetHelper(const mat_t* matrix, size_t n);
+UNUSED_FUNCTION static double Recursive_Det_Helper(const mat_t* matrix, size_t n);
 
 double matrix_determinant(const mat_t* matrix, int* status)
 {
 	assert(matrix);
 	assert(matrix->nrow == matrix->ncol);
 	*status = SUCCESS;
-	//return RecDetHelper(matrix, matrix->nrow);
 	return matrix_LU_det(matrix, matrix->nrow);	
 }
 
 static double ComputeMinor(const mat_t* matrix, size_t row, size_t col)
 {
 	size_t n = matrix->nrow;
-	mat_t *minorMat = matrix_create(n-1, n-1);
-	matrix_get_submatrix(matrix, row, col, minorMat);
 	int status = SUCCESS;
+	mat_t *minorMat = matrix_create(n-1, n-1);
+	assert(minorMat);
+	matrix_get_submatrix(matrix, row, col, minorMat);
+	
 	double minor = matrix_determinant(minorMat, &status);
 	matrix_destroy(minorMat);
 	return minor;
@@ -339,7 +341,7 @@ static int ComputeCofactors(const mat_t* matrix, mat_t* result)
 	double *output = result->matrix;
 	for(size_t i=0; i < n; i++)
 	{
-		sign = (i%2==0)?1:-1;
+		sign = pow(-1,i);
 		for(size_t j = 0; j < n; j++)
 		{
 			output[i*n+j] = matrix->matrix[i*n+j] * sign;
