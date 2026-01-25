@@ -1,21 +1,21 @@
 import python_intro
 
-print(python_intro.count_char_in_string("blablabla", 'a'))
+assert(python_intro.count_char_in_string("blablabla", 'a') == 3)
 
-print(python_intro.flip_number(1234))
+assert(python_intro.flip_number(1234) == 4321)
 
-print(python_intro.celcius_to_fahrenheit(24))
+assert(python_intro.celcius_to_fahrenheit(24) == 75.2)
 
-print(python_intro.is_leap_year(2020))
-print(python_intro.is_leap_year(2000))
-print(python_intro.is_leap_year(2026))
+assert(python_intro.is_leap_year(2020) is True)
+assert(python_intro.is_leap_year(2000) is True)
+assert(python_intro.is_leap_year(2026) is False)
 
 assert(python_intro.check_password("Tom12345#") == True)
 assert(python_intro.check_password("tom12345#") == False)
 
-print(python_intro.sum_divisors(10))
-print(python_intro.min_bills_and_coins(105))
+assert(python_intro.sum_divisors(10) == 18)
+assert(python_intro.min_bills_and_coins(105) == 2)
 
-print(python_intro.is_prime(105))
-print(python_intro.is_prime(13))
-print(python_intro.is_prime(31))
+assert(python_intro.is_prime(105) is False)
+assert(python_intro.is_prime(13) is True)
+assert(python_intro.is_prime(31) is True)
