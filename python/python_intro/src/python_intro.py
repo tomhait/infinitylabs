@@ -21,7 +21,7 @@ def celcius_to_fahrenheit(celcius):
     return (celcius * 9 / 5) + 32
 
 def is_leap_year(year):
-    """ Check if year is leap year"""
+    """ Check if year is a leap year"""
     if year % 4 == 0:
         if year % 100 != 0:
             return True
