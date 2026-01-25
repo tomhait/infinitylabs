@@ -65,6 +65,8 @@ def min_bills_and_coins(amount):
 
 def is_prime(number):
     """ Checks if number is prime"""
+    if number == 0:
+        return False
     if sum_divisors(number) == 1 + number:
         return True
     return False
