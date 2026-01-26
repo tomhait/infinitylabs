@@ -54,6 +54,9 @@ def get_max_min_keys(dict1):
     print("min key: " + min_key)
 
 def get_diff_str(s1, s2):
+    """ Returns substring of letters in s1 (n) that don't
+    appear in s2 (m) in O(n+m) time complexity
+    """
     dict1 = {x: 0 for x in s2}
     res = ''
     for x in s1:
