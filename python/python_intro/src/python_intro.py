@@ -11,10 +11,14 @@ def count_char_in_string(string, char):
 def flip_number(number):
     """ Reverse the order of digits in number"""
     reversed_number = 0
+    sign = 1
+    if number < 0:
+        number = -number
+        sign = -1
     while number > 0:
         reversed_number = (reversed_number * 10) + (number % 10)
         number //= 10
-    return reversed_number
+    return sign * reversed_number
 
 def celcius_to_fahrenheit(celcius):
     """ Convert Celcius to Fahrenheit"""
@@ -22,18 +26,10 @@ def celcius_to_fahrenheit(celcius):
 
 def is_leap_year(year):
     """ Check if year is a leap year"""
-    if year % 4 == 0:
-        if year % 100 != 0:
-            return True
-        else:
-            if year % 400 == 0:
-                return True
-            else:
-                return False
-    return False
+    return (year % 4 ==0 and year % 100 != 0) or (year % 400 ==0)
 
 def check_password(password):
-    """" Check validity of a password"""
+    """ Check validity of a password"""
     has_lower = re.search(r'[a-z]', password) is not None
     has_upper = re.search(r'[A-Z]', password) is not None
     has_digits = re.search(r'[0-9]', password) is not None
@@ -44,6 +40,8 @@ def check_password(password):
 def sum_divisors(number):
     """ Sum the divisors of the number"""
     sum_div = 1
+    if number == 1:
+        return sum_div
     for div in range(2, number//2 + 1):
         if number % div ==0:
             sum_div += div
@@ -65,7 +63,7 @@ def min_bills_and_coins(amount):
 
 def is_prime(number):
     """ Checks if number is prime"""
-    if number == 0:
+    if number < 2:
         return False
     if sum_divisors(number) == 1 + number:
         return True
