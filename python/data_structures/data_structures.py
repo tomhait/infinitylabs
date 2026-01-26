@@ -25,4 +25,38 @@ def get_unique_dict_values(dict1):
     """ Returns a list with unique values in dictionary"""
     return list(dict.fromkeys(dict1.values()))
 
+def left_rotate_list(list1):
+    """ Left rotation of a list"""
+    return list1[1:] + list1[:1]
 
+def print_and_remove(list1):
+    """ Prints and removes every second element
+    until the list is empty
+    """
+    index = 1
+    while list1:
+        index %= len(list1)
+        print(list1.pop(index))
+        index += 1
+
+def convert_dict_to_tuples(dict1):
+    """ Converts a dictionary to a list of tuples"""
+    return list(dict1.items())
+
+def get_max_min_keys(dict1):
+    """ Prints the keys of the maximum and minimum
+    values in a dictionary
+    """
+    list1 = convert_dict_to_tuples(dict1)
+    max_key = max(list1, key=lambda x: x[1])[0]
+    min_key = min(list1, key=lambda x: x[1])[0]
+    print("max key: " + max_key)
+    print("min key: " + min_key)
+
+def get_diff_str(s1, s2):
+    dict1 = {x: 0 for x in s2}
+    res = ''
+    for x in s1:
+        if dict1.get(x,1) == 1:
+            res += x
+    return res

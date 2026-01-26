@@ -22,3 +22,26 @@ def test_list_intersection():
 def test_get_unique_dict_values():
     dict1 = {'x': 2, 'y': 1, 'c': 2}
     assert(get_unique_dict_values(dict1) == [2, 1])
+
+def test_left_rotation():
+    list1 = [1, 2, 3, 4]
+    assert(left_rotate_list(list1) == [2, 3, 4, 1])
+
+def test_print_and_remove_second():
+    list1 = [1, 2, 3, 4, 5, 6, 7, 8]
+    print_and_remove(list1)
+
+def test_dict_to_tuples_list():
+    dict1 = {"Tom": 1, "Danny": 2, "Gabi": 3}
+    list1 = convert_dict_to_tuples(dict1)
+    assert(list1[0] == ("Tom", 1))
+    assert (list1[1] != ("Danny", 1))
+
+def test_max_min_dict():
+    dict1 = {"Tom": 1, "Danny": 2, "Gabi": 3}
+    get_max_min_keys(dict1)
+
+def test_diff_str():
+    s1 = 'lorem ipsum'
+    s2 = 'lmnop'
+    assert(get_diff_str(s1, s2) == 're isu')
