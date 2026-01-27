@@ -1,3 +1,5 @@
+import pytest
+
 from data_structures import *
 
 def test_non_str_list():
