@@ -18,8 +18,7 @@ def intersect_unique_elem_lists(list1, list2):
     """ Returns a new list containing elements that appear
     in both lists
     """
-    unique_list = list(dict.fromkeys([x for x in list1 if x in list2]))
-    return unique_list
+    return list(dict.fromkeys([x for x in list1 if x in list2]))
 
 def get_unique_dict_values(dict1):
     """ Returns a list with unique values in dictionary"""
@@ -58,8 +57,4 @@ def get_diff_str(s1, s2):
     appear in s2 (m) in O(n+m) time complexity
     """
     dict1 = {x: 0 for x in s2}
-    res = ''
-    for x in s1:
-        if dict1.get(x,1) == 1:
-            res += x
-    return res
+    return ''.join([x for x in s1 if x not in dict1])
