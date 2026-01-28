@@ -6,7 +6,7 @@ def remove_words(lst, *args):
 
 def sort_str_nums(lst):
     """ Sorts list of string numbers numerically"""
-    lst.sort(key=lambda x: x)
+    lst.sort(key=lambda x: int(x))
 
 def sum_neg_pos_nums(lst):
     """ Returns a tuple where the first (second)
