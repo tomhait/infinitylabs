@@ -24,3 +24,7 @@ def test_square_from_even():
 def test_gematria():
     assert(get_hebrew_gematria("אינפיניטי לאבס") == 323)
     assert (get_hebrew_gematria("שלום") == 936)
+
+def test_cred_card_check():
+    assert(check_credit_card(1789372997) == False)
+    assert(check_credit_card(79927398713) == True)

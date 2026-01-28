@@ -12,14 +12,22 @@ def sum_nums(lst):
     pass
 
 def get_square_from_even(lst):
+    """ Returns a list of squared
+    even elements in the list
+    """
     return [i**2 for i in lst if i % 2 == 0]
 
 def set_discount(dct_products, discount = 0.9):
+    """ Returns a new dictionary with
+    discounted prices for every product
+    """
     return {product: price*discount for product, price in dct_products.items()}
 
-def get_hebrew_gematria(word):
+def create_gematria_table():
+    """ Creates a wrapper function to compute
+    the gematria value of a hebrew letter
+    """
     letters = "אבגדהוזחטיכלמנסעפצקרשתךםןףץ"
-    word = word.replace(" ", "")
     char_to_val = {}
     for i, char in enumerate(letters):
         if i < 9:
@@ -29,4 +37,33 @@ def get_hebrew_gematria(word):
         else:
             val = (i - 17) * 100
         char_to_val[char] = val
-    return sum([char_to_val[x] for x in word])
+    def get_gematria_val(c):
+        return char_to_val[c]
+    return get_gematria_val
+
+def get_hebrew_gematria(word):
+    """ Returns the hebrew
+    gemtatia number of the word
+    """
+    word = word.replace(" ", "")
+    gematria_tab = create_gematria_table()
+    return sum([gematria_tab(x) for x in word])
+
+def check_credit_card(card_num):
+    """ Test cred card validity using
+    the Luhn algorithm
+    """
+    card_num = str(card_num)[::-1]
+    tot_sum = 0
+    for i, digit in enumerate(card_num):
+        if i % 2 != 0:
+            prod = int(digit) * 2
+            if prod > 9:
+                prod -= 9
+            tot_sum += prod
+        else:
+            tot_sum += int(digit)
+    if tot_sum % 10 == 0:
+        return True
+    return False
+
