@@ -8,8 +8,14 @@ def sort_str_nums(lst):
     """ Sorts list of string numbers numerically"""
     lst.sort(key=lambda x: int(x))
 
-def sum_nums(lst):
-    pass
+def sum_neg_pos_nums(lst):
+    """ Returns a tuple where the first (second)
+     variable is the sum of positive (negative)
+     elements in lst, respectively
+     """
+    pos_sum = sum([x for x in lst if x > 0])
+    neg_sum = sum([x for x in lst if x < 0])
+    return pos_sum, neg_sum
 
 def get_square_from_even(lst):
     """ Returns a list of squared
@@ -43,14 +49,14 @@ def create_gematria_table():
 
 def get_hebrew_gematria(word):
     """ Returns the hebrew
-    gemtatia number of the word
+    gematria number of the word
     """
     word = word.replace(" ", "")
     gematria_tab = create_gematria_table()
     return sum([gematria_tab(x) for x in word])
 
 def check_credit_card(card_num):
-    """ Test cred card validity using
+    """ Test credit card validity using
     the Luhn algorithm
     """
     card_num = str(card_num)[::-1]

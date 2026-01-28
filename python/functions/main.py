@@ -14,7 +14,8 @@ def test_sort_str_nums():
     assert(lst == ["0", "1", "4", "5"])
 
 def test_sum_nums():
-    pass
+    lst = [0, 1, 2 ,3, -1, -2, -3]
+    assert(sum_neg_pos_nums(lst) == (6, -6))
 
 def test_square_from_even():
     lst = [0, 1, 2, 3, 4, 6]
