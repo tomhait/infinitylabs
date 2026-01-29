@@ -9,9 +9,9 @@ def test_remove_words():
     assert(filt_lst == [1, 2, 3])
 
 def test_sort_str_nums():
-    lst = ["4", "5", "1", "0"]
+    lst = ["1", "1.8", "73", "8"]
     sort_str_nums(lst)
-    assert(lst == ["0", "1", "4", "5"])
+    assert(lst == ["1", "1.8", "8", "73"])
 
 def test_sum_nums():
     lst = [0, 1, 2 ,3, -1, -2, -3]
