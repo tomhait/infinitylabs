@@ -14,5 +14,5 @@ if __name__ == '__main__':
 
     reverse_args()
 
-change_file_permissions("test_permissions.txt")
-print(stat.filemode(os.stat("test_permissions.txt").st_mode))
+    change_file_permissions("test_permissions.txt")
+    print(stat.filemode(os.stat("test_permissions.txt").st_mode))

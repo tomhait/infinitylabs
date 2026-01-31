@@ -1,7 +1,6 @@
 import os
 import sys
 import stat
-import getpass
 import platform
 
 def is_in_global(name):
@@ -12,8 +11,8 @@ my_name = "Tom"
 
 def print_os_info():
     """ Prints OS name, Logged user, and current directory"""
-    print("Operating system: ", platform.system())
-    print("Logged user: ", getpass.getuser())
+    print(f'Operating system: {platform.system()}')
+    print("Logged user: ", os.getlogin())
     print("Current directory: ", os.getcwd())
 
 def reverse_args():
