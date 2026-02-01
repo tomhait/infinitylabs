@@ -91,7 +91,6 @@ def filter_corona_field(corona_file, output_file_name):
             csv_field_index = {field_name: line.index(field_name) for field_name in fields}
         except ValueError:
             print("Field name was not found")
-            return None
         csv_writer = csv.DictWriter(out_f, fieldnames=fields)
         csv_writer.writeheader()
         for line in f:
@@ -144,12 +143,16 @@ lower_str = {let: i for i, let in enumerate(string.ascii_lowercase)}
 tot_letters = 26
 
 def cipher_encode_decode(file_name, out_file_name, n_shifts = 3, is_encode = True):
+    """ Encodes and decodes the content of a file
+    according to Caesar encryption. n_shifts is the number
+    of shitted letters from the current letter.
+    """
     with open(file_name) as f, open(out_file_name, 'w') as out_f:
         for line in f:
             line = line.strip()
             new_line = ''
             for let in line:
-                if let == " ":
+                if let in (" ", ".", ","):
                     new_line += " "
                     continue
                 flag = False
@@ -176,7 +179,7 @@ class EncDecCipherManager:
         line = line.strip()
         new_line = ''
         for let in line:
-            if let == " " or let == "." or let == ",":
+            if let in (" ", ".", ","):
                 new_line += let
                 continue
             flag = False
