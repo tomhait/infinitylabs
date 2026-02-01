@@ -2,8 +2,11 @@ import os
 import pathlib
 import string
 from itertools import islice
+import csv
+import json
 
-__all__ = ("generate_eng_letter_files","read_first_n_lines","corona_stats")
+__all__ = ("generate_eng_letter_files","read_first_n_lines",
+           "corona_stats","filter_corona_field","csv_to_json", "merge_files")
 
 def generate_eng_letter_files(location):
     """ Creates a new folder abc within location
@@ -58,18 +61,45 @@ def corona_stats(file_name):
     print(f"Max age of Un-vaccinated people: {max(age_unvac)}")
     print(f"Average length of hospitalization: {sum(host_length) / len(host_length):.2f}")
 
-def filter_corona_field(corona_file, field_name, output_file_name):
+def filter_corona_field(corona_file, output_file_name, *fields):
     """ Filter the requested field name from the corona file
     and write it to output_file_name
     """
-    lst = [field_name + '\n']
-    with open(corona_file) as f:
+    data = []
+    fields = fields[0]
+    lst_index_field = {field_name: i for i, field_name in enumerate(fields)}
+    with open(corona_file) as f, open(output_file_name, 'w') as out_f:
         line = f.readline().strip().split(',')
         try:
-            field_index = line.index(field_name)
+            csv_field_index = {field_name: line.index(field_name) for field_name in fields}
         except ValueError:
             print("Field name was not found")
             return None
+        csv_writer = csv.DictWriter(out_f, fieldnames=fields)
+        csv_writer.writeheader()
         for line in f:
             line = line.strip().split(",")
-            lst.append(line[field_index + '\n'])
+            out_dict = {}
+            for field_name in fields:
+                out_dict[field_name] = line[csv_field_index[field_name]]
+            data.append(out_dict)
+        csv_writer.writerows(data)
+
+
+def csv_to_json(csv_name, json_name):
+    """ Converts a csv file to JSON file"""
+    lst = []
+    with open(csv_name) as csv_f:
+        reader = csv.DictReader(csv_f)
+        for line in reader:
+            lst.append(line)
+
+    with open(json_name, 'w') as json_f:
+        json.dump(lst, json_f, indent=4)
+
+
+def merge_files(dir_name):
+    """ Merge all text files in dir_name
+    into one file
+    """
+
