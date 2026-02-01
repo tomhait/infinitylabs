@@ -175,7 +175,7 @@ class EncDecCipherManager:
         self.filename = filename
         self.content = []
 
-    def enc_dec_line(self, line, is_decode = True):
+    def enc_dec_line(self, line, n_shifts = 3, is_decode = True):
         line = line.strip()
         new_line = ''
         for let in line:
@@ -188,9 +188,9 @@ class EncDecCipherManager:
                 ind = lower_str.get(let, -1)
                 flag = True
             if is_decode:
-                ind = (ind + 3) % tot_letters
+                ind = (ind + n_shifts) % tot_letters
             else:
-                ind = (ind - 3) % tot_letters
+                ind = (ind - n_shifts) % tot_letters
             if flag:
                 new_line += string.ascii_lowercase[ind]
             else:
