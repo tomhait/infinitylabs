@@ -7,7 +7,7 @@ import json
 
 __all__ = ("generate_eng_letter_files","read_first_n_lines",
            "corona_stats","filter_corona_field","csv_to_json",
-           "merge_files", "cipher_encode_decode")
+           "merge_files", "cipher_encode_decode", "EncDecCipherManager")
 
 def generate_eng_letter_files(location):
     """ Creates a new folder abc within location
@@ -166,3 +166,43 @@ def cipher_encode_decode(file_name, out_file_name, n_shifts = 3, is_encode = Tru
                 else:
                     new_line += string.ascii_uppercase[ind]
             out_f.write(new_line + '\n')
+
+class EncDecCipherManager:
+    def __init__(self, filename):
+        self.filename = filename
+        self.content = []
+
+    def enc_dec_line(self, line, is_decode = True):
+        line = line.strip()
+        new_line = ''
+        for let in line:
+            if let == " " or let == "." or let == ",":
+                new_line += let
+                continue
+            flag = False
+            ind = upper_str.get(let, -1)
+            if ind == -1:
+                ind = lower_str.get(let, -1)
+                flag = True
+            if is_decode:
+                ind = (ind + 3) % tot_letters
+            else:
+                ind = (ind - 3) % tot_letters
+            if flag:
+                new_line += string.ascii_lowercase[ind]
+            else:
+                new_line += string.ascii_uppercase[ind]
+        return new_line
+
+    def __enter__(self):
+        with open(self.filename) as f:
+            for line in f:
+                new_line = self.enc_dec_line(line, is_decode = True)
+                self.content.append(new_line+'\n')
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        with open(self.filename, 'w') as f:
+            for line in self.content:
+                new_line = self.enc_dec_line(line, is_decode = False)
+                f.write(new_line + '\n')
