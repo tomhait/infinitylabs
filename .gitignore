@@ -1,2 +1,12 @@
 c/hello.c
 c/fib.c
+python/files_and_context_managers/corona.csv
+python/files_and_context_managers/abc/*
+python/files_and_context_managers/cipher.txt
+python/files_and_context_managers/cipher_encoded.txt
+python/files_and_context_managers/cipher_info.txt
+python/files_and_context_managers/corona.json
+python/files_and_context_managers/filter.csv
+python/files_and_context_managers/encoded.txt
+python/files_and_context_managers/decoded.txt
+
