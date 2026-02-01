@@ -61,12 +61,29 @@ def corona_stats(file_name):
     print(f"Max age of Un-vaccinated people: {max(age_unvac)}")
     print(f"Average length of hospitalization: {sum(host_length) / len(host_length):.2f}")
 
-def filter_corona_field(corona_file, output_file_name, *fields):
+def _age_input():
+    age_range_str = input("Choose age range (\"min-max\" format): ")
+    lst = age_range_str.split('-')
+    return int(lst[0]), int(lst[1])
+
+def _gender_input():
+    gender = input("Choose gender (M/F/ALL): ")
+    return gender
+
+def _vaccinated_input():
+    is_vac = input("Choose if vaccinated or not (Y/N/ALL): ")
+    return is_vac
+
+fields = ("gender", "Age", "Is_vaccinated")
+
+def filter_corona_field(corona_file, output_file_name):
     """ Filter the requested field name from the corona file
     and write it to output_file_name
     """
+    gender = _gender_input()
+    ages = _age_input()
+    is_vac = _vaccinated_input()
     data = []
-    fields = fields[0]
     with open(corona_file) as f, open(output_file_name, 'w') as out_f:
         line = f.readline().strip().split(',')
         try:
@@ -79,8 +96,21 @@ def filter_corona_field(corona_file, output_file_name, *fields):
         for line in f:
             line = line.strip().split(",")
             out_dict = {}
-            for field_name in fields:
-                out_dict[field_name] = line[csv_field_index[field_name]]
+            sex = line[csv_field_index["gender"]]
+            age = int(line[csv_field_index["Age"]])
+            vac = line[csv_field_index["Is_vaccinated"]]
+            if gender == "ALL" or sex == gender:
+                out_dict["gender"] = line[csv_field_index["gender"]]
+            else:
+                continue
+            if ages[0] <= age <= ages[1]:
+                out_dict["Age"] = line[csv_field_index["Age"]]
+            else:
+                continue
+            if is_vac == "ALL" or vac == is_vac:
+                out_dict["Is_vaccinated"] = line[csv_field_index["Is_vaccinated"]]
+            else:
+                continue
             data.append(out_dict)
         csv_writer.writerows(data)
 
