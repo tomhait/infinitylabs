@@ -67,7 +67,6 @@ def filter_corona_field(corona_file, output_file_name, *fields):
     """
     data = []
     fields = fields[0]
-    lst_index_field = {field_name: i for i, field_name in enumerate(fields)}
     with open(corona_file) as f, open(output_file_name, 'w') as out_f:
         line = f.readline().strip().split(',')
         try:
@@ -98,8 +97,14 @@ def csv_to_json(csv_name, json_name):
         json.dump(lst, json_f, indent=4)
 
 
-def merge_files(dir_name):
+def merge_files(dir_name, out_file_name):
     """ Merge all text files in dir_name
     into one file
     """
+    for file_path in pathlib.Path(dir_name).iterdir():
+        if file_path.is_file() and file_path.suffix == ".txt":
+            with open(file_path) as f, open(out_file_name,'a') as out_f:
+                lines = f.readlines()
+                out_f.writelines(lines)
+
 
