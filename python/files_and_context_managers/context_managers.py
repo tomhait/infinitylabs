@@ -153,7 +153,7 @@ def cipher_encode_decode(file_name, out_file_name, n_shifts = 3, is_encode = Tru
             new_line = ''
             for let in line:
                 if let in (" ", ".", ","):
-                    new_line += " "
+                    new_line += let
                     continue
                 flag = False
                 ind = upper_str.get(let, -1)
@@ -161,9 +161,9 @@ def cipher_encode_decode(file_name, out_file_name, n_shifts = 3, is_encode = Tru
                     ind = lower_str.get(let, -1)
                     flag = True
                 if is_encode:
-                    ind = (ind - 3) % tot_letters
+                    ind = (ind - n_shifts) % tot_letters
                 else:
-                    ind = (ind + 3) % tot_letters
+                    ind = (ind + n_shifts) % tot_letters
                 if flag:
                     new_line += string.ascii_lowercase[ind]
                 else:
