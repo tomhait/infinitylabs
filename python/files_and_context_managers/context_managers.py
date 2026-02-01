@@ -6,7 +6,8 @@ import csv
 import json
 
 __all__ = ("generate_eng_letter_files","read_first_n_lines",
-           "corona_stats","filter_corona_field","csv_to_json", "merge_files")
+           "corona_stats","filter_corona_field","csv_to_json",
+           "merge_files", "cipher_encode_decode")
 
 def generate_eng_letter_files(location):
     """ Creates a new folder abc within location
@@ -137,4 +138,31 @@ def merge_files(dir_name, out_file_name):
                 lines = f.readlines()
                 out_f.writelines(lines)
 
+## Advanced questions ##
+upper_str = {let: i for i, let in enumerate(string.ascii_uppercase)}
+lower_str = {let: i for i, let in enumerate(string.ascii_lowercase)}
+tot_letters = 26
 
+def cipher_encode_decode(file_name, out_file_name, n_shifts = 3, is_encode = True):
+    with open(file_name) as f, open(out_file_name, 'w') as out_f:
+        for line in f:
+            line = line.strip()
+            new_line = ''
+            for let in line:
+                if let == " ":
+                    new_line += " "
+                    continue
+                flag = False
+                ind = upper_str.get(let, -1)
+                if ind == -1:
+                    ind = lower_str.get(let, -1)
+                    flag = True
+                if is_encode:
+                    ind = (ind - 3) % tot_letters
+                else:
+                    ind = (ind + 3) % tot_letters
+                if flag:
+                    new_line += string.ascii_lowercase[ind]
+                else:
+                    new_line += string.ascii_uppercase[ind]
+            out_f.write(new_line + '\n')
