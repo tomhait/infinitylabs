@@ -3,11 +3,12 @@ import sys
 import stat
 import platform
 
+my_name = "Tom"
+
 def is_in_global(name):
     """ Checks if name is in global namespace"""
     return name in globals()
 
-my_name = "Tom"
 
 def print_os_info():
     """ Prints OS name, Logged user, and current directory"""
@@ -30,12 +31,11 @@ def change_file_permissions(file_name):
     If not, grants permission to Owner and Group only
     """
     found = False
-    for root, dirs, files in os.walk('/'):
+    for root, dirs, files in os.walk('.'):
         if file_name in files:
             found = True
             file_path = os.path.join(root, file_name)
             current_perm = os.stat(file_path).st_mode
-
             perm_str = stat.filemode(current_perm)
 
             if 'x' not in perm_str:

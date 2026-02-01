@@ -2,6 +2,8 @@ from modules import *
 from areas import *
 
 if __name__ == '__main__':
+    print(is_in_global('my_name'))
+
     r = 2
     w = 10
     h = 5
