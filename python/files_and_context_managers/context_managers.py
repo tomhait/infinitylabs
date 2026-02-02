@@ -131,11 +131,12 @@ def merge_files(dir_name, out_file_name):
     """ Merge all text files in dir_name
     into one file
     """
-    for file_path in pathlib.Path(dir_name).iterdir():
-        if file_path.is_file() and file_path.suffix == ".txt":
-            with open(file_path) as f, open(out_file_name,'a') as out_f:
-                lines = f.readlines()
-                out_f.writelines(lines)
+    with open(out_file_name,'w') as out_f:
+        for file_path in pathlib.Path(dir_name).iterdir():
+            if file_path.is_file() and file_path.suffix == ".txt":
+                with open(file_path) as f:
+                    lines = f.readlines()
+                    out_f.writelines(lines)
 
 ## Advanced questions ##
 upper_str = {let: i for i, let in enumerate(string.ascii_uppercase)}
