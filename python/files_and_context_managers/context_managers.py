@@ -35,6 +35,7 @@ def read_first_n_lines(file_name, n):
             with open(base_path) as f:
                 lines_iterator = islice(f, n)
                 lines += [line.strip('\n') for line in lines_iterator]
+            break
     return lines
 
 def corona_stats(file_name):
@@ -77,6 +78,26 @@ def _vaccinated_input():
 
 fields = ("gender", "Age", "Is_vaccinated")
 
+def _check_line_fields(line, gender, ages, is_vac, csv_field_index):
+    line = line.strip().split(",")
+    out_dict = {}
+    sex = line[csv_field_index["gender"]]
+    age = int(line[csv_field_index["Age"]])
+    vac = line[csv_field_index["Is_vaccinated"]]
+    if gender == "ALL" or sex == gender:
+        out_dict["gender"] = line[csv_field_index["gender"]]
+    else:
+        return None
+    if ages[0] <= age <= ages[1]:
+        out_dict["Age"] = line[csv_field_index["Age"]]
+    else:
+        return None
+    if is_vac == "ALL" or vac == is_vac:
+        out_dict["Is_vaccinated"] = line[csv_field_index["Is_vaccinated"]]
+    else:
+        return None
+    return out_dict
+
 def filter_corona_field(corona_file, output_file_name):
     """ Filter the requested field name from the corona file
     and write it to output_file_name
@@ -94,22 +115,8 @@ def filter_corona_field(corona_file, output_file_name):
         csv_writer = csv.DictWriter(out_f, fieldnames=fields)
         csv_writer.writeheader()
         for line in f:
-            line = line.strip().split(",")
-            out_dict = {}
-            sex = line[csv_field_index["gender"]]
-            age = int(line[csv_field_index["Age"]])
-            vac = line[csv_field_index["Is_vaccinated"]]
-            if gender == "ALL" or sex == gender:
-                out_dict["gender"] = line[csv_field_index["gender"]]
-            else:
-                continue
-            if ages[0] <= age <= ages[1]:
-                out_dict["Age"] = line[csv_field_index["Age"]]
-            else:
-                continue
-            if is_vac == "ALL" or vac == is_vac:
-                out_dict["Is_vaccinated"] = line[csv_field_index["Is_vaccinated"]]
-            else:
+            out_dict = _check_line_fields(line, gender, ages, is_vac, csv_field_index)
+            if out_dict is None:
                 continue
             data.append(out_dict)
         csv_writer.writerows(data)
