@@ -152,7 +152,7 @@ def cipher_encode_decode(file_name, out_file_name, n_shifts = 3, is_encode = Tru
             line = line.strip()
             new_line = ''
             for let in line:
-                if let in (" ", ".", ","):
+                if upper_str.get(let, -1) == -1 and lower_str.get(let, -1) == -1:
                     new_line += let
                     continue
                 flag = False
@@ -179,7 +179,7 @@ class EncDecCipherManager:
         line = line.strip()
         new_line = ''
         for let in line:
-            if let in (" ", ".", ","):
+            if upper_str.get(let, -1) == -1 and lower_str.get(let, -1) == -1:
                 new_line += let
                 continue
             flag = False
