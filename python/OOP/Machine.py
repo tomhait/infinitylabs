@@ -8,31 +8,31 @@ class Machine(ABC):  # abstract class - implement the methods only in MachineTyp
 
     @abstractmethod
     def start_machine(self):
-        """starts the machine"""
+        """ starts the machine"""
     pass
 
 
     @abstractmethod
     def stop_machine(self):
-        """stops the machine"""
+        """ stops the machine"""
     pass
 
 
     @abstractmethod
     def get_rate(self):
-        """returns the price per minute of the machine"""
+        """ returns the price per minute of the machine"""
     pass
 
 
     @abstractmethod
     def get_accumulated_price(self):
-        """returns the accumulated price of the machine"""
+        """ returns the accumulated price of the machine"""
     pass
 
 
     @abstractmethod
     def is_on(self):
-        """return True if this machine is on"""
+        """ return True if this machine is on"""
     pass
 
 
@@ -44,7 +44,7 @@ class MachineType1(Machine):
         self.start_time = None
 
     def start_machine(self):
-        """starts the machine, start_time is optional"""
+        """ starts the machine, start_time is optional"""
         self.is_on = True
         self.start_time = datetime.now()
 
@@ -56,7 +56,7 @@ class MachineType1(Machine):
         return self.rate * total_minutes
 
     def stop_machine(self):
-        """stops the machine, stop_time is optional"""
+        """ stops the machine, stop_time is optional"""
         if not self.is_on:
             print("Machine is already down")
             return None
@@ -65,17 +65,17 @@ class MachineType1(Machine):
         return None
 
     def get_rate(self):
-        """returns the price per minute of the machine"""
+        """ returns the price per minute of the machine"""
         return self.rate
 
 
     def get_accumulated_price(self):
-        """returns the accumulated price of the machine"""
+        """ returns the accumulated price of the machine"""
         return self.cur_tot_price + self._get_cur_price(datetime.now())
 
 
     def is_on(self):
-        """return True if this machine is on"""
+        """ return True if this machine is on"""
         return self.is_on
 
     def __str__(self):
@@ -91,7 +91,7 @@ class MachineType2(Machine):
         self.start_time = None
 
     def start_machine(self):
-        """starts the machine, start_time is optional"""
+        """ starts the machine, start_time is optional"""
         self.is_on = True
         self.start_time = datetime.now()
 
@@ -103,7 +103,7 @@ class MachineType2(Machine):
         return self.rate * total_minutes
 
     def stop_machine(self):
-        """stops the machine, stop_time is optional"""
+        """ stops the machine, stop_time is optional"""
         if not self.is_on:
             print("Machine is already down")
             return None
@@ -112,17 +112,17 @@ class MachineType2(Machine):
         return None
 
     def get_rate(self):
-        """returns the price per minute of the machine"""
+        """ returns the price per minute of the machine"""
         return self.rate
 
 
     def get_accumulated_price(self):
-        """returns the accumulated price of the machine"""
+        """ returns the accumulated price of the machine"""
         return self.cur_tot_price + self._get_cur_price(datetime.now())
 
 
     def is_on(self):
-        """return True if this machine is on"""
+        """ return True if this machine is on"""
         return self.is_on
 
     def __str__(self):
@@ -138,12 +138,12 @@ class Cloud:
 
 
     def add_machine(self, machine):
-        """adds a machine to the cloud"""
+        """ adds a machine to the cloud"""
         self.machines.append(machine)
 
 
     def get_tot_price(self):
-        """calculate the total price of all the machines in the cloud"""
+        """ calculate the total price of all the machines in the cloud"""
         return sum([mach.get_accumulated_price() for mach in self.machines])
 
 
