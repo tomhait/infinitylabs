@@ -79,7 +79,7 @@ class MachineType1(Machine):
         return self.is_on
 
     def __str__(self):
-        return f"Type 1 Machine current cost: {self.get_accumulated_price(): .2f}"
+        return f"Type 1 Machine current cost: {self.get_accumulated_price():.2f}"
 
 
 class MachineType2(Machine):
@@ -126,7 +126,7 @@ class MachineType2(Machine):
         return self.is_on
 
     def __str__(self):
-        return f"Type 2 Machine current cost: {self.get_accumulated_price(): .2f}"
+        return f"Type 2 Machine current cost: {self.get_accumulated_price():.2f}"
 
 
 
