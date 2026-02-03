@@ -138,7 +138,7 @@ class Cloud:
 
 
     def add_machine(self, machine):
-        """adds a machine to the cloude"""
+        """adds a machine to the cloud"""
         self.machines.append(machine)
 
 
