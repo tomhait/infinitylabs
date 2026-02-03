@@ -9,31 +9,31 @@ class Machine(ABC):  # abstract class - implement the methods only in MachineTyp
     @abstractmethod
     def start_machine(self):
         """ starts the machine"""
-    pass
+        pass
 
 
     @abstractmethod
     def stop_machine(self):
         """ stops the machine"""
-    pass
+        pass
 
 
     @abstractmethod
     def get_rate(self):
         """ returns the price per minute of the machine"""
-    pass
+        pass
 
 
     @abstractmethod
     def get_accumulated_price(self):
         """ returns the accumulated price of the machine"""
-    pass
+        pass
 
 
     @abstractmethod
     def is_on(self):
         """ return True if this machine is on"""
-    pass
+        pass
 
 
 class MachineType1(Machine):

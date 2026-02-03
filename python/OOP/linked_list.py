@@ -37,7 +37,7 @@ class LinkedList:
         """ Returns True if list is empty,
         False otherwise
         """
-        return self.len == 0
+        return len(self) == 0
 
     def get_head_data(self):
         """ Returns the head data"""
