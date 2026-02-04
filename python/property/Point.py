@@ -9,8 +9,8 @@ class Point:
     """
     def __init__(self, x = 0.0, y = 0.0):
         """ Constructor for Point class"""
-        self.x = x
-        self.y = y
+        self.__x = x
+        self.__y = y
 
     @property
     def x(self):
@@ -47,4 +47,4 @@ if __name__ == "__main__":
     print(p2)
     p1.x = 3
     print(p1)
-    help(Point)
+    # help(Point)
