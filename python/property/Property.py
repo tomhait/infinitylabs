@@ -11,7 +11,7 @@ class Property:
         """ Get decorator"""
         if instance is None:
             return self
-        if self.fdel is None:
+        if self.fget is None:
             raise AttributeError("Unable to get attribute")
         return self.fget(instance)
 
@@ -59,4 +59,5 @@ if __name__ == "__main__":
     print(a.x)
     a.x = 1
     print(a.x)
-    del(a.x)
+    #del(a.x)
+    print(a.__dict__)
