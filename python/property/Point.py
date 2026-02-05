@@ -1,6 +1,3 @@
-import math
-from numbers import Number
-
 class Point:
     """
     Represents a 2D point.
@@ -37,7 +34,7 @@ class Point:
         return f"Point({self.x}, {self.y})"
 
 if __name__ == "__main__":
-    p1 = Point()
+    p1 = Point("x",0)
     p2 = Point(2,4)
     try:
         p1.x = "Hello"
