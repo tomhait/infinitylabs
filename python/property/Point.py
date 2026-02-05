@@ -41,6 +41,7 @@ if __name__ == "__main__":
     except TypeError as e:
         print(e)
     print(p1.x)
+
     print(p1)
     print(p2)
     p1.x = 3

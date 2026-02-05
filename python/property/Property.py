@@ -40,7 +40,7 @@ class Property:
 class X:
 
     def __init__(self, val):
-        self.__x = val
+        self.x = val
 
     @Property
     def x(self):
