@@ -6,8 +6,8 @@ class Point:
     """
     def __init__(self, x = 0.0, y = 0.0):
         """ Constructor for Point class"""
-        self.__x = x
-        self.__y = y
+        self.x = x
+        self.y = y
 
     @property
     def x(self):
@@ -34,12 +34,13 @@ class Point:
         return f"Point({self.x}, {self.y})"
 
 if __name__ == "__main__":
-    p1 = Point("x",0)
+    p1 = Point(4,0)
     p2 = Point(2,4)
     try:
         p1.x = "Hello"
     except TypeError as e:
         print(e)
+    print(p1.x)
     print(p1)
     print(p2)
     p1.x = 3
