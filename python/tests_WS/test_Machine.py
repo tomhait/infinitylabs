@@ -20,7 +20,7 @@ def test_machine_initial_state(machine):
     assert machine.is_active() == False
     assert machine.get_accumulated_price() == 0
 
-def test_machine_pricing(machine, mocker):
+def test_machine_pricing(machine):
     with freeze_time("2026-01-01 12:00:00") as frozen_datetime:
         machine.start_machine()
         frozen_datetime.tick(delta=timedelta(seconds=60))
@@ -32,7 +32,7 @@ def test_machine_pricing(machine, mocker):
 
 # Cloud tests
 
-def test_cloud_price(cloud, machine, mocker):
+def test_cloud_price(cloud, machine):
     with freeze_time("2026-01-01 12:00:00") as frozen_datetime:
 
         m = MachineType2()
