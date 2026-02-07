@@ -1,5 +1,4 @@
 import pytest
-import time
 from Machine import *
 from datetime import timedelta
 from freezegun import freeze_time
