@@ -46,4 +46,5 @@ if __name__ == "__main__":
     print(p2)
     p1.x = 3
     print(p1)
+    print(p1.__dict__)
     # help(Point)
