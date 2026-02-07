@@ -1,6 +1,9 @@
 import pytest
 import time
 from Machine import *
+from datetime import timedelta
+from freezegun import freeze_time
+
 
 @pytest.fixture
 def machine():
@@ -18,31 +21,37 @@ def test_machine_initial_state(machine):
     assert machine.is_active() == False
     assert machine.get_accumulated_price() == 0
 
-def test_machine_pricing(machine):
-    machine.start_machine()
-    time.sleep(1)
-    assert machine.get_accumulated_price() > 0
-    machine.stop_machine()
-    assert machine.is_active() == False
+def test_machine_pricing(machine, mocker):
+    with freeze_time("2026-01-01 12:00:00") as frozen_datetime:
+        machine.start_machine()
+        frozen_datetime.tick(delta=timedelta(seconds=60))
+        assert machine.get_accumulated_price() > 0
+        print(machine.get_accumulated_price())
+        machine.stop_machine()
+        assert machine.is_active() == False
+
 
 # Cloud tests
 
-def test_cloud_price(cloud, machine):
-    m = MachineType2()
-    cloud.add_machine(machine)
-    cloud.add_machine(m)
+def test_cloud_price(cloud, machine, mocker):
+    with freeze_time("2026-01-01 12:00:00") as frozen_datetime:
 
-    assert len(cloud) == 2
+        m = MachineType2()
+        cloud.add_machine(machine)
+        cloud.add_machine(m)
 
-    assert cloud.get_tot_price() == 0
+        assert len(cloud) == 2
 
-    machine.start_machine()
-    m.start_machine()
+        assert cloud.get_tot_price() == 0
 
-    time.sleep(1)
+        machine.start_machine()
+        m.start_machine()
 
-    assert cloud.get_tot_price() > 0
+        frozen_datetime.tick(delta=timedelta(seconds=60))
+
+        assert cloud.get_tot_price() > 0
+        print(cloud.get_tot_price())
 
 """ To run pytest in Bash:
-    pytest test_Machine.py
+    pytest -s test_Machine.py
 """

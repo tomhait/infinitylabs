@@ -8,11 +8,13 @@ class TestBank(unittest.TestCase):
 
     def test_deposit(self):
         self.assertTrue(self.account.deposit(1000))
+        self.assertTrue(self.account.deposit(-2000))
 
     def test_withdraw(self):
         self.assertTrue(self.account.deposit(1000))
         self.assertFalse(self.account.withdraw(2000))
         self.assertTrue(self.account.withdraw(500))
+        self.assertTrue(self.account.balance == 500)
 
     def tearDown(self):
         del self.account
