@@ -5,6 +5,7 @@ import cmd
 class MyShell(cmd.Cmd):
     intro = "Welcome to MyShell! Type help or ? to list commands.\n"
     prompt = "myshell$ "
+    jobs = []
 
     def do_greet(self, arg):
         """ Greet the named person: greet <name>"""
@@ -30,6 +31,18 @@ class MyShell(cmd.Cmd):
         except Exception as e:
             print(f"cd: error changing directory: {e}")
 
+    def do_fg(self, arg):
+        try:
+            pid = int(arg.strip())
+            if pid in self.jobs:
+                print(f"Bringing {pid} to foreground")
+                os.waitpid(pid,0)
+                self.jobs.remove(pid)
+            else:
+                print(f"No background job with PID {pid}")
+        except ValueError:
+            print("Usage: fg <PID>")
+
     def default(self, args):
         """ Handle other commands using fork and execvp"""
         args = args.strip().split()
@@ -48,9 +61,12 @@ class MyShell(cmd.Cmd):
             except FileNotFoundError:
                 print(f"myshell: command not found: {args[0]}")
                 os._exit(1)
-        elif not is_bg:
-            os.waitpid(pid, 0)
-
+        else:
+            if not is_bg:
+                os.waitpid(pid, 0)
+            else:
+                self.jobs.append(pid)
+                print(f"{len(self.jobs)} {pid} started in background")
 
 if __name__ == "__main__":
     MyShell().cmdloop()
