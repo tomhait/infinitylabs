@@ -19,7 +19,6 @@ def test_withdraw_success(account):
     assert account.balance == 500
 
 def test_withdraw_insufficient_funds(account):
-    # This is why your current test is failing
     result = account.withdraw(500)
     assert result is False
     assert account.balance == 0
