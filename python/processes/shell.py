@@ -15,29 +15,11 @@ class MyShell(cmd.Cmd):
         print("Goodbye!")
         return True
 
-    def do_cd(self, args):
-        """ change directory"""
-        args = args.strip().split()
-        if not args:
-            return None
-        path = args[0]
-
-        try:
-            os.chdir(os.path.abspath(path))
-        except FileNotFoundError:
-            print(f"cd: no such file or directory: {path}")
-        except Exception as e:
-            print(f"cd: error changing directory: {e}")
-
     def default(self, args):
         """ Handle other commands using fork and execvp"""
         args = args.strip().split()
         if not args:
             return None
-        is_bg = False
-        if args[-1] == "&":
-            is_bg = True
-            args.pop()
 
         pid = os.fork()
 
@@ -47,7 +29,7 @@ class MyShell(cmd.Cmd):
             except FileNotFoundError:
                 print(f"myshell: command not found: {args[0]}")
                 os._exit(1)
-        elif not is_bg:
+        else:
             os.waitpid(pid, 0)
 
 if __name__ == "__main__":
