@@ -1,4 +1,3 @@
-
 import os
 import cmd
 
@@ -31,10 +30,14 @@ class MyShell(cmd.Cmd):
             print(f"cd: error changing directory: {e}")
 
     def default(self, args):
-        """ Handle other commands using fork and execv"""
+        """ Handle other commands using fork and execvp"""
         args = args.strip().split()
         if not args:
             return None
+        is_bg = False
+        if args[-1] == "&":
+            is_bg = True
+            args.pop()
 
         pid = os.fork()
 
@@ -44,7 +47,7 @@ class MyShell(cmd.Cmd):
             except FileNotFoundError:
                 print(f"myshell: command not found: {args[0]}")
                 os._exit(1)
-        else:
+        elif not is_bg:
             os.waitpid(pid, 0)
 
 if __name__ == "__main__":
