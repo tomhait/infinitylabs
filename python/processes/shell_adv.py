@@ -84,6 +84,7 @@ class MyShell(cmd.Cmd):
             os.waitpid(p, 0)
 
     def do_rev(self, arg):
+        """ Reverse letters"""
         content = arg.strip()
         if content:
             print(content[::-1])
