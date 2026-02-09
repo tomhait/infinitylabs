@@ -93,6 +93,18 @@ class MyShell(cmd.Cmd):
 
     def default(self, args):
         """ Handle other commands using fork and execvp"""
+        # take care of zombies
+        try:
+            while True:
+                pid, status = os.waitpid(-1, os.WNOHANG)
+                if pid == 0:
+                    break
+                print(f"Process {pid} finished")
+                if pid in self.jobs:
+                    self.jobs.remove(pid)
+        except ChildProcessError:
+            pass
+
         if '|' in args:
             self.do_pipeline(args)
             return
