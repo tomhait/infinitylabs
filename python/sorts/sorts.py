@@ -134,7 +134,7 @@ def radix_sort(arr: list):
     """
     Non - comparison algorithm
     O(d * (n + k)) time complexity (n - num of elements; k - range of the input values;
-    d - number of digits)
+    d - max number of digits)
     O(n + k) space complexity (count/output array)
     Stable
     """
