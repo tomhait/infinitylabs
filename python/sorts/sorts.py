@@ -100,11 +100,11 @@ def quick_sort(arr: list, low: int, high: int):
 def counting_sort(arr: list):
     """
     Non - comparison algorithm
-    O(n + k) time complexity (n - num of elements, k - range of the input values)
+    O(n + k) time complexity (n - num of elements; k - range of the input values)
     O(n + k) space complexity (count/output array)
     Stable
     """
-    count_arr = np.bincount(arr)
+    count_arr = np.bincount(arr) # array size k
     count_arr = list(itertools.accumulate(count_arr))
     sorted_arr = [0] * len(arr)
     for x in arr[::-1]:
@@ -112,10 +112,35 @@ def counting_sort(arr: list):
         count_arr[x] -= 1
     return sorted_arr
 
+def _counting_sort(arr: list, exp1 = 1):
+    n = len(arr)
+    sorted_arr = [0] * n
+    count = [0] * 10
 
+    for i in range(n):
+        index = (arr[i] // exp1) % 10
+        count[index] += 1
 
+    count = list(itertools.accumulate(count))
 
+    for x in arr[::-1]:
+        index = (x // exp1) % 10
+        sorted_arr[count[index] - 1] = x
+        count[index] -= 1
 
+    return sorted_arr
 
-def radix_sort(lst: list):
-    pass
+def radix_sort(arr: list):
+    """
+    Non - comparison algorithm
+    O(d * (n + k)) time complexity (n - num of elements; k - range of the input values;
+    d - number of digits)
+    O(n + k) space complexity (count/output array)
+    Stable
+    """
+    d = max(arr)
+    exp1 = 1
+    while d // exp1 > 0:
+        arr = _counting_sort(arr, exp1)
+        exp1 *= 10
+    return arr

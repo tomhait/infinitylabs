@@ -10,3 +10,5 @@ if __name__ == "__main__":
     print(arr)
     arr = [4, 2, 1, 8, 3, 3]
     print(counting_sort(arr))
+    arr = [170, 45, 75, 90, 802, 24, 2, 66]
+    print(radix_sort(arr))
