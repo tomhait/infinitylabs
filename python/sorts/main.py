@@ -9,3 +9,4 @@ if __name__ == "__main__":
     quick_sort(arr, 0, len(arr) - 1)
     print(arr)
     arr = [4, 2, 1, 8, 3, 3]
+    print(counting_sort(arr))

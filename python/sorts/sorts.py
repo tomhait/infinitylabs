@@ -1,3 +1,6 @@
+import itertools
+import numpy as np
+
 def bubble_sort(arr: list):
     """
     O(n^2) worst/average time complexity
@@ -94,8 +97,25 @@ def quick_sort(arr: list, low: int, high: int):
     quick_sort(arr, low, p - 1)
     quick_sort(arr, p + 1, high)
 
-def counting_sort(lst: list):
-    pass
+def counting_sort(arr: list):
+    """
+    Non - comparison algorithm
+    O(n + k) time complexity (n - num of elements, k - range of the input values)
+    O(n + k) space complexity (count/output array)
+    Stable
+    """
+    count_arr = np.bincount(arr)
+    count_arr = list(itertools.accumulate(count_arr))
+    sorted_arr = [0] * len(arr)
+    for x in arr[::-1]:
+        sorted_arr[count_arr[x]-1] = x
+        count_arr[x] -= 1
+    return sorted_arr
+
+
+
+
+
 
 def radix_sort(lst: list):
     pass
