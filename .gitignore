@@ -10,3 +10,23 @@ python/files_and_context_managers/filter.csv
 python/files_and_context_managers/encoded.txt
 python/files_and_context_managers/decoded.txt
 
+.DS_Store
+.idea/
+python/.DS_Store
+python/OOP/__pycache__/
+python/data_structures/.idea/
+python/data_structures/__pycache__/
+python/exceptions/__pycache__/
+python/files_and_context_managers/__pycache__/
+python/files_and_context_managers/test.py
+python/functions/.idea/
+python/functions/__pycache__/
+python/python_intro/.idea/
+python/python_intro/src/__pycache__/
+python/scopes_and_modules/__pycache__/
+python/scopes_and_modules/test.txt
+python/scopes_and_modules/test_permissions.txt
+python/sorts/__pycache__/
+python/tests/
+python/tests_WS/__pycache__/
+quizzes/.idea/
