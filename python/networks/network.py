@@ -58,7 +58,11 @@ class MyTranslator:
 					to = input("Select target language code: ").strip()
 				print("Type your phrase:")
 				phrase = input("> ").strip()
-				print(self.get_translate(phrase, to))
+				try:
+					print(self.get_translate(phrase, to))
+				except Exception:
+					print("Wrong language code")
+				print("\n\n\n")
 			else:
 				print("Wrong option")
 
