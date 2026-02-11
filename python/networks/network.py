@@ -6,13 +6,14 @@ class MyTranslator:
 	url_lang = "https://" + rapidapi_host + "/api/v1/translator/support-languages"
 	url_trans = "https://" + rapidapi_host + "/api/v1/translator/text"
 
+	session = requests.Session()
 
 	def get_supported_lang(self):
 		headers = {
 			"x-rapidapi-key": self.api_key,
 			"x-rapidapi-host": self.rapidapi_host
 		}
-		response = requests.get(self.url_lang, headers=headers)
+		response = self.session.get(self.url_lang, headers=headers)
 		data = response.json()
 		print("Supported languages are:")
 		for lang in data[1:]:
@@ -30,7 +31,7 @@ class MyTranslator:
 			"Content-Type": "application/json"
 		}
 
-		response = requests.post(self.url_trans, json=payload, headers=headers)
+		response = self.session.post(self.url_trans, json=payload, headers=headers)
 
 		data = response.json()
 		return data['trans']
@@ -68,3 +69,4 @@ class MyTranslator:
 
 if __name__ == "__main__":
 	MyTranslator().run_translator()
+	MyTranslator().session.close()
