@@ -35,29 +35,32 @@ class MyTranslator:
 		data = response.json()
 		return data['trans']
 
+	def run_translator(self):
+		print("Welcome to my translator")
+
+		while True:
+			print('Options:')
+			print('0 - exit')
+			print("1 - show supported languages")
+			print("2 - translate")
+			opt = input("> ").strip()
+			if opt == "0":
+				break
+			if opt == "1":
+				self.get_supported_lang()
+				print("\n\n\n")
+				continue
+			if opt == "2":
+				print("Default target language is: English")
+				lang_change = input("Type 3 if you want a different language: ").strip()
+				to = "en"
+				if lang_change == "3":
+					to = input("Select target language code: ").strip()
+				print("Type your phrase:")
+				phrase = input("> ").strip()
+				print(self.get_translate(phrase, to))
+			else:
+				print("Wrong option")
+
 if __name__ == "__main__":
-	print("Welcome to my translator")
-	trans = MyTranslator()
-	while True:
-		print('Options:')
-		print('0 - exit')
-		print("1 - show supported languages")
-		print("2 - translate")
-		opt = input("> ").strip()
-		if opt == "0":
-			break
-		if opt == "1":
-			trans.get_supported_lang()
-			print("\n\n\n")
-			continue
-		if opt == "2":
-			print("Default target language is: English")
-			lang_change = input("Type 3 if you want a different language: ").strip()
-			to = "en"
-			if lang_change == "3":
-				to = input("Select target language code: ").strip()
-			print("Type your phrase:")
-			phrase = input("> ").strip()
-			print(trans.get_translate(phrase, to))
-		else:
-			print("Wrong option")
+	MyTranslator().run_translator()
