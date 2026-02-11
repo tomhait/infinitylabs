@@ -68,5 +68,6 @@ class MyTranslator:
 				print("Wrong option")
 
 if __name__ == "__main__":
-	MyTranslator().run_translator()
-	MyTranslator().session.close()
+	trans = MyTranslator()
+	trans.run_translator()
+	trans.session.close()
