@@ -1,5 +1,6 @@
 import socket
 import threading
+import time
 
 class MyUDPServer:
     UDP_IP = "127.0.0.1"
@@ -14,9 +15,11 @@ class MyUDPServer:
         print(f"Listening for UDP packets on {self.UDP_IP}:{self.port}")
 
         while True:
-            data, addr = self.sock.recvfrom(self.BUFFER_LEN)
-            print(f"Received packet from {addr}:{data.decode()}")
-            if data.decode().strip() == "exit":
+            try:
+                data, addr = self.sock.recvfrom(self.BUFFER_LEN)
+                print(f"Received packet from {addr}:{data.decode()}")
+            except KeyboardInterrupt:
+                print("\nClosing server")
                 self.sock.close()
                 break
 
@@ -114,3 +117,27 @@ class MyTCPClient:
             print(f"Sent TCP packet to {self.TCP_IP}:{self.port}: {message}")
         except Exception:
             self.sock.close()
+
+class MyBroadcastServer:
+    UDP_IP = '<broadcast>'
+
+
+    def __init__(self, port_num=5010):
+        self.port = port_num
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.broad_addr = (self.UDP_IP, self.port)
+        print("Starting broadcast")
+
+    def send_message(self, message = "Hello"):
+        try:
+            while True:
+                self.sock.sendto(message.encode(), self.broad_addr)
+                time.sleep(5)
+        except KeyboardInterrupt:
+            print("\nBroadcast stopped")
+        finally:
+            self.sock.close()
+
+class MyBroadcastListener:
+    pass
