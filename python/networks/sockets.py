@@ -129,7 +129,7 @@ class MyBroadcastServer:
         self.broad_addr = (self.UDP_IP, self.port)
         print("Starting broadcast")
 
-    def send_message(self, message = "Hello"):
+    def start(self, message = "Hello"):
         try:
             while True:
                 self.sock.sendto(message.encode(), self.broad_addr)
@@ -140,4 +140,23 @@ class MyBroadcastServer:
             self.sock.close()
 
 class MyBroadcastListener:
-    pass
+    BUFFER_LEN = 1024
+
+    def __init__(self, port_num=5010):
+        self.port = port_num
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.bind(('',self.port))
+
+    def start(self):
+        print("Listening tp broadcast...")
+        print("Select Ctrl+C to close")
+        while True:
+            try:
+                data, addr = self.sock.recvfrom(self.BUFFER_LEN)
+                data = data.decode()
+                print(f"Received message from {addr}")
+                print(data)
+            except KeyboardInterrupt:
+                print("Closing Listener...")
+                self.sock.close()
+                break
