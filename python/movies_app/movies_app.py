@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import pandas as pd
 import requests
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
@@ -59,22 +59,44 @@ class ExternalMovieProvider(
 
 class MovieService:
     def __init__(self, local_prov: MovieProvider, external_prov: MovieProvider):
-        pass
+        self.local_prov = local_prov
+        self.external_prov = external_prov
 
     def get_full_report(self, title):
         """ Combines data from local and external movie data and returns it as dict"""
+        data = self.local_prov.get_movie_data(title)
+        return data
 
-    pass
-
-
-class MovieWebAPI:
-    """ A client to interact with local and external movie data"""
-    #app = FastAPI()
-    #templates = Jinja2Templates(directory=".")
-
-    def __init__(self, api_key: str, movie_service: MovieService):
-        self.api_key = api_key
-        self.movie_service = movie_service
-
-    def get_by_title(self, title: str):
-
+# app = FastAPI()
+# templates = Jinja2Templates(directory=".")
+#
+# class MovieWebAPI:
+#     """ A client to interact with local and external movie data"""
+#     template_name = "movie_app.html"
+#
+#     def __init__(self, api_key: str, movie_service: MovieService):
+#         self.api_key = api_key
+#         self.movie_service = movie_service
+#
+#     def get_by_title(self, title: str):
+#         data = self.movie_service.get_full_report(title)
+#
+#
+#     @app.get("/", response_class=HTMLResponse)
+#     async def get_form(self, request: Request):
+#         # Initial load of the page
+#         return templates.TemplateResponse(self.template_name, {"request": request})
+#
+#     @app.post("/submit", response_class=HTMLResponse)
+#     async def post_form(self,
+#         request: Request,
+#         movie_title: str = Form(...)  # Matches 'name' attribute in HTML
+#     ):
+#         data = self.movie_service.get_full_report(movie_title)
+#
+#         # This is where Jinja takes the Python variables and puts them in the HTML
+#         return templates.TemplateResponse("index.html", {
+#             "request": request,
+#             "movie_name": data['title'],
+#             "movie_score": data['average_rating']
+#         })
