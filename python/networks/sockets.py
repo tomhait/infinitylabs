@@ -272,7 +272,7 @@ class ReactorServer(Server):
             if data:
                 data = data.decode().strip()
                 print(f"Received message: {data}")
-                self.messages.get(sock, []).append(data)
+                self.messages.setdefault(sock, []).append(data)
                 self.reactor.subscribe(sock, 'w', self.handle_write)
             else:
                 self.close_sock(sock)
@@ -283,7 +283,9 @@ class ReactorServer(Server):
         if sock in self.messages:
             msg = self.messages[sock].pop(0)
             try:
-                sock.send(msg)
+                sock.send(msg.encode())
+                if not self.messages[sock]:
+                    del self.messages[sock]
             except ConnectionResetError:
                 self.close_sock(sock)
         else:
