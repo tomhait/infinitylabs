@@ -90,11 +90,11 @@ class MovieService:
 #     @app.post("/submit", response_class=HTMLResponse)
 #     async def post_form(self,
 #         request: Request,
-#         movie_title: str = Form(...)  # Matches 'name' attribute in HTML
+#         movie_title: str = Form(...)
 #     ):
 #         data = self.movie_service.get_full_report(movie_title)
 #
-#         # This is where Jinja takes the Python variables and puts them in the HTML
+#
 #         return templates.TemplateResponse("index.html", {
 #             "request": request,
 #             "movie_name": data['title'],
