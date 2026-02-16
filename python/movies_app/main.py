@@ -23,7 +23,6 @@ async def search_movies(q: str = Query(..., min_length=2)):
 
 @app.get("/", response_class=HTMLResponse)
 async def get_form(request: Request):
-        # Initial load of the page
     return templates.TemplateResponse(template_name, {
         "request": request,
         "local": None,

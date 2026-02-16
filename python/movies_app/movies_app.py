@@ -62,24 +62,24 @@ class Movie:
     def from_tuple(cls, title_value):
         return cls(title_value[0], title_value[1])
 
-class IMDBMovies:
-    def __init__(self):
-        self._parse_data()
-
-    def _parse_data(self):
-        self.df_map = pd.read_table("imdbid_to_title.tsv", names=("imdb_id","title"))
-
-    def get_movie_list(self, title):
-        match = self.df_map[self.df_map["title"].str.contains(title, case=False, regex=False)]
-        if match.empty:
-            return []
-        return match["title"].head(10).tolist()
-
-    def get_movie_id(self, title):
-        match = self.df_map[self.df_map["title"].str.contains(title, case=False, regex=False)]
-        if match.empty:
-            return None
-        return match["imdb_id"].iloc[0]
+# class IMDBMovies:
+#     def __init__(self):
+#         self._parse_data()
+#
+#     def _parse_data(self):
+#         self.df_map = pd.read_table("imdbid_to_title.tsv", names=("imdb_id","title"))
+#
+#     def get_movie_list(self, title):
+#         match = self.df_map[self.df_map["title"].str.contains(title, case=False, regex=False)]
+#         if match.empty:
+#             return []
+#         return match["title"].head(10).tolist()
+#
+#     def get_movie_id(self, title):
+#         match = self.df_map[self.df_map["title"].str.contains(title, case=False, regex=False)]
+#         if match.empty:
+#             return None
+#         return match["imdb_id"].iloc[0]
 
 class LocalMovieProvider(MovieProvider):
     """  Implements the interface for the local dataset MovieLens"""
@@ -152,7 +152,7 @@ class MovieService:
     def __init__(self, local_prov: MovieProvider, external_prov: MovieProvider):
         self.local_prov = local_prov
         self.external_prov = external_prov
-        self.imdb_movies = IMDBMovies()
+        # self.imdb_movies = IMDBMovies()
 
     def get_full_report(self, title):
         """ Combines data from local and external movie data and returns it as dict"""
@@ -161,8 +161,8 @@ class MovieService:
             self.external_prov.get_movie_data(movie)
         return movie
 
-    def get_movie_list(self, title):
-        return self.imdb_movies.get_movie_list(title)
+    # def get_movie_list(self, title):
+    #     return self.imdb_movies.get_movie_list(title)
 # app = FastAPI()
 # templates = Jinja2Templates(directory=".")
 #
