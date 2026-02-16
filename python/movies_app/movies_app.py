@@ -63,25 +63,6 @@ class Movie:
     def from_tuple(cls, title_value):
         return cls(title_value[0], title_value[1])
 
-# class IMDBMovies:
-#     def __init__(self):
-#         self._parse_data()
-#
-#     def _parse_data(self):
-#         self.df_map = pd.read_table("imdbid_to_title.tsv", names=("imdb_id","title"))
-#
-#     def get_movie_list(self, title):
-#         match = self.df_map[self.df_map["title"].str.contains(title, case=False, regex=False)]
-#         if match.empty:
-#             return []
-#         return match["title"].head(10).tolist()
-#
-#     def get_movie_id(self, title):
-#         match = self.df_map[self.df_map["title"].str.contains(title, case=False, regex=False)]
-#         if match.empty:
-#             return None
-#         return match["imdb_id"].iloc[0]
-
 class LocalMovieProvider(MovieProvider):
     """  Implements the interface for the local dataset MovieLens"""
     def __init__(self, dir_path: Path):
