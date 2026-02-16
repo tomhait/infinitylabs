@@ -158,7 +158,7 @@ class MovieService:
     def get_full_report(self, title):
         """ Combines data from local and external movie data and returns it as dict"""
         movie = self.local_prov.get_movie_data(title)
-        if movie:
+        if movie is not None:
             self.external_prov.get_movie_data(movie)
         return movie
 
@@ -199,7 +199,7 @@ class MovieWebAPI:
         async def post_form(request: Request, movie_title: str = Form(...)):
             movie = self.movie_service.get_full_report(movie_title)
 
-            if isinstance(movie, dict) and "error" in movie:
+            if movie is None:
                 return self.templates.TemplateResponse(self.template_name, {
                     "request": request,
                     "error_message": f"Could not find movie: {movie_title}",
