@@ -1,7 +1,11 @@
+import os
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class MyTranslator:
-	api_key = "caf4e244e2msh52934742de09cefp1d9c11jsnb375a275f6ab"
+	api_key=os.getenv("MY_API_KEY")
 	rapidapi_host = "google-translate113.p.rapidapi.com"
 	url_lang = "https://" + rapidapi_host + "/api/v1/translator/support-languages"
 	url_trans = "https://" + rapidapi_host + "/api/v1/translator/text"
