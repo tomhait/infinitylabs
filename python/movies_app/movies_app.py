@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 import os
 from dotenv import load_dotenv
 
-load_dotenv()  # This loads the variables from .env file
+load_dotenv()
 
 api_key = os.getenv("MY_API_KEY")
 
@@ -175,7 +175,7 @@ class MovieWebAPI:
         self.external_prov = ExternalMovieProvider()
         self.movie_service = MovieService(self.local_prov, self.external_prov)
 
-        
+
         self.app = FastAPI()
         self._setup_routes()
 
