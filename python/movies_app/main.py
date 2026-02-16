@@ -56,9 +56,3 @@ async def post_form(request: Request, movie_title: str = Form(...)):
             "average_rating": movie.get_omdb_rating()
         }
     })
-# if __name__ == "__main__":
-#     local_prov = LocalMovieProvider(BASE_DIR)
-#     external_prov = ExternalMovieProvider("","")
-#     movie_service = MovieService(local_prov, external_prov)
-#     #movie_api = MovieWebAPI("",movie_service)
-#     #app = movie_api.app

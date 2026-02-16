@@ -2,7 +2,14 @@ from abc import ABC, abstractmethod
 import pandas as pd
 import requests
 from pathlib import Path
+import httpx
+from fastapi import HTTPException
+import os
+from dotenv import load_dotenv
 
+load_dotenv()  # This loads the variables from .env file
+
+api_key = os.getenv("MY_API_KEY")
 
 class MovieProvider(ABC):
     """ Abstract base class for movie provider (e.g., OMDB)"""
@@ -49,11 +56,30 @@ class Movie:
 
     @classmethod
     def from_string(cls, title):
-        pass
+        return cls(title, "NA")
 
     @classmethod
     def from_tuple(cls, title_value):
         return cls(title_value[0], title_value[1])
+
+class IMDBMovies:
+    def __init__(self):
+        self._parse_data()
+
+    def _parse_data(self):
+        self.df_map = pd.read_table("imdbid_to_title.tsv", names=("imdb_id","title"))
+
+    def get_movie_list(self, title):
+        match = self.df_map[self.df_map["title"].str.contains(title, case=False, regex=False)]
+        if match.empty:
+            return []
+        return match["title"].head(10).tolist()
+
+    def get_movie_id(self, title):
+        match = self.df_map[self.df_map["title"].str.contains(title, case=False, regex=False)]
+        if match.empty:
+            return None
+        return match["imdb_id"].iloc[0]
 
 class LocalMovieProvider(MovieProvider):
     """  Implements the interface for the local dataset MovieLens"""
@@ -63,7 +89,7 @@ class LocalMovieProvider(MovieProvider):
 
     def get_movie_data(self, title: str):
         """ Returns a dict with movie name and average rating"""
-        match = self.df_movies[self.df_movies["title"].str.contains(title, case=False)]
+        match = self.df_movies[self.df_movies["title"].str.contains(title, case=False, regex=False)]
         if match.empty:
             return None
         movie_id = match.iloc[0]["movieId"]
@@ -88,7 +114,7 @@ class LocalMovieProvider(MovieProvider):
         self.df_movies["year"] = pd.to_numeric(self.df_movies["year"])
 
     def get_movie_list(self, title):
-        match = self.df_movies[self.df_movies["tןאךק"].str.contains(title, case=False, regex=False)]
+        match = self.df_movies[self.df_movies["title"].str.contains(title, case=False, regex=False)]
         if match.empty:
             return []
         return match["title"].head(10).tolist()
@@ -98,7 +124,7 @@ class ExternalMovieProvider(
     MovieProvider):
     """  Implements the interface for the remote OMDB API"""
 
-    def __init__(self, api_key = "b2288374", API_URL="https://www.omdbapi.com/"):
+    def __init__(self, API_URL="https://www.omdbapi.com/"):
         self.api_key = api_key
         self.url = API_URL
 
@@ -121,10 +147,12 @@ class ExternalMovieProvider(
             print(f"API connection error: {e}")
 
 
+
 class MovieService:
     def __init__(self, local_prov: MovieProvider, external_prov: MovieProvider):
         self.local_prov = local_prov
         self.external_prov = external_prov
+        self.imdb_movies = IMDBMovies()
 
     def get_full_report(self, title):
         """ Combines data from local and external movie data and returns it as dict"""
@@ -133,6 +161,8 @@ class MovieService:
             self.external_prov.get_movie_data(movie)
         return movie
 
+    def get_movie_list(self, title):
+        return self.imdb_movies.get_movie_list(title)
 # app = FastAPI()
 # templates = Jinja2Templates(directory=".")
 #
@@ -148,21 +178,4 @@ class MovieService:
 #         data = self.movie_service.get_full_report(title)
 #
 #
-#     @app.get("/", response_class=HTMLResponse)
-#     async def get_form(self, request: Request):
-#         # Initial load of the page
-#         return templates.TemplateResponse(self.template_name, {"request": request})
-#
-#     @app.post("/submit", response_class=HTMLResponse)
-#     async def post_form(self,
-#         request: Request,
-#         movie_title: str = Form(...)
-#     ):
-#         data = self.movie_service.get_full_report(movie_title)
-#
-#
-#         return templates.TemplateResponse("index.html", {
-#             "request": request,
-#             "movie_name": data['title'],
-#             "movie_score": data['average_rating']
-#         })
+
