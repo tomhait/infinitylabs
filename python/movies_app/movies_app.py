@@ -1,11 +1,11 @@
-from abc import ABC, abstractmethod
+import os
 import pandas as pd
 import requests
+from abc import ABC, abstractmethod
 from pathlib import Path
 from fastapi import FastAPI, Request, Form, Query
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
