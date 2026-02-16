@@ -13,7 +13,7 @@
         }
         .source-label { font-weight: bold; color: #555; margin-bottom: 10px; display: block; }
 
-        /* Added styling for the input */
+
         input[type="text"] { padding: 8px; width: 250px; border: 1px solid #ccc; border-radius: 4px; }
         button { padding: 8px 15px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
     </style>
@@ -62,14 +62,14 @@
             }
 
             try {
-                // This calls the FastAPI endpoint we discussed
+
                 const response = await fetch(`/search-movies?q=${encodeURIComponent(query)}`);
                 const movies = await response.json();
 
-                // Clear previous suggestions
+
                 suggestionsList.innerHTML = '';
 
-                // Add new suggestions from the search result
+
                 movies.forEach(movie => {
                     const option = document.createElement('option');
                     option.value = movie.title;
