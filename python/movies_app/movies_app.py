@@ -23,16 +23,42 @@ class MovieProvider(ABC):
 class Movie:
     def __init__(self, title, id):
         self.title = title
-        self.year = "NA"
+        self.year = "--"
         self.id = id
-        self.movielens_rating = "NA"
-        self.omdb_rating = "NA"
+        self.movielens_rating = "--"
+        self.omdb_rating = "--"
+        self.metascore = "--"
+        self.int_movie_db = "--"
+        self.rotten_tomatoes = "--"
+        self.matacritic = "--"
 
     def add_movielens_rating(self, rating):
         self.movielens_rating = rating
 
     def add_omdb_rating(self, rating):
         self.omdb_rating = rating
+
+    def add_metascore(self, metascore):
+        self.metascore = metascore
+
+    def add_ratings(self, ratings):
+        for rate in ratings:
+            if rate['Source'] == "Internet Movie Database":
+                self.int_movie_db = rate.get("Value")
+            if rate['Source'] == "Rotten Tomatoes":
+                self.rotten_tomatoes = rate.get("Value")
+            if rate['Source'] == "Metacritic":
+                self.matacritic = rate.get("Value")
+
+
+    def get_int_movie_rate(self):
+        return self.int_movie_db
+
+    def get_rotten_rate(self):
+        return self.rotten_tomatoes
+
+    def get_metacritic_rate(self):
+        return self.matacritic
 
     def set_title(self, title):
         self.title = title
@@ -122,6 +148,8 @@ class ExternalMovieProvider(
             movie_json = response.json()
             if movie_json.get("Response"):
                 movie.add_omdb_rating(movie_json.get("imdbRating"))
+                movie.add_metascore(movie_json.get("Metascore"))
+                movie.add_ratings(movie_json.get("Ratings"))
                 movie.set_title(movie_json.get("Title"))
             else:
                 print(f"Movie was not found: {movie_json.get('Error')}")
@@ -134,7 +162,6 @@ class MovieService:
     def __init__(self, local_prov: MovieProvider, external_prov: MovieProvider):
         self.local_prov = local_prov
         self.external_prov = external_prov
-        # self.imdb_movies = IMDBMovies()
 
     def get_full_report(self, title):
         """ Combines data from local and external movie data and returns it as dict"""
@@ -198,6 +225,9 @@ class MovieWebAPI:
                 "external": {
                     "title": movie.get_title(),
                     "year": movie.get_year(),
-                    "average_rating": movie.get_omdb_rating()
+                    "average_rating": movie.get_omdb_rating(),
+                    "Internet_Movie_Database": movie.get_int_movie_rate(),
+                    "Rotten_Tomatoes": movie.get_rotten_rate(),
+                    "Metacritic": movie.get_metacritic_rate()
                 }
             })
