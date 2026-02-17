@@ -10,8 +10,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-api_key = os.getenv("MY_API_KEY")
-
 class MovieProvider(ABC):
     """ Abstract base class for movie provider (e.g., OMDB)"""
 
@@ -21,6 +19,7 @@ class MovieProvider(ABC):
 
 
 class Movie:
+    """ Holds the Movie's metadata"""
     def __init__(self, title, id):
         self.title = title
         self.year = "--"
@@ -42,6 +41,7 @@ class Movie:
         self.metascore = metascore
 
     def add_ratings(self, ratings):
+        """ Parses OMDb ratings"""
         for rate in ratings:
             if rate['Source'] == "Internet Movie Database":
                 self.int_movie_db = rate.get("Value")
@@ -90,13 +90,13 @@ class Movie:
         return cls(title_value[0], title_value[1])
 
 class LocalMovieProvider(MovieProvider):
-    """  Implements the interface for the local dataset MovieLens"""
+    """  Interface for the local dataset MovieLens"""
     def __init__(self, dir_path: Path):
         self.path = dir_path
         self._parse_data()
 
     def get_movie_data(self, title: str):
-        """ Returns a dict with movie name and average rating"""
+        """ Returns a Movie instance with the local movie data"""
         match = self.df_movies[self.df_movies["title"].str.contains(title, case=False, regex=False)]
         if match.empty:
             return None
@@ -109,10 +109,8 @@ class LocalMovieProvider(MovieProvider):
         movie.set_year(match.iloc[0]['year'])
         return movie
 
-    def get_id(self):
-        pass
-
     def _parse_data(self):
+        """ Parses local MovieLens dataset"""
         self.df_ratings = pd.read_csv(self.path / "ratings.csv")
         self.df_movies = pd.read_csv(self.path / "movies.csv")
         self.df_map = pd.read_csv(self.path / "links.csv", dtype=str)
@@ -122,6 +120,7 @@ class LocalMovieProvider(MovieProvider):
         self.df_movies["year"] = pd.to_numeric(self.df_movies["year"])
 
     def get_movie_list(self, title):
+        """ Returns list of 10 movies containing the title"""
         match = self.df_movies[self.df_movies["title"].str.contains(title, case=False, regex=False)]
         if match.empty:
             return []
@@ -130,14 +129,14 @@ class LocalMovieProvider(MovieProvider):
 
 class ExternalMovieProvider(
     MovieProvider):
-    """  Implements the interface for the remote OMDB API"""
+    """  Interface for the remote OMDB API"""
 
-    def __init__(self, API_URL="https://www.omdbapi.com/"):
-        self.api_key = api_key
-        self.url = API_URL
+    def __init__(self):
+        self.api_key = os.getenv("MY_API_KEY")
+        self.url = os.getenv("API_URL")
 
     def get_movie_data(self, movie: Movie):
-        """ Returns a dict with movie name and average rating"""
+        """ Updates a Movie instance with OMDb data"""
         params = {
             'apikey': self.api_key,
             'i': movie.get_imdb_id()
@@ -159,12 +158,16 @@ class ExternalMovieProvider(
 
 
 class MovieService:
+    """ Interface for collecting data from local and external databases"""
     def __init__(self, local_prov: MovieProvider, external_prov: MovieProvider):
         self.local_prov = local_prov
         self.external_prov = external_prov
 
     def get_full_report(self, title):
-        """ Combines data from local and external movie data and returns it as dict"""
+        """
+        Combines data from local and external movie data
+        and returns it as a Movie instance
+        """
         movie = self.local_prov.get_movie_data(title)
         if movie is not None:
             self.external_prov.get_movie_data(movie)
@@ -172,6 +175,7 @@ class MovieService:
 
 
 class MovieWebAPI:
+    """ Creates a Movie web API using FastAPI"""
     def __init__(self, base_dir: str = "./ml-latest-small", template_dir: str = "."):
 
         self.base_dir = Path(base_dir)
