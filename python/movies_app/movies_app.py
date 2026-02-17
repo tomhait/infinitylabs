@@ -45,9 +45,9 @@ class Movie:
         for rate in ratings:
             if rate['Source'] == "Internet Movie Database":
                 self.int_movie_db = rate.get("Value")
-            if rate['Source'] == "Rotten Tomatoes":
+            elif rate['Source'] == "Rotten Tomatoes":
                 self.rotten_tomatoes = rate.get("Value")
-            if rate['Source'] == "Metacritic":
+            elif rate['Source'] == "Metacritic":
                 self.matacritic = rate.get("Value")
 
 
