@@ -19,11 +19,11 @@ class Server(ABC):
         pass
 
 class Client(ABC):
-    abstractmethod
+    @abstractmethod
     def start(self):
         pass
 
-    abstractmethod
+    @abstractmethod
     def send_packet(self, message):
         pass
 
