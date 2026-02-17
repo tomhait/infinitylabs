@@ -129,7 +129,7 @@ class LocalMovieProvider(MovieProvider):
 
 class ExternalMovieProvider(
     MovieProvider):
-    """  Interface for the remote OMDB API"""
+    """  Interface for remote OMDb API"""
 
     def __init__(self):
         self.api_key = os.getenv("MY_API_KEY")
