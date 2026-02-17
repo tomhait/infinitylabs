@@ -30,6 +30,7 @@ class Movie:
         self.int_movie_db = "--"
         self.rotten_tomatoes = "--"
         self.matacritic = "--"
+        self.poster_url = "--"
 
     def add_movielens_rating(self, rating):
         self.movielens_rating = rating
@@ -50,6 +51,11 @@ class Movie:
             elif rate['Source'] == "Metacritic":
                 self.matacritic = rate.get("Value")
 
+    def add_poster_url(self, poster_url):
+        self.poster_url = poster_url
+
+    def get_poster_url(self):
+        return self.poster_url
 
     def get_int_movie_rate(self):
         return self.int_movie_db
@@ -149,6 +155,7 @@ class ExternalMovieProvider(
                 movie.add_omdb_rating(movie_json.get("imdbRating"))
                 movie.add_metascore(movie_json.get("Metascore"))
                 movie.add_ratings(movie_json.get("Ratings"))
+                movie.add_poster_url(movie_json.get("Poster"))
                 movie.set_title(movie_json.get("Title"))
             else:
                 print(f"Movie was not found: {movie_json.get('Error')}")
@@ -232,6 +239,7 @@ class MovieWebAPI:
                     "average_rating": movie.get_omdb_rating(),
                     "Internet_Movie_Database": movie.get_int_movie_rate(),
                     "Rotten_Tomatoes": movie.get_rotten_rate(),
-                    "Metacritic": movie.get_metacritic_rate()
+                    "Metacritic": movie.get_metacritic_rate(),
+                    "poster_url": movie.get_poster_url()
                 }
             })
