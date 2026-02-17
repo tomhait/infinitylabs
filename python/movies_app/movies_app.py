@@ -22,8 +22,8 @@ class Movie:
     """ Holds the Movie's metadata"""
     def __init__(self, title, id):
         self.title = title
-        self.year = "--"
         self.id = id
+        self.year = "--"
         self.movielens_rating = "--"
         self.omdb_rating = "--"
         self.metascore = "--"
