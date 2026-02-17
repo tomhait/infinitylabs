@@ -1,9 +1,16 @@
+import os
 import socket
 import threading
 import time
 import select
 from abc import ABC, abstractmethod
+from dotenv import load_dotenv
 
+load_dotenv()
+
+__all__ = ("MyUDPServer", "MyUDPClient", "MyTCPServer",
+           "MyTCPClient", "MyBroadcastServer", "MyBroadcastListener",
+           "ReactorServer", "run_clients_simulation")
 ###########################################################################
 
 class Server(ABC):
@@ -26,7 +33,7 @@ class MyUDPServer(Server):
     """
     UDP server
     """
-    UDP_IP = "127.0.0.1"
+    UDP_IP = os.getenv("UDP_IP")
     BUFFER_LEN = 1024
 
     def __init__(self, port_num = 5000):
@@ -50,7 +57,7 @@ class MyUDPClient(Client):
     """
     UDP client
     """
-    UDP_IP = "127.0.0.1"
+    UDP_IP = os.getenv("UDP_IP")
     BUFFER_LEN = 1024
 
     def __init__(self, port_num = 5000):
@@ -79,7 +86,7 @@ class MyTCPServer(Server):
     """
     TCP server
     """
-    TCP_IP = "127.0.0.1"
+    TCP_IP = os.getenv("TCP_IP")
     BUFFER_LEN = 1024
     totalclient = 10
     idle_limit = 60
@@ -132,7 +139,7 @@ class MyTCPClient(Client):
     """
     TCP client
     """
-    TCP_IP = "127.0.0.1"
+    TCP_IP = os.getenv("TCP_IP")
     BUFFER_LEN = 1024
 
     def __init__(self, port_num = 5005):
@@ -179,7 +186,7 @@ class MyBroadcastServer(Server):
         finally:
             self.sock.close()
 
-class MyBroadcastListener(Client):
+class MyBroadcastListener:
     BUFFER_LEN = 1024
 
     def __init__(self, port_num=5010):
@@ -200,8 +207,7 @@ class MyBroadcastListener(Client):
                 print("Closing Listener...")
                 self.sock.close()
                 break
-    def send_packet(self, message):
-        pass
+
 
 ###########################################################################
 ###########################################################################
@@ -242,7 +248,7 @@ class Reactor:
         self.is_run = False
 
 class ReactorServer(Server):
-    TCP_IP = "127.0.0.1"
+    TCP_IP = os.getenv("TCP_IP")
     BUFFER_LEN = 1024
     totalclient = 10
 
