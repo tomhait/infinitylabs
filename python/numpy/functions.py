@@ -74,3 +74,12 @@ def get_central_part(mat: np.ndarray):
 
 #############################################################
 
+def standard_matrix(mat: np.ndarray, axis=0):
+    """ Returns a standardized numpy matrix by columns
+    (default; axis=0)
+    """
+    mean = np.nanmean(mat, axis=axis, keepdims=True)
+    std = np.nanstd(mat, axis=axis, keepdims=True)
+    stand_mat = (mat-mean) / std
+    return stand_mat
+
