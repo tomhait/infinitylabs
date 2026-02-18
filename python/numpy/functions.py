@@ -56,7 +56,7 @@ def get_random_mat(shape: tuple | list):
     """ Generates a random integer matrix by shape
     and append a column of ones
     """
-    mat = rng.integers(low=1, high=10, size=shape)
+    mat = rng.integers(low=-20, high=20, size=shape)
     return np.append(mat, np.ones((shape[0], 1)), axis=1)
 
 #############################################################
@@ -83,3 +83,30 @@ def standard_matrix(mat: np.ndarray, axis=0):
     stand_mat = (mat-mean) / std
     return stand_mat
 
+#############################################################
+
+def create_quadratic_ds(n_samples = 500, a = 1, b = 1, c = 1):
+    """ Creates a dataset that follows a quadratic formula plus
+    noise, consisting n_samples between -30 and 100
+    """
+    x = np.linspace(-30, 100, n_samples)
+    y = a * x**2 + b * x + c
+    noise = rng.normal(size=n_samples)
+    return x, y + noise
+
+#############################################################
+
+def apply_ols_quad(x, y):
+    coefficients = np.polyfit(x, y, 2)
+    quadratic_model = np.poly1d(coefficients)
+    y_pred = quadratic_model(x)
+    print(f"Fitted coefficients (a, b, c): {coefficients}")
+    return y_pred
+
+#############################################################
+
+def softmax(x, axis = None):
+    """ Computes the softmax values of x"""
+    x_max = np.max(x, axis=axis)
+    exp_x = np.exp(x - x_max)
+    return exp_x / np.sum(exp_x, axis=axis)
