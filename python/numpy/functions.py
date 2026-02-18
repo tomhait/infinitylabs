@@ -49,23 +49,28 @@ def concat(arr1: np.ndarray | list, arr2: np.ndarray | list):
 def print_elem(arr: np.ndarray | list):
     print(arr)
 
-n=10000000
-a_list = zero_list(n)
-a_np = zero_np(n)
+#############################################################
+rng = np.random.default_rng(42)
 
-a_list1 = add_const(a_list, val = 1)
-a_list2 = add_const(a_list)
-a_np1 = add_const(a_np, val = 1)
-a_np2 = add_const(a_np)
+def get_random_mat(shape: tuple | list):
+    """ Generates a random integer matrix by shape
+    and append a column of ones
+    """
+    mat = rng.integers(low=1, high=10, size=shape)
+    return np.append(mat, np.ones((shape[0], 1)), axis=1)
 
-dot_prod(a_list1, a_list2)
-dot_prod(a_np1, a_np2)
+#############################################################
 
-apply_exp(a_list1)
-apply_exp(a_np1)
+def get_central_part(mat: np.ndarray):
+    """ Returns the central part of the metrix excluding the
+    first and last quarters of rows and columns
+    """
+    shape = mat.shape
+    n1 = shape[0] // 4
+    n2 = n1 * 3
+    n3 = shape[1] // 4
+    n4 = n3 * 3
+    return mat[n1:n2, n3:n4]
 
-concat(a_list1, a_list2)
-concat(a_np1, a_np2)
+#############################################################
 
-print_elem(a_list1)
-print_elem(a_np1)
