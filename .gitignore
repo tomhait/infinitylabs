@@ -30,9 +30,6 @@ python/sorts/__pycache__/
 python/tests/
 python/tests_WS/__pycache__/
 quizzes/.idea/
-.env
-python/movies_app/.env
-.gitignore
 python/movies_app/.env
 python/movies_app/__pycache__/
 python/movies_app/ml-latest-small/
