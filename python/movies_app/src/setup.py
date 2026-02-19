@@ -3,7 +3,7 @@ import subprocess
 import zipfile
 
 try:
-    result = subprocess.run(["bash", "./setup.sh"], check=True, capture_output=True, text=True)
+    result = subprocess.run(["bash", "./src/setup.sh"], check=True, capture_output=True, text=True)
     print("Download successful!")
 except subprocess.CalledProcessError as e:
     print(f"Error occurred: {e.stderr}")

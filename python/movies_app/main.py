@@ -1,5 +1,4 @@
-from movies_app import MovieWebAPI
-
+from src.movieWebAPI import MovieWebAPI
 
 api_instance = MovieWebAPI()
 app = api_instance.app
