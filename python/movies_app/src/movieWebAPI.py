@@ -49,20 +49,22 @@ class MovieWebAPI:
                     "external": None
                 })
 
+            ratings = movie.get_all_ratings()
+
             return self.templates.TemplateResponse(self.template_name, {
                 "request": request,
                 "local": {
                     "title": movie.get_title(),
                     "year": movie.get_year(),
-                    "average_rating": movie.get_local_rating()
+                    "average_rating": ratings['movielens']
                 },
                 "external": {
                     "title": movie.get_title(),
                     "year": movie.get_year(),
-                    "average_rating": movie.get_omdb_rating(),
-                    "Internet_Movie_Database": movie.get_int_movie_rate(),
-                    "Rotten_Tomatoes": movie.get_rotten_rate(),
-                    "Metacritic": movie.get_metacritic_rate(),
+                    "average_rating": ratings['omdb'],
+                    "Internet_Movie_Database": ratings['internet'],
+                    "Rotten_Tomatoes": ratings['rotten'],
+                    "Metacritic": ratings['metacritic'],
                     "poster_url": movie.get_poster_url()
                 }
             })

@@ -1,8 +1,8 @@
 class Movie:
     """ Holds the Movie's metadata"""
-    def __init__(self, title, id):
+    def __init__(self, title, movie_id):
         self.title = title
-        self.id = id
+        self.movie_id = movie_id
         self.year = "--"
         self.movielens_rating = "--"
         self.omdb_rating = "--"
@@ -11,15 +11,6 @@ class Movie:
         self.rotten_tomatoes = "--"
         self.matacritic = "--"
         self.poster_url = "--"
-
-    def add_movielens_rating(self, rating):
-        self.movielens_rating = rating
-
-    def add_omdb_rating(self, rating):
-        self.omdb_rating = rating
-
-    def add_metascore(self, metascore):
-        self.metascore = metascore
 
     def add_ratings(self, ratings):
         """ Parses OMDb ratings"""
@@ -37,26 +28,11 @@ class Movie:
     def get_poster_url(self):
         return self.poster_url
 
-    def get_int_movie_rate(self):
-        return self.int_movie_db
-
-    def get_rotten_rate(self):
-        return self.rotten_tomatoes
-
-    def get_metacritic_rate(self):
-        return self.matacritic
-
     def set_title(self, title):
         self.title = title
 
     def get_imdb_id(self):
-        return self.id
-
-    def get_local_rating(self):
-        return self.movielens_rating
-
-    def get_omdb_rating(self):
-        return self.omdb_rating
+        return self.movie_id
 
     def get_title(self):
         return self.title
@@ -66,6 +42,15 @@ class Movie:
 
     def get_year(self):
         return self.year
+
+    def get_all_ratings(self):
+        return {'movielens': self.movielens_rating,
+                'omdb': self.omdb_rating,
+                'metascore': self.metascore_rating,
+                'rotten': self.rotten_tomatoes,
+                'metacritic': self.matacritic,
+                "internet": self.int_movie_db
+                }
 
     @classmethod
     def from_string(cls, title):

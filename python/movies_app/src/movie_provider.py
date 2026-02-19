@@ -1,11 +1,10 @@
 import os
-import pandas as pd
 import requests
 from abc import ABC, abstractmethod
 from pathlib import Path
-
 from dotenv import load_dotenv
 from .movie import Movie
+from .parsers import parse_movielens_data
 
 load_dotenv()
 
@@ -22,31 +21,25 @@ class LocalMovieProvider(MovieProvider):
     """  Interface for the local dataset MovieLens"""
     def __init__(self, dir_path: Path):
         self.path = dir_path
-        self._parse_data()
+        parsed_data = parse_movielens_data(self.path)
+        self.df_ratings = parsed_data[0]
+        self.df_movies = parsed_data[1]
+        self.df_map = parsed_data[2]
 
     def get_movie_data(self, title: str):
         """ Returns a Movie instance with the local movie data"""
         match = self.df_movies[self.df_movies["title"].str.contains(title, case=False, regex=False)]
         if match.empty:
             return None
-        movie_id = match.iloc[0]["movieId"]
-        movie_name = match.iloc[0]["title"]
+        match = match.iloc[0]
+        movie_id = match["movieId"]
+        movie_name = match["title"]
         avg_rating = self.df_ratings[self.df_ratings["movieId"] == movie_id]["rating"].mean()
         movie_imdb = self.df_map["imdbId"][self.df_map["movieId"]== str(movie_id)].iloc[0]
         movie = Movie.from_tuple((movie_name,movie_imdb))
-        movie.add_movielens_rating(round(avg_rating, 2))
-        movie.set_year(match.iloc[0]['year'])
+        movie.movielens_rating = round(avg_rating, 2)
+        movie.set_year(match['year'])
         return movie
-
-    def _parse_data(self):
-        """ Parses local MovieLens dataset"""
-        self.df_ratings = pd.read_csv(self.path / "ratings.csv")
-        self.df_movies = pd.read_csv(self.path / "movies.csv")
-        self.df_map = pd.read_csv(self.path / "links.csv", dtype=str)
-        self.df_map["imdbId"] = "tt" + self.df_map["imdbId"]
-        self.df_movies["year"] = self.df_movies['title'].str.extract(r'\((\d{4})\)')
-        self.df_movies['title'] = self.df_movies['title'].str.replace(r'\s*\(\d{4}\)', '', regex=True)
-        self.df_movies["year"] = pd.to_numeric(self.df_movies["year"])
 
     def get_movie_list(self, title):
         """ Returns list of 10 movies containing the title"""
@@ -55,9 +48,7 @@ class LocalMovieProvider(MovieProvider):
             return []
         return match["title"].head(10).tolist()
 
-
-class ExternalMovieProvider(
-    MovieProvider):
+class ExternalMovieProvider(MovieProvider):
     """  Interface for remote OMDb API"""
 
     def __init__(self):
@@ -75,8 +66,8 @@ class ExternalMovieProvider(
             response.raise_for_status()
             movie_json = response.json()
             if movie_json.get("Response"):
-                movie.add_omdb_rating(movie_json.get("imdbRating"))
-                movie.add_metascore(movie_json.get("Metascore"))
+                movie.omdb_rating = movie_json.get("imdbRating")
+                movie.metascore_rating = movie_json.get("Metascore")
                 movie.add_ratings(movie_json.get("Ratings"))
                 movie.add_poster_url(movie_json.get("Poster"))
                 movie.set_title(movie_json.get("Title"))
