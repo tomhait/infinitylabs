@@ -97,7 +97,7 @@ def create_quadratic_ds(n_samples = 500, a = 1, b = 2, c = 1):
 #############################################################
 
 def apply_ols_quad(x, y):
-    """ Fits a polynomial linear regression"""
+    """ Fits a quadratic linear regression"""
     mat = np.column_stack([x**2, x, np.ones(x.shape)])
     coefficients = np.linalg.inv(mat.T @ mat) @ mat.T @ y
     quadratic_model = np.poly1d(coefficients)
