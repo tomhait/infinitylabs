@@ -30,3 +30,10 @@ python/sorts/__pycache__/
 python/tests/
 python/tests_WS/__pycache__/
 quizzes/.idea/
+python/movies_app/
+python/networks/.env
+python/networks/__pycache__/
+python/numpy/Lenna.png
+python/numpy/__pycache__/
+python/numpy/data.csv
+python/numpy/incomplete_data.csv
