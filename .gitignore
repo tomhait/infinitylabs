@@ -31,6 +31,7 @@ python/tests/
 python/tests_WS/__pycache__/
 quizzes/.idea/
 python/movies_app/.env
+python/networks/.env
 python/movies_app/__pycache__/
 python/movies_app/ml-latest-small/
 python/movies_app/old/
