@@ -1,0 +1,4 @@
+fastapi==0.129.0
+pandas==3.0.1
+python-dotenv==1.2.1
+Requests==2.32.5
