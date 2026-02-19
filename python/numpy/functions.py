@@ -85,7 +85,7 @@ def standard_matrix(mat: np.ndarray, axis=0):
 
 #############################################################
 
-def create_quadratic_ds(n_samples = 500, a = 1, b = 1, c = 1):
+def create_quadratic_ds(n_samples = 500, a = 1, b = 2, c = 1):
     """ Creates a dataset that follows a quadratic formula plus
     noise, consisting n_samples between -30 and 100
     """
@@ -97,7 +97,8 @@ def create_quadratic_ds(n_samples = 500, a = 1, b = 1, c = 1):
 #############################################################
 
 def apply_ols_quad(x, y):
-    coefficients = np.polyfit(x, y, 2)
+    mat = np.column_stack([x**2, x, np.ones(x.shape)])
+    coefficients = np.linalg.inv(mat.T @ mat) @ mat.T @ y
     quadratic_model = np.poly1d(coefficients)
     y_pred = quadratic_model(x)
     print(f"Fitted coefficients (a, b, c): {coefficients}")
