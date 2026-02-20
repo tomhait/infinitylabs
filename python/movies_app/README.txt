@@ -7,5 +7,4 @@ MY_API_KEY="Get an API key from omdb"
 API_URL="https://www.omdbapi.com/"
 
 Then, to run the server:
-python main.py
-
+uvicorn main:app --reload
