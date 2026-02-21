@@ -80,7 +80,7 @@ def standard_matrix(mat: np.ndarray, axis=0):
     """
     mean = np.nanmean(mat, axis=axis, keepdims=True)
     std = np.nanstd(mat, axis=axis, keepdims=True)
-    stand_mat = (mat-mean) / std
+    stand_mat = (mat-mean) / (std + 1e-8)
     return stand_mat
 
 #############################################################
