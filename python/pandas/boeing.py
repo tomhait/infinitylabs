@@ -11,7 +11,6 @@ Original file is located at
 
 import kagglehub
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 
 path = kagglehub.dataset_download("nurielreuven/boeing-historical-airplane-orders-deliveries")
