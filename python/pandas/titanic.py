@@ -14,8 +14,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.linear_model import LogisticRegression
+from sklearn import svm
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import GridSearchCV
 
 """# **Ex 1**"""
 
@@ -123,7 +126,7 @@ df.describe()
 df['sex_encoded'] = df['Sex'].map({'male': 0, 'female': 1})
 df.count()
 
-"""# **Ex. 5 - Logitstic regression with Lasso**"""
+"""# **Ex. 5 - Different Supervised classifiers**"""
 
 #Ex. 5
 features = ['Pclass', 'Age', 'family_size', 'Fare', 'sex_encoded']
@@ -148,6 +151,62 @@ importance = pd.DataFrame({
     'Coefficient': model.coef_[0]
 })
 print(importance.sort_values(by='Coefficient', ascending=False))
+
+# Elasticnet logistic regression
+model = LogisticRegression(penalty='elasticnet', solver='saga', l1_ratio=0.5, C=1.0, max_iter=1000)
+model.fit(X_train_scaled, y_train)
+
+print(f"Training accuracy: {model.score(X_train_scaled, y_train): .2f}")
+print(f"Testing accuracy: {model.score(X_test_scaled, y_test): .2f}")
+
+importance = pd.DataFrame({
+    'Feature': features,
+    'Coefficient': model.coef_[0]
+})
+print(importance.sort_values(by='Coefficient', ascending=False))
+
+# Grid Search
+param_grid = {
+    'C': [0.001, 0.01, 0.1, 0.2, 0.3, 0.5, 1, 10],
+    'l1_ratio': [0.1, 0.5, 0.7, 0.9, 0.95, 1.0]
+}
+grid_search = GridSearchCV(
+    LogisticRegression(penalty='elasticnet', solver='saga', max_iter=10000),
+    param_grid,
+    cv=4,
+    scoring='accuracy'
+)
+
+grid_search.fit(X_train_scaled, y_train)
+
+# Print best parameters
+print(f"Best parameters: {grid_search.best_params_}")
+
+# Use the best model
+best_model = grid_search.best_estimator_
+
+print(f"Training accuracy: {best_model.score(X_train_scaled, y_train): .2f}")
+print(f"Testing accuracy: {best_model.score(X_test_scaled, y_test): .2f}")
+
+# SVM
+model = svm.SVC(kernel='linear', C=1)
+model.fit(X_train_scaled, y_train)
+
+print(f"Training accuracy: {model.score(X_train_scaled, y_train): .2f}")
+print(f"Testing accuracy: {model.score(X_test_scaled, y_test): .2f}")
+
+importance = pd.DataFrame({
+    'Feature': features,
+    'Coefficient': model.coef_[0]
+})
+print(importance.sort_values(by='Coefficient', ascending=False))
+
+# KNN
+model = KNeighborsClassifier(n_neighbors=10)
+model.fit(X_train_scaled, y_train)
+
+print(f"Training accuracy: {model.score(X_train_scaled, y_train): .2f}")
+print(f"Testing accuracy: {model.score(X_test_scaled, y_test): .2f}")
 
 """# **Ex 6**"""
 
