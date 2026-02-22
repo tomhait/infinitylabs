@@ -63,7 +63,7 @@ print(prog_df.tail())
 print(prog_df.head())
 
 plt.plot(prog_df['Month'], prog_df['Planes_In_Progress'],
-         color='blue', linewidth=2, label='In Building Process')
+         color='blue', linewidth=2)
 
 plt.title('Boeing Aircraft Manufacturing Volume', fontsize=15)
 plt.xlabel('Year', fontsize=12)
