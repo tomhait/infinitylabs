@@ -5,8 +5,9 @@ from abstract_genetic_alg import GeneticAlgorithm
 class ImageEvolver(GeneticAlgorithm):
     def __init__(self, target_path, num_triangles=50, pop_size=20):
         img = Image.open(target_path).convert('RGB')
-        self.target = np.array(img).astype(float)
-        self.width, self.height = img.size
+        resized_img = img.resize((256, 256), Image.Resampling.LANCZOS)
+        self.target = np.array(resized_img).astype(float)
+        self.width, self.height = resized_img.size
         self.num_triangles = num_triangles
         self.pop_size = pop_size
         self.gene_size = 10
@@ -72,5 +73,5 @@ class ImageEvolver(GeneticAlgorithm):
 
 
 
-evolver = ImageEvolver(r"Lenna.png", num_triangles=100, pop_size=50)
-evolver.run(generations=3000, file_name="Lenna_result.png")
+evolver = ImageEvolver(r"brain.jpg", num_triangles=300, pop_size=100)
+evolver.run(generations=3000, file_name="brain_result.jpg")
