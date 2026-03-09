@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 class GeneticAlgorithm(ABC):
-    """ Abstract base class for |Genetic algorithm implementation"""
+    """ Abstract base class for Genetic algorithm implementation"""
 
     @abstractmethod
     def fitness(self, chromosome):
