@@ -19,11 +19,11 @@ class ImageEvolver(GeneticAlgorithm):
         canvas = Image.new('RGB', (self.width, self.height), (0, 0, 0))
         draw = ImageDraw.Draw(canvas, 'RGBA')
 
-        for t in chromosome:
-            coords = [(t[0] * self.width, t[1] * self.height),
-                      (t[2] * self.width, t[3] * self.height),
-                      (t[4] * self.width, t[5] * self.height)]
-            color = tuple((t[6:10] * 255).astype(int))
+        for gene in chromosome:
+            coords = [(gene[0] * self.width, gene[1] * self.height),
+                      (gene[2] * self.width, gene[3] * self.height),
+                      (gene[4] * self.width, gene[5] * self.height)]
+            color = tuple((gene[6:10] * 255).astype(int))
             draw.polygon(coords, fill=color)
 
         return np.array(canvas).astype(float)

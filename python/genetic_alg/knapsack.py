@@ -51,8 +51,8 @@ class GenKnapsack(GeneticAlgorithm):
                 chromosome[i] = 1 if chromosome[i] == 0 else 0
 
 
-    def selection(self, population): # Tournament
-        offspring = rng.choice(population, 2)
+    def selection(self, population, tournament_size = 2):
+        offspring = rng.choice(population, tournament_size)
         return max(offspring, key=self.fitness)
 
     @func_timer
