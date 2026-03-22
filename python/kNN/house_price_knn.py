@@ -7,6 +7,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.compose import TransformedTargetRegressor
 
 path = kagglehub.dataset_download("yasserh/housing-prices-dataset")
 
@@ -19,7 +20,7 @@ print(df.shape)
 print(df.info())
 
 X = df.drop('price', axis=1)
-y = np.log1p(df['price'])
+y = df['price']
 
 numeric_features = ['area', 'bedrooms', 'bathrooms', 'stories', 'parking']
 numeric_transformer = Pipeline(steps=[
@@ -39,14 +40,20 @@ preprocessor = ColumnTransformer(
 
 clf = Pipeline(steps=[
     ('preprocessor', preprocessor),
-    ('classifier', KNeighborsRegressor(n_neighbors=10))
+    ('classifier', KNeighborsRegressor(n_neighbors=6))
 ])
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-clf.fit(X_train, y_train)
+model = TransformedTargetRegressor(
+    regressor=clf,
+    func=np.log1p,
+    inverse_func=np.expm1
+)
 
-y_pred = clf.predict(X_test)
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
 
 mse = mean_squared_error(y_test, y_pred)
 r2 = r2_score(y_test, y_pred)
