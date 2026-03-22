@@ -2,7 +2,10 @@ import kagglehub
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
 
 path = kagglehub.dataset_download("yasserh/titanic-dataset")
 
@@ -12,21 +15,36 @@ df = pd.read_csv(path+"/Titanic-Dataset.csv")
 
 print(df.count())
 
-# Fill missing age with median
-df['Age'] = df['Age'].fillna(df['Age'].median())
-
-df['Sex'] = LabelEncoder().fit_transform(df['Sex'])
-
-# Numerical feature selection
+# Features
 features = ['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare']
 X = df[features]
 y = df['Survived']
 
-# Standardization
-X_scaled = StandardScaler().fit_transform(X)
+numeric_features = ['Pclass', 'Age', 'Fare', 'SibSp', 'Parch']
+numeric_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='median')),
+    ('scaler', StandardScaler())
+])
 
-X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2)
-knn = KNeighborsClassifier(n_neighbors=5)
-knn.fit(X_train, y_train)
+categorical_features = ['Sex']
+categorical_transformer = Pipeline(steps=[
+    ('onehot', OneHotEncoder(drop='if_binary'))
+])
 
-print(f"Titanic Survival Accuracy: {knn.score(X_test, y_test):.2%}")
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', numeric_transformer, numeric_features),
+        ('cat', categorical_transformer, categorical_features)
+    ])
+
+clf = Pipeline(steps=[
+    ('preprocessor', preprocessor),
+    ('classifier', KNeighborsClassifier(n_neighbors=5))
+])
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+clf.fit(X_train, y_train)
+
+accuracy = clf.score(X_test, y_test)
+print(f"Titanic Accuracy (One-Hot Encoded): {accuracy:.2%}")
