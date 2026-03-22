@@ -21,7 +21,8 @@ print(df.count())
 print(df.shape)
 print(df.info())
 
-X = df.drop('price', axis=1)
+
+X = df.drop(columns=['price'])
 y = df['price']
 
 numeric_features = ['area', 'bedrooms', 'bathrooms', 'stories', 'parking']
@@ -29,9 +30,10 @@ numeric_transformer = Pipeline(steps=[
     ('scaler', StandardScaler())
 ])
 
-categorical_features = ['mainroad', 'guestroom', 'basement', 'hotwaterheating', 'airconditioning', 'prefarea','furnishingstatus']
+categorical_features = ['mainroad', 'guestroom', 'basement', 'hotwaterheating', 'airconditioning', 'prefarea', 'furnishingstatus']
 categorical_transformer = Pipeline(steps=[
-    ('onehot', OneHotEncoder(drop='if_binary'))
+    ('onehot', OneHotEncoder(drop='if_binary')),
+    ('scaler', StandardScaler(with_mean=False))
 ])
 
 preprocessor = ColumnTransformer(
@@ -42,7 +44,7 @@ preprocessor = ColumnTransformer(
 
 clf = Pipeline(steps=[
     ('preprocessor', preprocessor),
-    ('classifier', KNeighborsRegressor(n_neighbors=6))
+    ('classifier', KNeighborsRegressor(n_neighbors=8))
 ])
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
@@ -77,7 +79,6 @@ plt.plot([min_val, max_val], [min_val, max_val], color='red', linestyle='--', lw
 plt.xlabel('Observed Price')
 plt.ylabel('Predicted Price')
 plt.title('Predicted vs. Observed House Prices')
-plt.legend()
 plt.tight_layout()
 
 plt.show()
