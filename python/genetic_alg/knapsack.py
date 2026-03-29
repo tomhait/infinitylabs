@@ -17,12 +17,14 @@ def func_timer(func):
 
 class GenKnapsack(GeneticAlgorithm):
 
-    def __init__(self, items = None, capacity = 10, pop_size = 10, num_generations = 50, mutation_rate = 0.05):
+    def __init__(self, items = None, capacity = 10, pop_size = 10, num_generations = 50, mutation_rate = 0.05, alpha = 2):
         self.items = items
         self.capacity = capacity
         self.pop_size = pop_size
         self.num_generations = num_generations
         self.mutation_rate = mutation_rate
+        self.alpha = alpha
+        self.current_gen = 0
 
     def create_individual(self):
         return np.array([rng.choice([0,1]) for _ in range(len(self.items))])
@@ -36,7 +38,9 @@ class GenKnapsack(GeneticAlgorithm):
                 total_value += self.items[i][1]
 
         if total_weight > self.capacity:
-            return 0
+            dynamic_alpha = self.alpha * (self.current_gen + 1)
+            penalty = dynamic_alpha * (total_weight - self.capacity) ** 2
+            return max(0, total_value - penalty)
 
         return total_value
 
@@ -65,6 +69,7 @@ class GenKnapsack(GeneticAlgorithm):
         population = [self.create_individual() for _ in range(self.pop_size)]
 
         for gen in range(self.num_generations):
+            self.current_gen = gen
             new_population = []
             population.sort(key=self.fitness, reverse=True)
             new_population.append(population[0])
