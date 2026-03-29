@@ -17,7 +17,7 @@ def func_timer(func):
 
 class GenKnapsack(GeneticAlgorithm):
 
-    def __init__(self, items = None, capacity = 10, pop_size = 10, num_generations = 50, mutation_rate = 0.01):
+    def __init__(self, items = None, capacity = 10, pop_size = 10, num_generations = 50, mutation_rate = 0.05):
         self.items = items
         self.capacity = capacity
         self.pop_size = pop_size
@@ -25,7 +25,7 @@ class GenKnapsack(GeneticAlgorithm):
         self.mutation_rate = mutation_rate
 
     def create_individual(self):
-        return [rng.choice([0,1]) for _ in range(len(self.items))]
+        return np.array([rng.choice([0,1]) for _ in range(len(self.items))])
 
     def fitness(self, chromosome):
         total_weight = 0
@@ -37,6 +37,7 @@ class GenKnapsack(GeneticAlgorithm):
 
         if total_weight > self.capacity:
             return 0
+
         return total_value
 
     def crossover(self, parent1, parent2):
@@ -51,9 +52,10 @@ class GenKnapsack(GeneticAlgorithm):
                 chromosome[i] = 1 if chromosome[i] == 0 else 0
 
 
-    def selection(self, population, tournament_size = 2):
-        offspring = rng.choice(population, tournament_size)
-        return max(offspring, key=self.fitness)
+    def selection(self, population, tournament_size = 3):
+        indices = rng.choice(len(population), size = tournament_size, replace = False)
+        tournament_contestants = [population[i] for i in indices]
+        return sorted(tournament_contestants, key=self.fitness, reverse=True)[:2]
 
     @func_timer
     def run(self, items = None):
@@ -68,8 +70,7 @@ class GenKnapsack(GeneticAlgorithm):
             new_population.append(population[0])
 
             while len(new_population) < self.pop_size:
-                p1 = self.selection(population)
-                p2 = self.selection(population)
+                p1, p2 = self.selection(population)
 
                 c1, c2 = self.crossover(p1, p2)
                 self.mutate(c1)
