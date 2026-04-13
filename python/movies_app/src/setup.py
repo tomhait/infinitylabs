@@ -16,7 +16,7 @@ except subprocess.CalledProcessError as e:
     print(f"Error occurred: {e.stderr}")
 
 with zipfile.ZipFile(zip_filename, 'r') as zip_ref:
-    zip_ref.extractall("../")
+    zip_ref.extractall("./")
     if os.path.exists(zip_filename):
         os.remove(zip_filename)
         print(f"Temporary file '{zip_filename}' has been deleted.")
