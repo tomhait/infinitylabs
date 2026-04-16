@@ -27,3 +27,12 @@ knn.fit(X_train_reduced, y_train)
 accuracy = knn.score(X_test_reduced, y_test)
 
 print(f"MNIST Accuracy with PCA: {accuracy:.2%}")
+
+x_train = scaler.fit_transform(X_train)
+x_test = scaler.transform(X_test)
+
+for k in range(1,10):
+    knn = KNeighborsClassifier(n_neighbors=k)
+    knn.fit(X_train, y_train)
+    accuracy = knn.score(X_test, y_test)
+    print(f"MNIST Accuracy for k {k}: {accuracy:.2%}")
