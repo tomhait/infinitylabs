@@ -79,13 +79,12 @@ SELECT
     ROUND(100 * SUM(CASE WHEN final_result IN ('Pass', 'Distinction') THEN 1 ELSE 0 END) / COUNT(*), 2) AS success_rate_pct,
     ROUND(100 * SUM(CASE WHEN final_result = 'Fail' THEN 1 ELSE 0 END) / COUNT(*), 2) AS fail_rate_pct,
     ROUND(100 * SUM(CASE WHEN final_result = 'Withdrawn' THEN 1 ELSE 0 END) / COUNT(*), 2) AS withdrawal_rate_pct
-FROM student_info
+FROM student_info WHERE imd_band <> ''
 GROUP BY imd_band
 ORDER BY imd_band ASC;
 
 imd_band|student_count|success_rate_pct|fail_rate_pct|withdrawal_rate_pct|
 --------+-------------+----------------+-------------+-------------------+
-        |         1111|           65.71|        13.05|              21.24|
 0-10%   |         3311|           35.16|        27.67|              37.18|
 10-20   |         3516|           38.62|        25.94|              35.44|
 20-30%  |         3654|           40.75|        23.10|              36.15|
