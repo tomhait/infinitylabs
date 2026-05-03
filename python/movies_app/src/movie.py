@@ -46,7 +46,7 @@ class Movie:
     def get_all_ratings(self):
         return {'movielens': self.movielens_rating,
                 'omdb': self.omdb_rating,
-                'metascore': self.metascore_rating,
+                'metascore': self.metascore,
                 'rotten': self.rotten_tomatoes,
                 'metacritic': self.matacritic,
                 "internet": self.int_movie_db
