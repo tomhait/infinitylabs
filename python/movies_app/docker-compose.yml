@@ -1,0 +1,26 @@
+services:
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - ./db_dada:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=moviesapp_db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d moviesapp_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  movies-app:
+    build: .
+    ports:
+      - "9000-9001:8000"
+    deploy:
+      replicas: 2
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/moviesapp_db
+    depends_on:
+      db:
+        condition: service_healthy
