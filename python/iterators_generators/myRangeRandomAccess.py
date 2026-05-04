@@ -50,4 +50,5 @@ print("\n\n")
 r = MyRange(2, 100)
 print(r[14]) # should be 16
 print(r[-1]) # should be 99
+print(len(r))
 print(r[130]) # IndexError
