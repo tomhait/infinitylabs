@@ -17,7 +17,7 @@ class MyRange:
             if not isinstance(val, int):
                 raise TypeError('Not integer type')
 
-        self.gen = self.get_next()
+        self.gen = self._get_next()
 
     def __iter__(self):
         return self
@@ -25,7 +25,7 @@ class MyRange:
     def __next__(self):
         return next(self.gen)
 
-    def get_next(self):
+    def _get_next(self):
         yield from range(self.start, self.stop, self.step)
 
     def __len__(self):
