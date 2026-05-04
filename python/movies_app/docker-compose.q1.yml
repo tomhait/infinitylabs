@@ -1,0 +1,12 @@
+services:
+  movies-app:
+    image: python:3.14
+    container_name: fastapi_movieapp
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "5001:8000"
+    environment:
+      - .env
+    command: sh -c "pip install -r requirements.txt && bash start.sh"
