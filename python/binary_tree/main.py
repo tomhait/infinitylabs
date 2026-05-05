@@ -5,7 +5,7 @@ def test1():
     bst = BST()
     for val in lst:
         bst.insert(val)
-    print("\n",len(bst))
+    print("\n",len(bst) == 15)
     # in order
     output = []
     for i in bst:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterator, Any
+from functools import reduce
 
 @dataclass
 class Node:
@@ -156,7 +157,7 @@ class BST:
         '''
         Number of nodes
         '''
-        return len(list(self.in_order()))
+        return reduce(lambda x, _: x + 1, self.in_order(), 0)
 
     def __iter__(self) -> Iterator[Any]:
         '''
