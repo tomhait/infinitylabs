@@ -78,7 +78,6 @@ python/genetic_alg/dump.py
 python/genetic_alg/result.png
 python/genetic_alg/test.py
 python/genetic_alg/vor_result.png
-python/movies_app/Dockerfile
 python/movies_app/db_dada/PG_VERSION
 python/movies_app/db_dada/base/1/112
 python/movies_app/db_dada/base/1/113
@@ -1348,9 +1347,7 @@ python/movies_app/db_dada/pg_xact/0000
 python/movies_app/db_dada/postgresql.auto.conf
 python/movies_app/db_dada/postgresql.conf
 python/movies_app/db_dada/postmaster.opts
-python/movies_app/docker-compose.1.yml
 python/movies_app/docker-compose.old.yml
-python/movies_app/docker-compose.yml
 python/movies_app/movies_app.pem
 python/movies_app/nginx.conf
 python/movies_app/start.sh
