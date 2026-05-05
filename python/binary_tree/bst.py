@@ -87,7 +87,7 @@ class BST:
         comp = self._compare(current.value_num, target.value_num)
         if comp > 0:
             current.left = self._remove_rec(current.left, target)
-        elif comp > 0:
+        elif comp < 0:
             current.right = self._remove_rec(current.right, target)
         else:
             if current.left is None:
@@ -99,6 +99,14 @@ class BST:
             current.value_num = successor.value_num
             current.right = self._remove_rec(current.right, successor)
         return current
+
+    def _get_min_rec(self, node: Node) -> Node:
+        '''
+        Finds the leftmost node.
+        '''
+        if node.left is None:
+            return node
+        return self._get_min_rec(node.left)
 
     def _contains_rec(self, current: Node, node: Node):
         if current is None:

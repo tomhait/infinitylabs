@@ -43,6 +43,14 @@ def test2():
     print(", ".join([str(i) for i in output]))
     print('a' in bst)
     print('b' in bst)
+    bst.remove('ab')
+    print('ab' in bst)
+    output = []
+    for i in bst:
+        output.append(i)
+    print("\n")
+    print("In-order")
+    print(", ".join([str(i) for i in output]))
 
 if __name__ == "__main__":
     test1()
