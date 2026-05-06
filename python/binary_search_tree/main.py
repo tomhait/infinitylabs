@@ -57,7 +57,7 @@ def test3():
     bst = BST()
     for val in lst:
         bst.insert(val)
-    print(len(bst))
+    print('\n',len(bst))
     print("\n")
     print("In-order")
     output = []

@@ -34,7 +34,7 @@ class BST:
             raise TypeError('The value is not comparable')
         if self.type is None:
             self.type = type(value)
-        elif type(value) != self.type:
+        elif not isinstance(value, self.type):
             raise TypeError(f'The BST values should be of type {self.type}')
         if value in self:
             raise ValueError('The value is already inside the tree')
