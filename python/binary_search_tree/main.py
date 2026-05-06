@@ -29,7 +29,7 @@ def test1():
     print(", ".join([str(i) for i in output]))
 
 def test2():
-    lst = ['a',1,3,4,'ab']
+    lst = ['a','1','3','4','ab']
     bst = BST()
     for val in lst:
         bst.insert(val)
@@ -52,6 +52,32 @@ def test2():
     print("In-order")
     print(", ".join([str(i) for i in output]))
 
+def test3():
+    lst = ['a', '1']
+    bst = BST()
+    for val in lst:
+        bst.insert(val)
+    print(len(bst))
+    print("\n")
+    print("In-order")
+    output = []
+    for i in bst:
+        output.append(i)
+    print(", ".join([str(i) for i in output]))
+    bst.remove('a')
+    bst.remove('1')
+    lst = [3,1,4,0]
+    for val in lst:
+        bst.insert(val)
+    print(len(bst))
+    print("\n")
+    print("In-order")
+    output = []
+    for i in bst:
+        output.append(i)
+    print(", ".join([str(i) for i in output]))
+
 if __name__ == "__main__":
     test1()
     test2()
+    test3()

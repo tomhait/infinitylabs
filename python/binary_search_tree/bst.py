@@ -9,7 +9,6 @@ class Node:
     Defines a basic node with a value, and left (smaller) and right (larger) children.
     '''
     value: Any
-    value_num: int = -1
     left: Node | None = None
     right: Node | None = None
 
@@ -20,6 +19,7 @@ class BST:
 
     def __init__(self):
         self.root: Node | None = None
+        self.type = None
 
     def _compare(self, a: Any, b: Any):
         if a == b: return 0
@@ -27,11 +27,17 @@ class BST:
 
     def _create_node(self, value):
         node = Node(value)
-        if isinstance(value, str):
-            node.value_num = sum(map(ord, value))
-        else:
-            node.value_num = value
         return node
+
+    def _validate_value(self,value):
+        if not isinstance(value,(int,float,str,list)):
+            raise TypeError('The value is not comparable')
+        if self.type is None:
+            self.type = type(value)
+        elif type(value) != self.type:
+            raise TypeError(f'The BST values should be of type {self.type}')
+        if value in self:
+            raise ValueError('The value is already inside the tree')
 
     def insert(self, value: Any) -> None:
         '''
@@ -39,10 +45,7 @@ class BST:
         Raises ValueError if the value already exists in a different node.
         Raises TypeError if the value isn't comparable to all the basic types.
         '''
-        if not isinstance(value,(int,float,str)):
-            raise TypeError('The value is not comparable')
-        if value in self:
-            raise ValueError('The value is already inside the tree')
+        self._validate_value(value)
         node = self._create_node(value)
         if self.root is None:
             self.root = node
@@ -50,7 +53,7 @@ class BST:
             self._insert_rec(self.root, node)
 
     def _insert_rec(self, current, node):
-        comp = self._compare(current.value_num, node.value_num)
+        comp = self._compare(current.value, node.value)
         if comp > 0:
             if current.left is None:
                 current.left = node
@@ -80,11 +83,13 @@ class BST:
 
         target_node_data = self._create_node(value)
         self.root = self._remove_rec(self.root, target_node_data)
+        if self.root is None:
+            self.type = None
 
     def _remove_rec(self, current: Node | None, target: Node):
         if current is None:
             return None
-        comp = self._compare(current.value_num, target.value_num)
+        comp = self._compare(current.value, target.value)
         if comp > 0:
             current.left = self._remove_rec(current.left, target)
         elif comp < 0:
@@ -96,7 +101,6 @@ class BST:
                 return current.left
             successor = self._get_min_rec(current.right)
             current.value = successor.value
-            current.value_num = successor.value_num
             current.right = self._remove_rec(current.right, successor)
         return current
 
@@ -111,7 +115,7 @@ class BST:
     def _contains_rec(self, current: Node, node: Node):
         if current is None:
             return False
-        comp = self._compare(current.value_num, node.value_num)
+        comp = self._compare(current.value, node.value)
         if comp == 0:
             return True
         if comp > 0:
