@@ -102,7 +102,160 @@ def test3():
     print("Passed")
     print("--------------\nPassed Test 3\n--------------")
 
+
+def remove_test(ordered_list, item_to_remove, output_pre_test, output_post_test):
+    bst = BST()
+    for val in ordered_list:
+        bst.insert(val)
+    bst.remove(item_to_remove)
+
+    output_pre = []
+    output_post = []
+    for i in bst.pre_order():
+        output_pre.append(i)
+
+    for i in bst.post_order():
+        output_post.append(i)
+
+    assert output_pre == output_pre_test
+    assert output_post == output_post_test
+    print("passed")
+
+
+def test4():
+    print("---- delete root test ----")
+
+    print(" root has no childs ")
+    items = [1]
+    delete_order = [1]
+    output_pre = []
+    output_post = []
+    remove_test(items, delete_order[0], output_pre, output_post)
+
+    print(" root has one right child ")
+    items = [1, 2]
+    delete_order = [1]
+    output_pre = [2]
+    output_post = [2]
+    remove_test(items, delete_order[0], output_pre, output_post)
+
+    print(" root has one right child and the child has right child")
+    items = [1, 2, 3]
+    delete_order = [1]
+    output_pre = [2, 3]
+    output_post = [3, 2]
+    remove_test(items, delete_order[0], output_pre, output_post)
+
+    print(" root has one right child and the child has left child")
+    items = [1, 3, 2]
+    delete_order = [1]
+    output_pre = [3, 2]
+    output_post = [2, 3]
+    remove_test(items, delete_order[0], output_pre, output_post)
+
+    print(" root has one right child and the child has left child and he has right child")
+    items = [1, 4, 2, 3]
+    delete_order = [1]
+    output_pre = [4, 2, 3]
+    output_post = [3, 2, 4]
+    remove_test(items, delete_order[0], output_pre, output_post)
+
+    print(" root has one left child ")
+    items = [3, 2]
+    delete_order = [3]
+    output_pre = [2]
+    output_post = [2]
+    remove_test(items, delete_order[0], output_pre, output_post)
+
+    print(" root has 2 childs ")
+    items = [2, 1, 3]
+    delete_order = [2]
+    output_pre = [3, 1]
+    output_post = [1, 3]
+    remove_test(items, delete_order[0], output_pre, output_post)
+
+    print(" root has 2 childs and the right child has left child")
+    items = [2, 1, 5, 3]
+    delete_order = [2]
+    output_pre = [3, 1, 5]
+    output_post = [1, 5, 3]
+    remove_test(items, delete_order[0], output_pre, output_post)
+
+    print(" root has 2 childs and the right child has left child and he has right child")
+    items = [2, 1, 5, 3, 4]
+    delete_order = [2]
+    output_pre = [3, 1, 5, 4]
+    output_post = [1, 4, 5, 3]
+    remove_test(items, delete_order[0], output_pre, output_post)
+
+    print("----delete not-root node----")
+    print(" node is a right and has no childs ")
+    items = [-10, 1]
+    delete_order = [1]
+    output_pre = [-10]
+    output_post = [-10]
+    remove_test(items, delete_order[0], output_pre, output_post)
+
+    print(" node is a right and  has one right child ")
+    items = [-10, 1, 2]
+    delete_order = [1]
+    output_pre = [-10, 2]
+    output_post = [2, -10]
+    remove_test(items, delete_order[0], output_pre, output_post)
+
+    print(" node is a right and  has one right child and the child has right child")
+    items = [-10, 1, 2, 3]
+    delete_order = [1]
+    output_pre = [-10, 2, 3]
+    output_post = [3, 2, -10]
+    remove_test(items, delete_order[0], output_pre, output_post)
+
+    print(" node is a right and  has 2 cilds, the right child and the child has left child")
+    items = [-10, 1, 0, 3, 2]
+    delete_order = [1]
+    output_pre = [-10, 2, 0, 3]
+    output_post = [0, 3, 2, -10]
+    remove_test(items, delete_order[0], output_pre, output_post)
+
+    print(
+        " node is a right and  has 2 childs, the right child has left child and he has right child")
+    items = [-10, 1, 0, 4, 2, 3]
+    delete_order = [1]
+    output_pre = [-10, 2, 0, 4, 3]
+    output_post = [0, 3, 4, 2, -10]
+    remove_test(items, delete_order[0], output_pre, output_post)
+
+    print(" node is a right and  has one left child ")
+    items = [-10, 3, 2]
+    delete_order = [3]
+    output_pre = [-10, 2]
+    output_post = [2, -10]
+    remove_test(items, delete_order[0], output_pre, output_post)
+
+    print(" node is a right and  has 2 childs ")
+    items = [-10, 2, 1, 3]
+    delete_order = [2]
+    output_pre = [-10, 3, 1]
+    output_post = [1, 3, -10]
+    remove_test(items, delete_order[0], output_pre, output_post)
+
+    print(" node is a right and  has 2 childs and the right child has left child")
+    items = [-10, 2, 1, 5, 3]
+    delete_order = [2]
+    output_pre = [-10, 3, 1, 5]
+    output_post = [1, 5, 3, -10]
+    remove_test(items, delete_order[0], output_pre, output_post)
+    print(
+        " node is a right and  has 2 childs and the right child has left child and he has right child")
+    items = [-10, 2, 1, 5, 3, 4]
+    delete_order = [2]
+    output_pre = [-10, 3, 1, 5, 4]
+    output_post = [1, 4, 5, 3, -10]
+    remove_test(items, delete_order[0], output_pre, output_post)
+
+
 if __name__ == "__main__":
     test1()
     test2()
     test3()
+    test4()
