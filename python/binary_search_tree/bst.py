@@ -21,6 +21,14 @@ class BST:
         self.root: Node | None = None
         self.type = None
 
+    def get_height(self, node: Node):
+        """
+        Returns the number of edges from the node to the deepest leaf node
+        """
+        if node is None:
+            return -1
+        return 1 + max(self.get_height(node.left),self.get_height(node.right))
+
     def _compare(self, a: Any, b: Any):
         if a == b: return 0
         return -1 if a < b else 1
