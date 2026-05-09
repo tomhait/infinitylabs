@@ -25,5 +25,4 @@ def acronym_replacer(text: str, acronyms: dict):
 
 with open("sample_text.txt",'r') as f:
     text = f.read()
-    # print(text)
     print(acronym_replacer(text,acronyms))
