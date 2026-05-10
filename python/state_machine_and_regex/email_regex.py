@@ -13,16 +13,16 @@ def remove_points(email: str):
     return "Invalid email"
 
 if __name__=="__main__":
-    print(f'sthait@gmail.com: {valid_email('sthait@gmail.com')}')
-    print(f'sth.ait@gmail.com: {valid_email('sth.ait@gmail.com')}')
-    print(f'sthait@gm.ail.com: {valid_email('sthait@gm.ail.com')}')
-    print(f'stha_it@gmail.com: {valid_email('stha_it@gmail.com')}')
-    print(f'sthait@gmail.c.o.m: {valid_email('sthait@gmail.c.o.m')}')
-    print(f'sth...ait@gmailcom: {valid_email('sth...ait@gmail.com')}')
+    print(f'sssss@gmail.com: {valid_email('sssss@gmail.com')}')
+    print(f'sss.sss@gmail.com: {valid_email('sss.sss@gmail.com')}')
+    print(f'sssss@gm.ail.com: {valid_email('sssss@gm.ail.com')}')
+    print(f'ssss_ss@gmail.com: {valid_email('ssss_ss@gmail.com')}')
+    print(f'sssss@gmail.c.o.m: {valid_email('sssss@gmail.c.o.m')}')
+    print(f'sss...sss@gmailcom: {valid_email('sss...sss@gmail.com')}')
 
-    print(f'sthait@gmail.com: {remove_points('sthait@gmail.com')}')
-    print(f'sth.ait@gmail.com: {remove_points('sth.ait@gmail.com')}')
-    print(f'sthait@gm.ail.com: {remove_points('sthait@gm.ail.com')}')
-    print(f'stha_it@gmail.com: {remove_points('stha_it@gmail.com')}')
-    print(f'sthait@gmail.c.o.m: {remove_points('sthait@gmail.c.o.m')}')
-    print(f'sth...ait@gmailcom: {remove_points('sth...ait@gmail.com')}')
+    print(f'sssss@gmail.com: {remove_points('sssss@gmail.com')}')
+    print(f'sss.sss@gmail.com: {remove_points('sss.sss@gmail.com')}')
+    print(f'sssss@gm.ail.com: {remove_points('sssss@gm.ail.com')}')
+    print(f'ssss_ss@gmail.com: {remove_points('ssss_ss@gmail.com')}')
+    print(f'sssss@gmail.c.o.m: {remove_points('sssss@gmail.c.o.m')}')
+    print(f'sss..sss@gmailcom: {remove_points('sss...sss@gmail.com')}')
