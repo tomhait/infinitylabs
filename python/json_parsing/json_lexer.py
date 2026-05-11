@@ -1,7 +1,6 @@
 import re
 from dataclasses import dataclass
 from typing import Any
-import json
 
 @dataclass
 class Token:
@@ -115,5 +114,5 @@ class MyJsonParser:
         is_end = next(tokens_gen, 'END')
         if is_end == 'END':
             return data
-        raise ValueError(f"Json object is not built correctly: {is_end}")
+        raise ValueError(f"JSON object is not built correctly: {is_end}")
 
