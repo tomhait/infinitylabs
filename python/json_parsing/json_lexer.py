@@ -65,7 +65,7 @@ class MyJsonParser:
         else:
             raise ValueError(f"Unexpected token {token.obType}")
 
-    def _parse_end(self, tokens_gen, enclosingType = 'RBRACKET'):
+    def _is_enclosing(self, tokens_gen, enclosingType ='RBRACKET'):
         token = next(tokens_gen)
         if token.obType == enclosingType:
             return True
@@ -87,7 +87,7 @@ class MyJsonParser:
             if token.obType == 'RBRACKET':
                 return result
             result.append(self._parse_value(tokens_gen,token))
-            if self._parse_end(tokens_gen):
+            if self._is_enclosing(tokens_gen):
                 return result
 
     def parse_object(self, tokens_gen, is_nested = False):
@@ -107,7 +107,7 @@ class MyJsonParser:
 
             result[key] = self._parse_value(tokens_gen)
 
-            if self._parse_end(tokens_gen, enclosingType='RBRACE'):
+            if self._is_enclosing(tokens_gen, enclosingType='RBRACE'):
                 return result
 
     def loads(self, obj_str):
