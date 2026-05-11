@@ -50,16 +50,6 @@ def test8():
     with pytest.raises(ValueError):
         data = json_parser.loads(obj_str)
 
-if __name__ == '__main__':
-    test1()
-    test2()
-    test3()
-    test4()
-    test5()
-    test6()
-    test7()
-    test8()
-
 
 
 
