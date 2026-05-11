@@ -40,6 +40,11 @@ class JsonLexer:
 
 class MyJsonParser:
     lexer = JsonLexer()
+    errors = {
+        'RBRACKET': "Expected '[' at the start of the array",
+        'LBRACE': "Expected '{' at the start of the array",
+        'COLON': "Expected ':' between key-value pair"
+    }
     def _cast_to_type(self, token):
         if token.obType == 'STRING':
             return token.value
@@ -49,35 +54,45 @@ class MyJsonParser:
             return int(token.value)
         return True if token.value.lower() == 'true' else False
 
+    def _parse_value(self, tokens_gen, token = None):
+        if not token: token = next(tokens_gen)
+        if token.obType in ('STRING', 'NUMBER', 'BOOL'):
+            return self._cast_to_type(token)
+        elif token.obType == 'LBRACKET':
+            return self.parse_array(tokens_gen, is_nested=True)
+        elif token.obType == 'LBRACE':
+            return self.parse_object(tokens_gen, is_nested=True)
+        else:
+            raise ValueError(f"Unexpected token {token.obType}")
+
+    def _parse_end(self, tokens_gen, enclosingType = 'RBRACKET'):
+        token = next(tokens_gen)
+        if token.obType == enclosingType:
+            return True
+        elif token.obType != 'COMMA':
+            raise ValueError("Expected ',' between array elements")
+        return False
+
+    def _consume_token(self, tokens_gen, tokenType = 'LBRACKET'):
+        token = next(tokens_gen)
+        if token.obType != tokenType:
+            raise ValueError(self.errors[tokenType])
+
     def parse_array(self, tokens_gen, is_nested = False):
         if not is_nested:
-            token = next(tokens_gen)
-            if token.obType != 'LBRACKET':
-                raise ValueError("Expected '[' at the start of the array")
+            self._consume_token(tokens_gen, tokenType = 'LBRACKET')
         result = []
         while True:
             token = next(tokens_gen)
             if token.obType == 'RBRACKET':
                 return result
-            if token.obType in ('STRING', 'NUMBER', 'BOOL'):
-                result.append(self._cast_to_type(token))
-            elif token.obType == 'LBRACKET':
-                result.append(self.parse_array(tokens_gen, is_nested=True))
-            elif token.obType == 'LBRACE':
-                result.append(self.parse_object(tokens_gen, is_nested=True))
-            else:
-                raise ValueError(f"Unexpected token {token.obType}")
-            token = next(tokens_gen)
-            if token.obType == 'RBRACKET':
+            result.append(self._parse_value(tokens_gen,token))
+            if self._parse_end(tokens_gen):
                 return result
-            elif token.obType != 'COMMA':
-                raise ValueError("Expected ',' between array elements")
 
     def parse_object(self, tokens_gen, is_nested = False):
         if not is_nested:
-            token = next(tokens_gen)
-            if token.obType != 'LBRACE':
-                raise ValueError("Expected '{' at the start of the array")
+            self._consume_token(tokens_gen, tokenType = 'LBRACE')
         result = {}
         while True:
             token = next(tokens_gen)
@@ -88,25 +103,12 @@ class MyJsonParser:
                 raise ValueError('Key should be a string')
 
             key = token.value
-            token = next(tokens_gen)
-            if token.obType != 'COLON':
-                raise ValueError("Expected ':' between key-value pair")
+            self._consume_token(tokens_gen, tokenType = 'COLON')
 
-            token = next(tokens_gen)
-            if token.obType in ('STRING', 'NUMBER', 'BOOL'):
-                result[key] = self._cast_to_type(token)
-            elif token.obType == 'LBRACKET':
-                result[key] = self.parse_array(tokens_gen, is_nested=True)
-            elif token.obType == 'LBRACE':
-                result[key] = self.parse_object(tokens_gen, is_nested=True)
-            else:
-                raise ValueError(f"Unexpected token {token.obType}")
+            result[key] = self._parse_value(tokens_gen)
 
-            token = next(tokens_gen)
-            if token.obType == 'RBRACE':
+            if self._parse_end(tokens_gen, enclosingType='RBRACE'):
                 return result
-            elif token.obType != 'COMMA':
-                raise ValueError("Expected ',' between array elements")
 
     def loads(self, obj_str):
         tokens_gen = self.lexer.tokenize(obj_str)
