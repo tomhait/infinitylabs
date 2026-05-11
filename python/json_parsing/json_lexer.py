@@ -42,13 +42,16 @@ def cast_to_type(token):
     if token.obType == 'STRING':
         return token.value
     if token.obType == 'NUMBER':
-        return int(token.value)
+        if '.' not in token.value:
+            return int(token.value)
+        return float(token.value)
     return True if token.value.lower() == 'true' else False
 
-def parse_array(tokens_gen):
-    token = next(tokens_gen)
-    if token.obType != 'LBRACKET':
-        raise ValueError("Expected '[' at the start of the array")
+def parse_array(tokens_gen, is_nested = False):
+    if not is_nested:
+        token = next(tokens_gen)
+        if token.obType != 'LBRACKET':
+            raise ValueError("Expected '[' at the start of the array")
     result = []
     while True:
         token = next(tokens_gen)
@@ -56,6 +59,10 @@ def parse_array(tokens_gen):
             return result
         if token.obType in ('STRING', 'NUMBER', 'BOOL'):
             result.append(cast_to_type(token))
+        elif token.obType == 'LBRACKET':
+            result.append(parse_array(tokens_gen, is_nested=True))
+        elif token.obType == 'LBRACE':
+            result.append(parse_object(tokens_gen, is_nested=True))
         else:
             raise ValueError(f"Unexpected token {token.obType}")
         token = next(tokens_gen)
@@ -64,10 +71,11 @@ def parse_array(tokens_gen):
         elif token.obType != 'COMMA':
             raise ValueError("Expected ',' between array elements")
 
-def parse_object(tokens_gen):
-    token = next(tokens_gen)
-    if token.obType != 'LBRACE':
-        raise ValueError("Expected '{' at the start of the array")
+def parse_object(tokens_gen, is_nested = False):
+    if not is_nested:
+        token = next(tokens_gen)
+        if token.obType != 'LBRACE':
+            raise ValueError("Expected '{' at the start of the array")
     result = {}
     while True:
         token = next(tokens_gen)
@@ -84,9 +92,11 @@ def parse_object(tokens_gen):
 
         token = next(tokens_gen)
         if token.obType in ('STRING', 'NUMBER', 'BOOL'):
-            if key not in result:
-                result[key] = []
-            result[key].append(cast_to_type(token))
+            result[key] = cast_to_type(token)
+        elif token.obType == 'LBRACKET':
+            result[key] = parse_array(tokens_gen, is_nested=True)
+        elif token.obType == 'LBRACE':
+            result[key] = parse_object(tokens_gen, is_nested=True)
         else:
             raise ValueError(f"Unexpected token {token.obType}")
 
@@ -102,9 +112,57 @@ if __name__ == '__main__':
     for token in lexer.tokenize(json_str):
         print(token)
 
-    array_str = '["name", "age", "Tom", 30]'
+    array_str = '[[["name", "age"]], "Tom", 30]'
     print(parse_array(lexer.tokenize(array_str)))
-    assert parse_array(lexer.tokenize(array_str)) == ['name', 'age', 'Tom', 30]
+    assert parse_array(lexer.tokenize(array_str)) == [[['name', 'age']], 'Tom', 30]
 
-    obj_str = "{'name': 'Tom', 'name': 'Gabbi', 'age': 30, 'age': 32, 'is_ok': True}"
+    obj_str = '''
+        {
+      "id": "USR-94821",
+      "isActive": true,
+      "profile": {
+        "firstName": "John",
+        "lastName": "Doe",
+        "contact": {
+          "email": "j.doe@example.com",
+          "phone": "+1-555-010-9999",
+          "address": {
+            "street": "123 Tech Lane",
+            "city": "San Francisco",
+            "state": "CA",
+            "zip": "94105"
+          }
+        }
+      },
+      "organizations": [
+        {
+          "name": "CloudNine Solutions",
+          "role": "Senior Architect",
+          "departments": ["Engineering", "Research"],
+          "projects": [
+            { "id": "PRJ-01", "name": "Titan", "status": "ongoing" },
+            { "id": "PRJ-02", "name": "Atlas", "status": "completed" }
+          ]
+        },
+        {
+          "name": "OpenSource Foundation",
+          "role": "Contributor",
+          "departments": ["Community Outsourcing"],
+          "projects": []
+        }
+      ],
+      "preferences": {
+        "notifications": {
+          "email": true,
+          "sms": false,
+          "push": true
+        },
+        "theme": "dark"
+      },
+      "metadata": {
+        "lastLogin": "2024-05-10T14:30:00Z",
+        "version": 2.1
+      }
+    }
+    '''
     print(parse_object(lexer.tokenize(obj_str)))
