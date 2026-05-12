@@ -1,4 +1,5 @@
 import os
+import aiohttp
 import requests
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -14,7 +15,7 @@ class MovieProvider(ABC):
     """ Abstract base class for movie provider (e.g., OMDB)"""
 
     @abstractmethod
-    def get_movie_data(self, movie):
+    async def get_movie_data(self, movie):
         pass
 
 class LocalMovieProvider(MovieProvider):
@@ -26,7 +27,7 @@ class LocalMovieProvider(MovieProvider):
         self.df_movies = parsed_data[1]
         self.df_map = parsed_data[2]
 
-    def get_movie_data(self, title: str):
+    async def get_movie_data(self, title: str):
         """ Returns a Movie instance with the local movie data"""
         match = self.df_movies[self.df_movies["title"].str.contains(title, case=False, regex=False)]
         if match.empty:
@@ -54,26 +55,34 @@ class ExternalMovieProvider(MovieProvider):
     def __init__(self):
         self.api_key = os.getenv("MY_API_KEY")
         self.url = os.getenv("API_URL")
+        self.session = None
 
-    def get_movie_data(self, movie: Movie):
+    def set_session(self, session: aiohttp.ClientSession):
+        self.session = session
+
+    async def get_movie_data(self, movie: Movie):
         """ Updates a Movie instance with OMDb data"""
+        if self.session is None:
+            raise RuntimeError("Session not initialized. Call set_session first.")
+
         params = {
             'apikey': self.api_key,
             'i': movie.get_imdb_id()
         }
         try:
-            response = requests.get(self.url, params=params)
-            response.raise_for_status()
-            movie_json = response.json()
-            if movie_json.get("Response"):
-                movie.omdb_rating = movie_json.get("imdbRating")
-                movie.metascore_rating = movie_json.get("Metascore")
-                movie.add_ratings(movie_json.get("Ratings"))
-                movie.add_poster_url(movie_json.get("Poster"))
-                movie.set_title(movie_json.get("Title"))
-            else:
-                print(f"Movie was not found: {movie_json.get('Error')}")
-        except requests.exceptions.RequestException as e:
+            async with self.session.get(self.url, params=params) as response:
+                response.raise_for_status()
+                movie_json = await response.json()  # Non-blocking JSON parsing
+
+                if movie_json.get("Response") == "True":
+                    movie.omdb_rating = movie_json.get("imdbRating")
+                    movie.metascore_rating = movie_json.get("Metascore")
+                    movie.add_ratings(movie_json.get("Ratings"))
+                    movie.add_poster_url(movie_json.get("Poster"))
+                    movie.set_title(movie_json.get("Title"))
+                else:
+                    print(f"Movie not found: {movie_json.get('Error')}")
+        except Exception as e:
             print(f"API connection error: {e}")
 
 class MovieService:
@@ -82,12 +91,12 @@ class MovieService:
         self.local_prov = local_prov
         self.external_prov = external_prov
 
-    def get_full_report(self, title):
+    async def get_full_report(self, title):
         """
         Combines data from local and external movie data
         and returns it as a Movie instance
         """
-        movie = self.local_prov.get_movie_data(title)
+        movie = await self.local_prov.get_movie_data(title)
         if movie is not None:
-            self.external_prov.get_movie_data(movie)
+            await self.external_prov.get_movie_data(movie)
         return movie

@@ -1,8 +1,10 @@
+import aiohttp
 from pathlib import Path
 from fastapi.templating import Jinja2Templates
 from fastapi import FastAPI, Request, Form, Query
 from fastapi.responses import HTMLResponse
 from .movie_provider import *
+from contextlib import asynccontextmanager
 
 class MovieWebAPI:
     """ Creates a Movie web API using FastAPI"""
@@ -17,8 +19,21 @@ class MovieWebAPI:
         self.external_prov = ExternalMovieProvider()
         self.movie_service = MovieService(self.local_prov, self.external_prov)
 
+        self._setup_events()
 
-        self.app = FastAPI()
+    def _setup_events(self):
+        """Manage the aiohttp session lifecycle."""
+
+        @asynccontextmanager
+        async def lifespan(app: FastAPI):
+            # Startup logic
+            self.session = aiohttp.ClientSession()
+            self.external_prov.set_session(self.session)
+            yield
+            # Shutdown logic
+            await self.session.close()
+
+        self.app = FastAPI(lifespan=lifespan)
         self._setup_routes()
 
     def _setup_routes(self):
@@ -39,7 +54,7 @@ class MovieWebAPI:
 
         @self.app.post("/submit", response_class=HTMLResponse)
         async def post_form(request: Request, movie_title: str = Form(...)):
-            movie = self.movie_service.get_full_report(movie_title)
+            movie = await self.movie_service.get_full_report(movie_title)
 
             if movie is None:
                 return self.templates.TemplateResponse(self.template_name, {
