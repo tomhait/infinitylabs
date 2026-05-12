@@ -10,7 +10,7 @@ class Scheduler:
 
     def run(self):
         print("\nScheduler started...")
-        while not self._pq.is_empty():
+        while self._pq:
             time_schedule, task = self._pq.peek()
 
             if time.time() >= time_schedule:
@@ -26,7 +26,7 @@ class FreqScheduler(Scheduler):
 
     def run(self):
         print("\nFrequency scheduler started...")
-        while not self._pq.is_empty():
+        while self._pq:
             time_schedule, task, freq = self._pq.peek()
             if time.time() >= time_schedule:
                 self._pq.pop()
@@ -42,7 +42,7 @@ class CoroScheduler(FreqScheduler):
 
     def run(self):
         print("\nCoroutine scheduler started...")
-        while not self._pq.is_empty():
+        while self._pq:
             time_schedule, coro, freq = self._pq.peek()
             if time.time() >= time_schedule:
                 self._pq.pop()
@@ -59,7 +59,7 @@ class CoroScheduler(FreqScheduler):
 class FlexCoroScheduler(CoroScheduler):
     def run(self):
         print("\nFlexible coroutine scheduler started...")
-        while not self._pq.is_empty():
+        while self._pq:
             time_schedule, coro, flex_freq = self._pq.peek()
             if time.time() >= time_schedule:
                 self._pq.pop()
@@ -85,21 +85,51 @@ class MixScheduler:
             self._ready.append(coro)
 
     def run(self):
-        while len(self._delayed) or len(self._ready):
-            while not self._delayed.is_empty():
+        while self._delayed or self._ready:
+            while self._delayed:
                 time_schedule, coro = self._delayed.peek()
                 if time.time() >= time_schedule:
                     self._delayed.pop()
                     self._ready.append(coro)
                 else:
                     break
-            if len(self._ready):
+            if self._ready:
                 for i in range(len(self._ready)):
                     coro = self._ready.pop(0)
                     try:
                         result = next(coro)
                         if isinstance(result, (int, float)) and result > 0:
                             self.add(coro, result)
+                        else:
+                            self._ready.append(coro)
+                    except StopIteration:
+                        continue
+            else:
+                time.sleep(0.1)
+
+class Sleep:
+    def __init__(self, seconds):
+        self.seconds = seconds
+    def __await__(self):
+        yield self
+
+class SleepScheduler(MixScheduler):
+    def run(self):
+        while self._delayed or self._ready:
+            while self._delayed:
+                time_schedule, coro = self._delayed.peek()
+                if time.time() >= time_schedule:
+                    self._delayed.pop()
+                    self._ready.append(coro)
+                else:
+                    break
+            if self._ready:
+                for i in range(len(self._ready)):
+                    coro = self._ready.pop(0)
+                    try:
+                        result = coro.send(None)
+                        if isinstance(result, Sleep):
+                            self.add(coro, result.seconds)
                         else:
                             self._ready.append(coro)
                     except StopIteration:
