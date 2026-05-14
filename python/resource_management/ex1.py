@@ -1,9 +1,10 @@
 import os
-import pandas as pd
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from functools import wraps
 from datetime import datetime
 import shutil
+import csv
+import json
 
 def func_timer(func):
     @wraps(func)
@@ -15,22 +16,30 @@ def func_timer(func):
         return res
     return wrap_func
 
-def write_to_json(copy_index, df):
-    filename = f"output/customers-100.{copy_index}.json"
-    if copy_index == 1:
-        df.to_json(filename, orient='records', indent=4)
-    else:
-        shutil.copyfile('output/customers-100.1.json', filename)
+def create_csv_copy(copy_index, csv_file):
+    shutil.copyfile(csv_file, f'output/customers-100.{copy_index}.csv')
+
+def parse_to_json(copy_index):
+    csv_file = f"output/customers-100.{copy_index}.csv"
+    json_file = f"output/customers-100.{copy_index}.json"
+    with open(csv_file, mode='r', encoding='utf-8') as csv_file:
+        csv_reader = csv.DictReader(csv_file)
+        data = list(csv_reader)
+
+    with open(json_file, mode='w', encoding='utf-8') as json_file:
+        json.dump(data, json_file, indent=4)
 
 @func_timer
 def main():
-    df = pd.read_csv('customers-100.csv')
+    csv_file = "./customers-100.csv"
     os.makedirs('output', exist_ok = True)
 
     n_copies = 10000
-    with ThreadPoolExecutor() as executor:
+    with ProcessPoolExecutor() as executor:
         for i in range(1, n_copies+1):
-            executor.submit(write_to_json, i, df)
+            executor.submit(create_csv_copy, i, csv_file)
+        for i in range(1, n_copies+1):
+            executor.submit(parse_to_json, i)
 
 if __name__ == '__main__':
     main()

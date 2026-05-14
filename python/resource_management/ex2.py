@@ -44,7 +44,6 @@ def worker_load_batch(file_chunk, db_config, columns):
     cursor.execute(f"USE {db_name}")
 
     create_customer_table(cursor)
-    cursor.execute("TRUNCATE TABLE customers")
 
     cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
     cursor.execute("SET UNIQUE_CHECKS = 0;")
