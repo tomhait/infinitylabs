@@ -56,9 +56,8 @@ def worker_load_batch(file_chunk, db_config, columns):
     for file_path in file_chunk:
         with open(file_path, 'r') as f:
             data = json.load(f)
-            records = data if isinstance(data, list) else [data]
 
-            for record in records:
+            for record in data:
                 row = tuple(record.get(col) for col in columns)
                 batch.append(row)
 
