@@ -17,6 +17,9 @@ class MyRange:
                 raise TypeError('Not integer type')
 
     def __getitem__(self, index):
+        if not isinstance(index, int):
+            raise TypeError('Index should be integer')
+
         if index < 0:
             index += len(self)
 
@@ -26,7 +29,8 @@ class MyRange:
         return self.start + (index * self.step)
 
     def __len__(self):
-        return (self.stop - self.start + self.step - 1) // self.step
+        step = self.step if self.step > 0 else (-1) * self.step
+        return max(0,(self.stop - self.start + step - 1) // step)
 
 range_4 = MyRange(4)
 for i in range_4:
@@ -44,6 +48,10 @@ for i in MyRange(2,10, 2):
     print(i)
 
 print("\n\n")
+print(len(MyRange(2,10, 2)))
+
+print(len(MyRange(2,10, -1)))
+print(len(MyRange(5, 1)))
 print(len(MyRange(2,10, 2)))
 
 print("\n\n")
