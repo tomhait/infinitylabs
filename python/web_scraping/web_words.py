@@ -12,10 +12,12 @@ def get_sorted_webpage_words(url):
             response = client.get(url)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'html.parser')
-            text = soup.get_text()
+            for element in soup(["script", "style"]):
+                element.extract()
+            text = soup.get_text(separator=' ', strip=True)
             words = re.findall(r'\b[\w\'-]+\b', text.lower())
             unique_words = sorted(list(set(words)))
-            sorted_words = sorted(unique_words, key=lambda x: (len(x), x), reverse=True)
+            sorted_words = sorted(unique_words, key=lambda x: len(x), reverse=True)
             return sorted_words
     except httpx.HTTPStatusError as e:
         return {"error": f"Failed to retrieve page: {e}"}
