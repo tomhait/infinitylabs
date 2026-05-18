@@ -40,10 +40,10 @@ class WallaMailScraper:
     def navigate_to_inbox(self):
         self.wait.until(EC.url_changes("https://friends.walla.co.il/"))
         self.driver.get("https://mail.walla.co.il/#/folder/inbox")
-        print("Scanning inbox...")
         time.sleep(8)
 
     def parse_unread_emails(self):
+        print("Scanning inbox...")
         unread_rows = self.driver.find_elements(By.CSS_SELECTOR, "li.mail-list-item.unread")
         unread_emails = []
 
