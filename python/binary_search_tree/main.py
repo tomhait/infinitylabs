@@ -1,5 +1,6 @@
 from bst import BST
 from bstAVL import BSTAVL
+
 def test1():
     print("\n--------------\nTest 1\n--------------")
     lst = [25, 15, 10, 4, 12, 22, 18, 24, 50, 31, 35, 44, 70, 66, 90]

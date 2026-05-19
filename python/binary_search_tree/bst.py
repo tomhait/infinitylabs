@@ -12,6 +12,10 @@ class Node:
     left: Node | None = None
     right: Node | None = None
 
+    def __post_init__(self):
+        if not isinstance(self.value,(int,float,str,list)):
+            raise TypeError('The value is not comparable')
+
 class BST:
     '''
         Define the basic binary search tree with root node.
@@ -38,8 +42,6 @@ class BST:
         return node
 
     def _validate_value(self,value):
-        if not isinstance(value,(int,float,str,list)):
-            raise TypeError('The value is not comparable')
         if self.type is None:
             self.type = type(value)
         elif not isinstance(value, self.type):
@@ -53,8 +55,8 @@ class BST:
         Raises ValueError if the value already exists in a different node.
         Raises TypeError if the value isn't comparable to all the basic types.
         '''
-        self._validate_value(value)
         node = self._create_node(value)
+        self._validate_value(node.value)
         if self.root is None:
             self.root = node
         else:
