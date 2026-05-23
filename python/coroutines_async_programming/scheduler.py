@@ -1,5 +1,6 @@
 import time
 from priorityQueue import PriorityQueue
+from collections import deque
 
 class Scheduler:
     def __init__(self):
@@ -76,7 +77,7 @@ class FlexCoroScheduler(CoroScheduler):
 class MixScheduler:
     def __init__(self):
         self._delayed = PriorityQueue()
-        self._ready = []
+        self._ready = deque()
 
     def add(self, coro, delay=0):
         if delay > 0:
@@ -95,7 +96,7 @@ class MixScheduler:
                     break
             if self._ready:
                 for i in range(len(self._ready)):
-                    coro = self._ready.pop(0)
+                    coro = self._ready.popleft()
                     try:
                         result = next(coro)
                         if isinstance(result, (int, float)) and result > 0:
@@ -125,7 +126,7 @@ class SleepScheduler(MixScheduler):
                     break
             if self._ready:
                 for i in range(len(self._ready)):
-                    coro = self._ready.pop(0)
+                    coro = self._ready.popleft()
                     try:
                         result = coro.send(None)
                         if isinstance(result, Sleep):
