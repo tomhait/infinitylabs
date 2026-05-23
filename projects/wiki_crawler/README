@@ -1,0 +1,10 @@
+This Wikipedia Crawler was validated under Python 3.14
+The program downloads all wikipedia webpages and saves them in the local file system as Html files
+In addition a Mongo DB is created in a container with the following field for each document:
+id - unique consecutive number
+name - webpage name
+file_path - location in the File System
+timestamp ("%Y-%m-%d %H:%M:%S") - date and time downloaded
+
+To run using docker:
+> docker compose up --build -d

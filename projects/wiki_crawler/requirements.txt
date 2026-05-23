@@ -1,0 +1,7 @@
+confluent-kafka
+pymongo
+BeautifulSoup4
+redis
+aiokafka
+aiohttp
+aiofiles
