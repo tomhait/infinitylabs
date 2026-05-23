@@ -24,7 +24,6 @@ def init_queue():
     if latest_docs:
         urls_to_scrape = []
         print(f"Download restarted. Found {len(latest_docs)} historical webpage records.")
-        print("Injecting seed payloads into parse queue...")
         is_parse = True
         for i, doc in enumerate(latest_docs):
             doc.pop('_id', None)
@@ -35,7 +34,6 @@ def init_queue():
             })
     else:
         print("Beginning downloading Wikipedia Htmls")
-        print("Injecting seed payload into fetch queue...")
 
     for item in urls_to_scrape:
         initial_payload = {
@@ -54,7 +52,7 @@ def init_queue():
         p.poll(0)
 
     p.flush()
-    print("All seed payloads injected. Pipeline is now running automatically.")
+    print("Seed queue manager done!")
 
 if __name__ == "__main__":
     init_queue()
