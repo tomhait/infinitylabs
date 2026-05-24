@@ -1,0 +1,124 @@
+services:
+  kafka:
+    image: apache/kafka:latest
+    container_name: kafka-broker
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:9092'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:9093'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb-core
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-db-data:/data/db
+
+  init-kafka:
+    image: apache/kafka:latest
+    depends_on:
+      - kafka
+    entrypoint: [ "/bin/bash", "-c" ]
+    command: >
+      "
+      echo 'Waiting for Kafka to respond...' &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list &&
+      
+      echo 'Creating topics...' &&
+      /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server kafka:9092 --topic fetch-queue --partitions 3 --replication-factor 1 &&
+      /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server kafka:9092 --topic parse-queue --partitions 3 --replication-factor 1 &&
+      /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server kafka:9092 --topic validate-queue --partitions 1 --replication-factor 1 &&
+      
+      echo 'All topics successfully created!'
+      "
+
+  pipeline-seeder:
+    build: .
+    command: python queue_manager.py
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      PYTHONUNBUFFERED: "1"
+      GROUP_ID: "init-group"
+      INPUT_TOPIC: "fetch-queue"
+      OUTPUT_TOPIC: "parse-queue"
+
+  fetch-worker:
+    build: .
+    command: python pipeline_worker.py
+    deploy:
+      replicas: 3
+    depends_on:
+      mongodb:
+        condition: service_started
+      init-kafka:
+        condition: service_completed_successfully
+    volumes:
+      - shared-pipeline-data:/app/storage
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      PYTHONUNBUFFERED: "1"
+      GROUP_ID: "fetch-group"
+      INPUT_TOPIC: "fetch-queue"
+      OUTPUT_TOPIC: "parse-queue"
+
+  parse-worker:
+    build: .
+    command: python pipeline_worker.py
+    deploy:
+      replicas: 3
+    depends_on:
+      mongodb:
+        condition: service_started
+      init-kafka:
+        condition: service_completed_successfully
+    volumes:
+      - shared-pipeline-data:/app/storage
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      PYTHONUNBUFFERED: "1"
+      GROUP_ID: "parse-group"
+      INPUT_TOPIC: "parse-queue"
+      OUTPUT_TOPIC: "validate-queue"
+
+  validate-worker:
+    build: .
+    command: python pipeline_worker.py
+    deploy:
+      replicas: 1
+    depends_on:
+      redis-server:
+        condition: service_started
+      mongodb:
+        condition: service_started
+      init-kafka:
+        condition: service_completed_successfully
+    volumes:
+      - shared-pipeline-data:/app/storage
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      PYTHONUNBUFFERED: "1"
+      GROUP_ID: "validate-group"
+      INPUT_TOPIC: "validate-queue"
+      OUTPUT_TOPIC: "fetch-queue"
+
+  redis-server:
+    image: redis/redis-stack-server:latest
+    ports:
+      - "6379:6379"
+    command: ["/entrypoint.sh", "--accept-license", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    restart: always
+
+volumes:
+  redis-data:
+  mongo-db-data:
+  shared-pipeline-data:
