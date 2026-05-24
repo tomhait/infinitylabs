@@ -20,6 +20,36 @@ headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 }
 
+async def save_html(file_path, html_text):
+    soup = BeautifulSoup(html_text, 'html.parser')
+    async with aiofiles.open(file_path, 'w', encoding='utf-8') as file:
+        await file.write(soup.prettify())
+
+def update_db(webpage_name):
+    now = datetime.datetime.now()
+    timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+
+    result = collection.find_one_and_update(
+        {"_id": "shared_user_id"},
+        {"$inc": {"sequence_value": 1}},
+        upsert=True,
+        return_document=ReturnDocument.AFTER
+    )
+
+    document = {
+        'id': result["sequence_value"],
+        'name': webpage_name,
+        'file_path': str(folder_path / f"{webpage_name}.html"),
+        'timestamp': timestamp
+    }
+    insert_result = collection.update_one(
+        {"name": webpage_name},
+        {"$set": document},
+        upsert=True
+    )
+    document.pop('_id', None)
+    print(f"Successfully processed: {webpage_name} (ID: {insert_result.upserted_id})")
+    return document
 
 async def fetch_html(url, retries=3, initial_delay=2):
     webpage_name = url.split("/")[-1]
@@ -39,41 +69,11 @@ async def fetch_html(url, retries=3, initial_delay=2):
                             continue
                         else:
                             return {"error": "Max retries reached. Continually rate limited (HTTP 429)."}
-
-
                     response.raise_for_status()
                     html_text = await response.text()
-
-                soup = BeautifulSoup(html_text, 'html.parser')
-                now = datetime.datetime.now()
-                timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
-
-                result = collection.find_one_and_update(
-                    {"_id": "shared_user_id"},
-                    {"$inc": {"sequence_value": 1}},
-                    upsert=True,
-                    return_document=ReturnDocument.AFTER
-                )
-
-                document = {
-                    'id': result["sequence_value"],
-                    'name': webpage_name,
-                    'file_path': str(folder_path / f"{webpage_name}.html"),
-                    'timestamp': timestamp
-                }
-
-                async with aiofiles.open(document['file_path'], 'w', encoding='utf-8') as file:
-                    await file.write(soup.prettify())
-
-                insert_result = collection.update_one(
-                                        {"name": webpage_name},
-                                        {"$set": document},
-                                        upsert=True
-                )
-                document.pop('_id', None)
-
-                print(f"Successfully processed: {webpage_name} (ID: {insert_result.upserted_id})")
-                return document
+                    document = update_db(webpage_name)
+                    await save_html(document['file_path'], html_text)
+                    return document
 
         except aiohttp.ClientResponseError as e:
             if e.status in [404, 403, 400]:
