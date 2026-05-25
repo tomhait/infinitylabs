@@ -1,0 +1,48 @@
+services:
+  namenode:
+    image: apache/hadoop:3.5.0
+    platform: linux/amd64
+    container_name: namenode
+    hostname: namenode
+    user: root
+    command: ["/bin/bash", "-c", "if [ ! -f /hadoop/dfs/name/current/VERSION ]; then hdfs namenode -format; fi && hdfs namenode"]
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    env_file:
+      - ./hadoop.env
+    volumes:
+      - namenode_data:/hadoop/dfs/name
+
+  datanode1:
+    image: apache/hadoop:3.5.0
+    platform: linux/amd64
+    container_name: datanode1
+    hostname: datanode1
+    user: root
+    command: ["hdfs", "datanode"]
+    depends_on:
+      - namenode
+    env_file:
+      - ./hadoop.env
+    volumes:
+      - datanode1_data:/hadoop/dfs/data
+
+  datanode2:
+    image: apache/hadoop:3.5.0
+    platform: linux/amd64
+    container_name: datanode2
+    hostname: datanode2
+    user: root
+    command: ["hdfs", "datanode"]
+    depends_on:
+      - namenode
+    env_file:
+      - ./hadoop.env
+    volumes:
+      - datanode2_data:/hadoop/dfs/data
+
+volumes:
+  namenode_data:
+  datanode1_data:
+  datanode2_data:

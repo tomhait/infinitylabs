@@ -1,0 +1,33 @@
+# To run the exercises:
+docker compose up -d
+
+# make exercises dir:
+docker exec -it namenode hdfs dfs -mkdir -p /exercises
+
+# copy dictionary to namenode:
+docker cp /usr/share/dict/web2 namenode:/tmp/words
+docker cp mapper.py namenode:/tmp/
+docker cp reducer.py namenode:/tmp/
+
+# enter to namenode container bash:
+docker exec -it namenode bash
+
+hdfs dfs -put /tmp/words /exercises/american-english
+
+for i in {1..9}; do
+  hdfs dfs -appendToFile /tmp/words /exercises/american-english
+done
+
+# install python:
+apt-get update && apt-get install -y python3
+
+chmod +x /tmp/mapper.py /tmp/reducer.py
+
+hadoop jar /opt/hadoop/share/hadoop/tools/lib/hadoop-streaming-3.5.0.jar   \
+-file /tmp/mapper.py -mapper /tmp/mapper.py   \
+-file /tmp/reducer.py -reducer /tmp/reducer.py   \
+-input /exercises/american-english   -output /exercises/output-wordcount
+
+# check results (should be 10 for each word):
+hdfs dfs -cat /exercises/output-wordcount/part-00000 | head -n 20
+hdfs dfs -cat /exercises/output-wordcount/part-00000 | tail -n 20
