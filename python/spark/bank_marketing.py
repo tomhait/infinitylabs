@@ -79,7 +79,6 @@ print("\nClient with the biggest balance:")
 
 df.orderBy(F.col("balance").desc()).select("balance", "job", "age").show(1)
 
-# calculate average balance
 avg_balance = df.select(F.avg("balance")).first()[0]
 twice_avg = avg_balance * 2
 
@@ -91,14 +90,12 @@ proportion = rich_clients / total_clients
 print(f"Average Balance: {avg_balance:.2f}")
 print(f"Proportion of clients with balance > twice the average: {proportion:.2%}")
 
-# chance of deposit as function of education level
 print("\nDeposit success rate by Education level:")
 df.groupBy("education") \
   .agg(F.round(F.avg(F.when(F.col("deposit") == "yes", 1).otherwise(0)),2).alias("deposit_rate")) \
   .orderBy(F.col("deposit_rate").desc()) \
   .show()
 
-# Convert target variable to numeric for analysis
 df_numeric_target = df.withColumn("deposit_binary", F.when(F.col("deposit") == "yes", 1).otherwise(0))
 
 print("\nCorrelation with Deposit (Numerical Variables):")
