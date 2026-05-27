@@ -1,0 +1,15 @@
+docker compose up --build -d
+
+docker exec -u root spark-master pip install matplotlib seaborn
+
+# Bank marketing
+docker exec -it spark-master /opt/spark/bin/spark-submit \
+  --master spark://spark-master:7077 \
+  /opt/spark/apps/bank_marketing.py 2>&1 | grep -vE "INFO|WARN" | tee bank_output.txt
+
+cat bank_output.txt
+open age_vs_deposit.png
+open deposit_distribution.png
+
+# OULAD analytics
+
