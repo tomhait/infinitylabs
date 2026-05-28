@@ -11,7 +11,7 @@ n = 100
 spark = SparkSession.builder.master("spark://spark-master:7077")\
     .appName("CoPrimes").getOrCreate()
 
-numbers = spark.range(1, n+1).withColumnRenamed("id", "n")
+numbers = spark.range(2, n+1).withColumnRenamed("id", "n")
 numbers.show(5)
 
 divisors_df = numbers.withColumn(
