@@ -12,4 +12,18 @@ open age_vs_deposit.png
 open deposit_distribution.png
 
 # OULAD analytics
+docker exec -it spark-master /opt/spark/bin/spark-submit \
+  --master spark://spark-master:7077 \
+  /opt/spark/apps/oulad_analysis.py 2>&1 | grep -vE "INFO|WARN" | tee oulad_output.txt
+
+cat oulad_output.txt
+
+# COPRIMES
+docker exec -it spark-master /opt/spark/bin/spark-submit \
+  --master spark://spark-master:7077 \
+  /opt/spark/apps/coprimes.py 2>&1 | grep -vE "INFO|WARN" | tee coprimes_output.txt
+
+cat oulad_output.txt
+
+
 
