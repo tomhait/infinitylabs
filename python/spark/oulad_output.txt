@@ -1,0 +1,191 @@
+Tables loaded successfully!
+
+Student Info Schema
+root
+ |-- code_module: string (nullable = true)
+ |-- code_presentation: string (nullable = true)
+ |-- id_student: integer (nullable = true)
+ |-- gender: string (nullable = true)
+ |-- region: string (nullable = true)
+ |-- highest_education: string (nullable = true)
+ |-- imd_band: string (nullable = true)
+ |-- age_band: string (nullable = true)
+ |-- num_of_prev_attempts: integer (nullable = true)
+ |-- studied_credits: integer (nullable = true)
+ |-- disability: string (nullable = true)
+ |-- final_result: string (nullable = true)
+
+
+Student VLE Activity Sample
++-----------+-----------------+----------+-------+----+---------+
+|code_module|code_presentation|id_student|id_site|date|sum_click|
++-----------+-----------------+----------+-------+----+---------+
+|        AAA|            2013J|     28400| 546652| -10|        4|
+|        AAA|            2013J|     28400| 546652| -10|        1|
+|        AAA|            2013J|     28400| 546652| -10|        1|
+|        AAA|            2013J|     28400| 546614| -10|       11|
+|        AAA|            2013J|     28400| 546714| -10|        1|
++-----------+-----------------+----------+-------+----+---------+
+only showing top 5 rows
+
+
+q07 - Do students tend to get higher or lower grades over the course of their studies?
++-----------+-----------------+-----------------+---------------+---------------+
+|code_module|code_presentation|initial_avg_score|final_avg_score|avg_improvement|
++-----------+-----------------+-----------------+---------------+---------------+
+|        GGG|            2013J|            67.93|          82.23|           14.3|
+|        GGG|            2014J|            66.99|          80.98|          13.99|
+|        CCC|            2014B|            60.47|          73.86|          13.39|
+|        GGG|            2014B|            69.25|          81.52|          12.27|
+|        BBB|            2014J|            58.87|          67.95|           9.08|
+|        BBB|            2013B|            71.46|          80.21|           8.75|
+|        BBB|            2014B|            71.89|          80.13|           8.24|
+|        BBB|            2013J|            72.51|          79.92|           7.41|
+|        DDD|            2013B|             68.2|          71.01|           2.81|
+|        CCC|            2014J|            73.88|          75.94|           2.06|
+|        DDD|            2014J|            72.43|           72.7|           0.27|
+|        FFF|            2014J|            78.84|          79.01|           0.17|
+|        AAA|            2013J|            69.96|          69.33|          -0.63|
+|        AAA|            2014J|            69.13|          68.43|           -0.7|
+|        FFF|            2013J|            78.46|          76.72|          -1.74|
+|        DDD|            2014B|            70.78|          68.93|          -1.85|
+|        DDD|            2013J|            72.32|          69.62|           -2.7|
+|        FFF|            2013B|            80.64|          77.87|          -2.77|
+|        FFF|            2014B|            79.81|          76.33|          -3.48|
+|        EEE|            2013J|            83.62|          79.42|           -4.2|
++-----------+-----------------+-----------------+---------------+---------------+
+only showing top 20 rows
+
+
+q08 - Are any of the student's characteristics (from studentInfo) good predictors to their academic achievements?
++---------------------------+--------------+----------------+--------------------+-------------------+
+|highest_education          |total_students|success_rate_pct|distinction_rate_pct|withdrawal_rate_pct|
++---------------------------+--------------+----------------+--------------------+-------------------+
+|Post Graduate Qualification|313           |65.5            |28.12               |23.64              |
+|HE Qualification           |4730          |56.17           |14.74               |27.12              |
+|A Level or Equivalent      |14045         |52.03           |10.65               |28.69              |
+|Lower Than A Level         |13158         |38.85           |5.53                |35.11              |
+|No Formal quals            |347           |29.68           |4.61                |42.94              |
++---------------------------+--------------+----------------+--------------------+-------------------+
+
++------+--------------+----------------+--------------------+-------------------+
+|gender|total_students|success_rate_pct|distinction_rate_pct|withdrawal_rate_pct|
++------+--------------+----------------+--------------------+-------------------+
+|F     |14718         |48.44           |9.47                |30.48              |
+|M     |17875         |46.19           |9.12                |31.72              |
++------+--------------+----------------+--------------------+-------------------+
+
++----------+--------------+----------------+--------------------+-------------------+
+|disability|total_students|success_rate_pct|distinction_rate_pct|withdrawal_rate_pct|
++----------+--------------+----------------+--------------------+-------------------+
+|N         |29429         |48.18           |9.52                |30.28              |
+|Y         |3164          |38.15           |7.05                |39.35              |
++----------+--------------+----------------+--------------------+-------------------+
+
+
+q09 - Do courses get more/less difficult between presentations?
++-----------+-----------------+---------+-------------+-------------+
+|code_module|code_presentation|avg_score|fail_rate_pct|student_count|
++-----------+-----------------+---------+-------------+-------------+
+|        AAA|            2013J|    69.51|        11.75|          383|
+|        AAA|            2014J|    68.76|         12.6|          365|
+|        BBB|            2013B|    78.84|        25.98|         1767|
+|        BBB|            2013J|    78.69|        23.29|         2237|
+|        BBB|            2014B|    78.61|        24.55|         1613|
+|        BBB|            2014J|    66.94|        17.06|         2292|
+|        CCC|            2014B|     73.2|        19.37|         1936|
+|        CCC|            2014J|    75.96|        16.25|         2498|
+|        DDD|            2013B|     69.5|        27.71|         1303|
+|        DDD|            2013J|    69.91|        22.08|         1938|
+|        DDD|            2014B|    69.19|        21.09|         1228|
+|        DDD|            2014J|    71.49|        20.19|         1803|
+|        EEE|            2013J|    75.08|        19.01|         1052|
+|        EEE|            2014B|    73.99|        23.63|          694|
+|        EEE|            2014J|    79.58|        16.67|         1188|
+|        FFF|            2013B|     77.5|        26.08|         1614|
+|        FFF|            2013J|    76.69|        22.47|         2283|
+|        FFF|            2014B|    76.16|         25.6|         1500|
+|        FFF|            2014J|    78.19|        16.62|         2365|
+|        GGG|            2013J|    79.93|        30.88|          952|
++-----------+-----------------+---------+-------------+-------------+
+only showing top 20 rows
+
+
+q10 - Are there any common combinations of courses that students take simultaneously / in a specific order?
++--------+--------+--------+-------------+
+|semester|module_a|module_b|student_count|
++--------+--------+--------+-------------+
+|2014B   |CCC     |EEE     |311          |
+|2014J   |CCC     |EEE     |287          |
+|2014J   |CCC     |DDD     |151          |
+|2014J   |CCC     |FFF     |134          |
+|2014B   |CCC     |FFF     |77           |
+|2014B   |CCC     |DDD     |72           |
+|2013J   |DDD     |FFF     |8            |
+|2014J   |DDD     |FFF     |6            |
+|2014J   |EEE     |FFF     |5            |
+|2014B   |DDD     |FFF     |5            |
+|2013J   |DDD     |EEE     |4            |
+|2014J   |BBB     |DDD     |4            |
+|2014B   |BBB     |GGG     |3            |
+|2013B   |BBB     |DDD     |3            |
+|2014J   |DDD     |EEE     |3            |
+|2013B   |BBB     |FFF     |2            |
+|2014B   |DDD     |EEE     |2            |
+|2013J   |EEE     |FFF     |2            |
+|2014J   |BBB     |CCC     |1            |
+|2014J   |BBB     |FFF     |1            |
++--------+--------+--------+-------------+
+only showing top 20 rows
+
+
+q11 - Are assessments with lower weight prone to being easier?
++------+---------------------+---------+
+|weight|number_of_assessments|avg_score|
++------+---------------------+---------+
+|1.0   |15                   |88.05    |
+|2.0   |3                    |68.33    |
+|3.0   |3                    |74.26    |
+|4.0   |2                    |73.38    |
+|5.0   |4                    |71.68    |
+|6.0   |1                    |63.64    |
+|7.0   |2                    |78.1     |
+|7.5   |1                    |71.07    |
+|8.0   |4                    |73.45    |
+|9.0   |2                    |77.1     |
+|10.0  |8                    |72.75    |
+|12.5  |11                   |76.5     |
+|15.0  |3                    |64.29    |
+|16.0  |3                    |85.16    |
+|17.5  |2                    |76.87    |
+|18.0  |15                   |71.66    |
+|20.0  |13                   |65.64    |
+|22.0  |6                    |73.36    |
+|25.0  |15                   |72.58    |
+|28.0  |9                    |79.56    |
++------+---------------------+---------+
+only showing top 20 rows
+
+
+q12 - Are there specific times when students tend to cancel their
+registrations? Is it relative to course start/assessments/exams or is it specific time of the year?
++-------------------+-------------+
+|cancellation_window|student_count|
++-------------------+-------------+
+|Before Start       |2678         |
+|Months 2-3         |1904         |
+|After month 3      |3041         |
+|Month 1            |2449         |
+|Finished Course    |22521        |
++-------------------+-------------+
+
+
+q13 - Do specific "kinds" of students use VLE more than others?
++--------+----------------------+
+|age_band|avg_clicks_per_student|
++--------+----------------------+
+|0-35    |1445.89               |
+|35-55   |2001.85               |
+|55<=    |3271.58               |
++--------+----------------------+
+
