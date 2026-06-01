@@ -53,11 +53,27 @@ def _create_tags_table(cursor):
     """
     cursor.execute(create_query)
 
+def _create_metrics_table(cursor):
+    create_query = """
+    CREATE TABLE IF NOT EXISTS model_metrics (
+        run_id SERIAL PRIMARY KEY,
+        execution_date TIMESTAMP NOT NULL,
+        liked_threshold NUMERIC(2, 1),
+        min_ratings INT,
+        avg_precision_k10 NUMERIC(5, 4),
+        avg_recall_k10 NUMERIC(5, 4),
+        avg_f1_k10 NUMERIC(5, 4),
+        avg_hit_rate_k10 NUMERIC(5, 4)
+    );
+    """
+    cursor.execute(create_query)
+
 def create_tables(cursor):
     _create_movies_table(cursor)
     _create_links_table(cursor)
     _create_ratings_table(cursor)
     _create_tags_table(cursor)
+    _create_metrics_table(cursor)
 
 
 def create_db(DB_CONFIG):

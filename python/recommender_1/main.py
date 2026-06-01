@@ -1,5 +1,5 @@
 import psycopg2
-from create_tables import create_tables, bulk_load_csv, create_db
+from .dags.create_tables import create_tables, bulk_load_csv, create_db
 from timer import func_timer
 
 DB_CONFIG = {
