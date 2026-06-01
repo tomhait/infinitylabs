@@ -39,6 +39,9 @@ docker compose down
 
 
 # Running HTTP server for user recommendations
+# Rename src/.template.env to src/.env
+# Fill the missing API key from OMDb API
+# Run:
 uvicorn app:app --reload
 # open browser at: http://127.0.0.1:8000/
 
