@@ -80,7 +80,7 @@ def get_user_liked_history(ratings_df, user_id: int, liked_threshold: float) -> 
         raise HTTPException(status_code=404, detail=f"User profile {user_id} not found.")
 
     user_liked = user_ratings[user_ratings['rating'] >= liked_threshold]
-    user_liked = user_liked.sort_values(by='timestamp', ascending=False)['movieId'].unique()[:200]
+    user_liked = user_liked.sort_values(by='timestamp', ascending=False)['movieId'].unique()
 
     user_liked_history = user_liked[::-1]
 
