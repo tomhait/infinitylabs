@@ -1,3 +1,7 @@
+"""
+The main is for applying Ex. 3
+Test the load to DB scalability
+"""
 import psycopg2
 from .dags.create_tables import create_tables, bulk_load_csv, create_db
 from timer import func_timer

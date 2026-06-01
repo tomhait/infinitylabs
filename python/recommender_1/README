@@ -22,6 +22,7 @@ SELECT * FROM links LIMIT 5;
 SELECT * FROM movies LIMIT 5;
 SELECT * FROM ratings LIMIT 5;
 SELECT * FROM tags LIMIT 5;
+SELECT * FROM model_metrics LIMIT 5;
 "
 
 docker exec -it recommender_1-postgres-1 psql -U airflow -d movielens -c "
@@ -35,6 +36,11 @@ SELECT 'tags', COUNT(*) FROM tags;"
 
 # close recommender-1 AirFlow compose
 docker compose down
+
+
+# Running HTTP server for user recommendations
+uvicorn app:app --reload
+# open browser at: http://127.0.0.1:8000/
 
 ########## Test commands #########
 docker exec -it recommender_1-postgres-1 psql -U airflow -d postgres -c "DROP DATABASE movielens;"
