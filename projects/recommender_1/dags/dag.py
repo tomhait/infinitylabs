@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.sensors.filesystem import FileSensor
 from airflow.operators.python import PythonOperator
+from airflow.exceptions import AirflowSkipException
 
 from data_ingestion import run_ingestion, DATA_DIR, REQUIRED_FILES, DB_CONFIG
 from data_manipulation import PrepareData
@@ -65,7 +66,26 @@ def run_manipulation(liked_th = 3.5):
         cursor.close()
         conn.close()
 
-# Default pipeline arguments
+def run_model_comparison(**kwargs):
+    """
+    Implement in case there is a new model to perform with
+    Return True in case the new model is better
+    """
+    is_better = False
+
+    if not is_better:
+        raise AirflowSkipException("New model performance did not beat the current production model.")
+
+    print("Success! Proceeding to deployment tasks.")
+    return True
+
+def run_save_model(model):
+    """
+    Implement in case there is a better model to be updated
+    """
+    pass
+
+
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -105,4 +125,14 @@ with DAG(
         op_kwargs={'liked_th': 3.5}
     )
 
-    sensor_tasks >> bulk_load_task >> train_model_task
+    compare_performance_task = PythonOperator(
+        task_id='compare_performance_vs_old_model',
+        python_callable=run_model_comparison
+    )
+
+    save_new_model_task = PythonOperator(
+        task_id='save_new_model_task',
+        python_callable=run_save_model
+    )
+
+    sensor_tasks >> bulk_load_task >> train_model_task >> compare_performance_task >> save_new_model_task

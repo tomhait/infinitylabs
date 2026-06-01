@@ -23,3 +23,4 @@ def calculate_performance_k(recommendations_df, test_movies, k=10):
     recall = hits / len(user_actual_liked_movies)
 
     return hit_rate, precision, recall
+
