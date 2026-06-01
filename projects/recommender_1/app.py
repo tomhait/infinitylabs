@@ -75,7 +75,6 @@ app.add_middleware(
 )
 
 def get_user_liked_history(ratings_df, user_id: int, liked_threshold: float) -> list:
-    """Extracts a validated list of up to 200 movie IDs the user liked."""
     user_ratings = ratings_df[ratings_df['userId'] == user_id]
     if user_ratings.empty:
         raise HTTPException(status_code=404, detail=f"User profile {user_id} not found.")
