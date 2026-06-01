@@ -175,15 +175,16 @@
         <div class="movie-list" id="recommendationsList"></div>
     </div>
 
-    <script>
+<script>
     async function fetchRecommendations() {
         const userId = document.getElementById('userIdInput').value;
         const listContainer = document.getElementById('recommendationsList');
         const errorBlock = document.getElementById('errorBlock');
         const heading = document.getElementById('user-heading');
 
+        // Clear existing states and show a visual loading feedback
         errorBlock.style.display = 'none';
-        listContainer.innerHTML = '<div style="text-align:center; color: var(--text-muted);">Calculating Bayesian probabilities...</div>';
+        listContainer.innerHTML = '<div style="text-align:center; color: var(--text-muted); padding: 20px;">Computing engine probabilities and downloading IMDb metadata...</div>';
 
         try {
             const response = await fetch(`http://127.0.0.1:8000/recommend?user_id=${userId}`);
@@ -195,47 +196,61 @@
 
             const data = await response.json();
             listContainer.innerHTML = '';
-            heading.innerText = `Top 10 Recommendations for User ${data.user_id}`;
+            heading.innerText = `Top 10 Movie Recommendations for User ${data.user_id}`;
 
             if (!data.recommendations || data.recommendations.length === 0) {
-                listContainer.innerHTML = '<div style="text-align:center; color: var(--text-muted);">No items matched the pipeline filters.</div>';
+                listContainer.innerHTML = '<div style="text-align:center; color: var(--text-muted); padding: 20px;">No recommendation candidates met the current matrix parameters.</div>';
                 return;
             }
-                const genresHTML = movie.genres.split('|')
-                    .map(g => `<span class="genre-badge">${g}</span>`)
+
+            data.recommendations.forEach(movie => {
+                // Break pipe-delimited categories safely into UI badges
+                const genresHTML = (movie.genres || 'Unknown')
+                    .split('|')
+                    .map(g => `<span class="genre-badge">${g.trim()}</span>`)
                     .join('');
 
-                const score = typeof movie.score === 'number' ? movie.score.toFixed(4) : "N/A";
+                // Format the log probability decimal layout cleanly
+                const finalScore = typeof movie.score === 'number' ? movie.score.toFixed(4) : "N/A";
+
+                // Enforce fallback asset handling if OMDb doesn't return a cover image url
+                const hasPoster = movie.poster_url && movie.poster_url !== '--' && movie.poster_url !== 'N/A';
+                const posterHTML = hasPoster
+                    ? `<img src="${movie.poster_url}" alt="${movie.title}" style="width: 50px; height: 75px; border-radius: 6px; object-fit: cover; margin-right: 16px; background-color: #334155; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">`
+                    : `<div style="width: 50px; height: 75px; border-radius: 6px; background-color: #334155; margin-right: 16px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: var(--text-muted); text-align: center; font-weight: 500; line-height: 1.2; padding: 4px; box-sizing: border-box;">No Poster</div>`;
 
                 const card = document.createElement('div');
                 card.className = 'movie-card';
+                card.style.display = 'flex';
+                card.style.alignItems = 'center';
+
                 card.innerHTML = `
-                    <div class="movie-info">
-                        <h3 class="movie-title">
+                    ${posterHTML}
+                    <div class="movie-info" style="flex: 1;">
+                        <h3 class="movie-title" style="margin: 0 0 6px 0; display: flex; align-items: center; gap: 8px;">
                             ${movie.title || 'Untitled Movie'}
-                            <span style="color: var(--text-muted); font-weight: 400; font-size: 1.05rem; margin-left: 4px;">(${movie.year || '--'})</span>
+                            <span style="color: var(--text-muted); font-weight: 400; font-size: 1rem;">(${movie.year || '--'})</span>
                         </h3>
                         <div class="genres-container">${genresHTML}</div>
                     </div>
-                    <div class="score-container">
-                        <div class="score-label">Log Likelihood</div>
-                        <div class="score-value">${score}</div>
+                    <div class="score-container" style="text-align: right; min-width: 120px;">
+                        <div class="score-label" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Log Score</div>
+                        <div class="score-value" style="font-family: monospace; font-weight: 700; color: #34d399; font-size: 1.1rem;">${finalScore}</div>
                     </div>
                 `;
                 listContainer.appendChild(card);
             });
-            data.recommendations.forEach(movie => {
-
 
         } catch (error) {
             listContainer.innerHTML = '';
-            errorBlock.innerText = `${error.message}`;
+            errorBlock.innerText = `Error processing recommendations: ${error.message}`;
             errorBlock.style.display = 'block';
             heading.innerText = "Execution Paused";
         }
     }
 
+    // Initialize layout immediately on initial browser viewport initialization
     window.onload = fetchRecommendations;
-    </script>
+</script>
 </body>
 </html>
