@@ -5,10 +5,10 @@ docker compose up -d
 python main.py
 
 # To run AirFlow dag:
-mkdir -p dags/data
-cp create_tables.py dags/
-cp movielens_ingestion_dag.py dags/
-cp m-latest-small/* dags/data
+docker exec -it recommender_1-airflow-scheduler-1 airflow connections add 'fs_default' \
+    --conn-type 'path' \
+    --conn-extra '{"path": "/opt/airflow/dags/data"}'
+cp ml-latest-small/* dags/data
 # go to http://localhost:8080/ and observe if the dag is active and running
 
 # show the databases

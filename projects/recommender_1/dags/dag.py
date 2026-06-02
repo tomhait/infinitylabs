@@ -1,10 +1,14 @@
+import sys
 import os
 import psycopg2
 from datetime import datetime, timedelta
 from airflow import DAG
-from airflow.sensors.filesystem import FileSensor
-from airflow.operators.python import PythonOperator
-from airflow.exceptions import AirflowSkipException
+from airflow.providers.standard.sensors.filesystem import FileSensor
+from airflow.providers.standard.operators.python import PythonOperator
+from airflow.sdk.exceptions import AirflowSkipException
+import pendulum
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from data_ingestion import run_ingestion, DATA_DIR, REQUIRED_FILES, DB_CONFIG
 from data_manipulation import PrepareData
@@ -89,7 +93,7 @@ def run_save_model(model):
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2026, 5, 30),
+    'start_date': pendulum.datetime(2026, 5, 1, tz="UTC"),
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
 }
@@ -99,7 +103,7 @@ with DAG(
     default_args=default_args,
     description='Pipeline to monitor, ingest, manipulate and train on MovieLens CSV inputs',
     schedule='@hourly',
-    catchup=False,
+    catchup=True,
 ) as dag:
 
     sensor_tasks = []

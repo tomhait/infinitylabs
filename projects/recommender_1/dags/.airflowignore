@@ -1,0 +1,9 @@
+data/
+create_tables.py
+data_ingestion.py
+data_manipulation.py
+metrics.py
+model.py
+model_training.py
+timer.py
+movielens_auto_update-graph.png
