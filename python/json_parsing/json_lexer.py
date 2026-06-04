@@ -10,7 +10,7 @@ class Token:
 class JsonLexer:
     rules = [
         ('NUMBER', r'[+-]?\d+(\.\d+)?([eE][+-]?\d+)?'),
-        ('STRING', r'\"[^"\\]*\"|\'[^\'\\]*\''),
+        ('STRING', r'\"(?:[^"\\]|\\.)*\"'),
         ('LBRACE', r'\{'),
         ('RBRACE', r'\}'),
         ('LBRACKET', r'\['),
@@ -46,6 +46,8 @@ class MyJsonParser:
         'COLON': "Expected ':' between key-value pair"
     }
     def _cast_to_type(self, token):
+        if token.obType == 'NULL':
+            return None
         if token.obType == 'STRING':
             return token.value
         if token.obType == 'NUMBER':
@@ -56,7 +58,7 @@ class MyJsonParser:
 
     def _parse_value(self, tokens_gen, token = None):
         if not token: token = next(tokens_gen)
-        if token.obType in ('STRING', 'NUMBER', 'BOOL'):
+        if token.obType in ('STRING', 'NUMBER', 'BOOL', 'NULL'):
             return self._cast_to_type(token)
         elif token.obType == 'LBRACKET':
             return self.parse_array(tokens_gen, is_nested=True)
