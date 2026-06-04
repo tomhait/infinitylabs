@@ -1,0 +1,134 @@
+Spark session created!
+
+Original DataFrame Schema:
+root
+ |-- age: integer (nullable = true)
+ |-- job: string (nullable = true)
+ |-- marital: string (nullable = true)
+ |-- education: string (nullable = true)
+ |-- default: string (nullable = true)
+ |-- balance: integer (nullable = true)
+ |-- housing: string (nullable = true)
+ |-- loan: string (nullable = true)
+ |-- contact: string (nullable = true)
+ |-- day: integer (nullable = true)
+ |-- month: string (nullable = true)
+ |-- duration: integer (nullable = true)
+ |-- campaign: integer (nullable = true)
+ |-- pdays: integer (nullable = true)
+ |-- previous: integer (nullable = true)
+ |-- poutcome: string (nullable = true)
+ |-- deposit: string (nullable = true)
+
+
+Original Data Table:
++---+-----------+--------+---------+-------+-------+-------+----+-------+---+-----+--------+--------+-----+--------+--------+-------+
+|age|        job| marital|education|default|balance|housing|loan|contact|day|month|duration|campaign|pdays|previous|poutcome|deposit|
++---+-----------+--------+---------+-------+-------+-------+----+-------+---+-----+--------+--------+-----+--------+--------+-------+
+| 59|     admin.| married|secondary|     no|   2343|    yes|  no|unknown|  5|  may|    1042|       1|   -1|       0| unknown|    yes|
+| 56|     admin.| married|secondary|     no|     45|     no|  no|unknown|  5|  may|    1467|       1|   -1|       0| unknown|    yes|
+| 41| technician| married|secondary|     no|   1270|    yes|  no|unknown|  5|  may|    1389|       1|   -1|       0| unknown|    yes|
+| 55|   services| married|secondary|     no|   2476|    yes|  no|unknown|  5|  may|     579|       1|   -1|       0| unknown|    yes|
+| 54|     admin.| married| tertiary|     no|    184|     no|  no|unknown|  5|  may|     673|       2|   -1|       0| unknown|    yes|
+| 42| management|  single| tertiary|     no|      0|    yes| yes|unknown|  5|  may|     562|       2|   -1|       0| unknown|    yes|
+| 56| management| married| tertiary|     no|    830|    yes| yes|unknown|  6|  may|    1201|       1|   -1|       0| unknown|    yes|
+| 60|    retired|divorced|secondary|     no|    545|    yes|  no|unknown|  6|  may|    1030|       1|   -1|       0| unknown|    yes|
+| 37| technician| married|secondary|     no|      1|    yes|  no|unknown|  6|  may|     608|       1|   -1|       0| unknown|    yes|
+| 28|   services|  single|secondary|     no|   5090|    yes|  no|unknown|  6|  may|    1297|       3|   -1|       0| unknown|    yes|
+| 38|     admin.|  single|secondary|     no|    100|    yes|  no|unknown|  7|  may|     786|       1|   -1|       0| unknown|    yes|
+| 30|blue-collar| married|secondary|     no|    309|    yes|  no|unknown|  7|  may|    1574|       2|   -1|       0| unknown|    yes|
+| 29| management| married| tertiary|     no|    199|    yes| yes|unknown|  7|  may|    1689|       4|   -1|       0| unknown|    yes|
+| 46|blue-collar|  single| tertiary|     no|    460|    yes|  no|unknown|  7|  may|    1102|       2|   -1|       0| unknown|    yes|
+| 31| technician|  single| tertiary|     no|    703|    yes|  no|unknown|  8|  may|     943|       2|   -1|       0| unknown|    yes|
+| 35| management|divorced| tertiary|     no|   3837|    yes|  no|unknown|  8|  may|    1084|       1|   -1|       0| unknown|    yes|
+| 32|blue-collar|  single|  primary|     no|    611|    yes|  no|unknown|  8|  may|     541|       3|   -1|       0| unknown|    yes|
+| 49|   services| married|secondary|     no|     -8|    yes|  no|unknown|  8|  may|    1119|       1|   -1|       0| unknown|    yes|
+| 41|     admin.| married|secondary|     no|     55|    yes|  no|unknown|  8|  may|    1120|       2|   -1|       0| unknown|    yes|
+| 49|     admin.|divorced|secondary|     no|    168|    yes| yes|unknown|  8|  may|     513|       1|   -1|       0| unknown|    yes|
++---+-----------+--------+---------+-------+-------+-------+----+-------+---+-----+--------+--------+-----+--------+--------+-------+
+only showing top 20 rows
+
+
+10 random rows from the Table:
++---+-----------+-------+---------+-------+-------+-------+----+--------+---+-----+--------+--------+-----+--------+--------+-------+
+|age|        job|marital|education|default|balance|housing|loan| contact|day|month|duration|campaign|pdays|previous|poutcome|deposit|
++---+-----------+-------+---------+-------+-------+-------+----+--------+---+-----+--------+--------+-----+--------+--------+-------+
+| 41| management|married| tertiary|     no|    217|     no|  no|cellular| 19|  nov|     328|       1|   -1|       0| unknown|     no|
+| 59|    retired|married|secondary|     no|   1035|    yes| yes|cellular|  5|  aug|     223|       1|   -1|       0| unknown|     no|
+| 44|     admin.|married|secondary|     no|      0|     no|  no|cellular| 31|  jul|     209|       1|   -1|       0| unknown|     no|
+| 42| management|married| tertiary|     no|    187|     no|  no|cellular| 11|  aug|      64|       1|   -1|       0| unknown|     no|
+| 59| technician|married|  primary|     no|    309|     no| yes|cellular| 29|  jul|      25|       5|   -1|       0| unknown|     no|
+| 34| technician| single|secondary|     no|    692|    yes|  no| unknown| 20|  may|     254|       1|   -1|       0| unknown|     no|
+| 46| management|married|secondary|     no|     21|    yes|  no|cellular|  7|  may|     124|       1|  338|       2| failure|     no|
+| 43|blue-collar|married|  primary|    yes|   1202|     no|  no| unknown| 30|  may|     295|       1|   -1|       0| unknown|     no|
+| 76|    retired|married| tertiary|     no|   2991|     no|  no|cellular| 25|  jan|     195|       1|   95|       2| success|     no|
+| 26|blue-collar| single|secondary|     no|   2007|     no|  no|cellular| 13|  jul|     272|       3|  182|       2| success|    yes|
++---+-----------+-------+---------+-------+-------+-------+----+--------+---+-----+--------+--------+-----+--------+--------+-------+
+
+
+Relative Proportions for 'deposit':
++-------+-----+----------+
+|deposit|count|proportion|
++-------+-----+----------+
+|     no| 5873|      0.53|
+|    yes| 5289|      0.47|
++-------+-----+----------+
+
+
+Relative Proportions for 'education':
++---------+-----+----------+
+|education|count|proportion|
++---------+-----+----------+
+|  unknown|  497|      0.04|
+| tertiary| 3689|      0.33|
+|secondary| 5476|      0.49|
+|  primary| 1500|      0.13|
++---------+-----+----------+
+
+
+Descriptive Statistics for Numerical Variables:
++-------+------------------+------------------+------------------+------------------+------------------+------------------+------------------+
+|summary|               age|           balance|               day|          duration|          campaign|             pdays|          previous|
++-------+------------------+------------------+------------------+------------------+------------------+------------------+------------------+
+|  count|             11162|             11162|             11162|             11162|             11162|             11162|             11162|
+|   mean|41.231947679627304|1528.5385235620856|15.658036194230425|371.99381831213043| 2.508421429851281| 51.33040673714388|0.8325568894463358|
+| stddev|11.913369192215518| 3225.413325946149| 8.420739541006462|347.12838571630687|2.7220771816614824|108.75828197197717| 2.292007218670508|
+|    min|                18|             -6847|                 1|                 2|                 1|                -1|                 0|
+|    25%|                32|               122|                 8|               138|                 1|                -1|                 0|
+|    50%|                39|               550|                15|               255|                 2|                -1|                 0|
+|    75%|                49|              1708|                22|               496|                 3|                20|                 1|
+|    max|                95|             81204|                31|              3881|                63|               854|                58|
++-------+------------------+------------------+------------------+------------------+------------------+------------------+------------------+
+
+Visualizations saved successfully as PNG images in your apps directory!
+
+Client with the biggest balance:
++-------+-------+---+
+|balance|    job|age|
++-------+-------+---+
+|  81204|retired| 84|
++-------+-------+---+
+only showing top 1 row
+
+Average Balance: 1528.54
+Proportion of clients with balance > twice the average: 13.93%
+
+Deposit success rate by Education level:
++---------+------------+
+|education|deposit_rate|
++---------+------------+
+| tertiary|        0.54|
+|  unknown|        0.51|
+|secondary|        0.45|
+|  primary|        0.39|
++---------+------------+
+
+
+Correlation with Deposit (Numerical Variables):
+    Correlation between deposit and age: 0.03
+    Correlation between deposit and balance: 0.08
+    Correlation between deposit and day: -0.06
+    Correlation between deposit and duration: 0.45
+    Correlation between deposit and campaign: -0.13
+    Correlation between deposit and pdays: 0.15
+    Correlation between deposit and previous: 0.14
