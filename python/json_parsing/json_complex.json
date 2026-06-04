@@ -1,0 +1,47 @@
+{
+  "id": "USR-94821",
+  "isActive": true,
+  "profile": {
+    "firstName": "John",
+    "lastName": "Doe",
+    "contact": {
+      "email": "j.doe@example.com",
+      "phone": "+1-555-010-9999",
+      "address": {
+        "street": "123 Tech Lane",
+        "city": "San Francisco",
+        "state": "CA",
+        "zip": "94105"
+      }
+    }
+  },
+  "organizations": [
+    {
+      "name": "CloudNine Solutions",
+      "role": "Senior Architect",
+      "departments": ["Engineering", "Research"],
+      "projects": [
+        { "id": "PRJ-01", "name": "Titan", "status": "ongoing" },
+        { "id": "PRJ-02", "name": "Atlas", "status": "completed" }
+      ]
+    },
+    {
+      "name": "OpenSource Foundation",
+      "role": "Contributor",
+      "departments": ["Community Outsourcing"],
+      "projects": []
+    }
+  ],
+  "preferences": {
+    "notifications": {
+      "email": true,
+      "sms": false,
+      "push": true
+    },
+    "theme": "dark"
+  },
+  "metadata": {
+    "lastLogin": "2024-05-10T14:30:00Z",
+    "version": 2.1
+  }
+}
