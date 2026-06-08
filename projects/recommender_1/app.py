@@ -14,12 +14,20 @@ from dags.model import NaiveBayesRecommender
 from src.movie_provider import ExternalMovieProvider
 from src.movie import Movie
 
+# DB_CONFIG = {
+#     "host": "localhost",
+#     "port": 5432,
+#     "user": "airflow",
+#     "password": "airflow",
+#     "dbname": "movielens"
+# }
+
 DB_CONFIG = {
-    "host": "localhost",
-    "port": 5432,
-    "user": "airflow",
-    "password": "airflow",
-    "dbname": "movielens"
+    "host": os.getenv("DB_HOST", "localhost"),
+    "port": int(os.getenv("DB_PORT", 5432)),
+    "user": os.getenv("DB_USER", "airflow"),
+    "password": os.getenv("DB_PASSWORD", "airflow"),
+    "dbname": os.getenv("DB_NAME", "movielens")
 }
 
 model_state = {}
@@ -36,14 +44,8 @@ async def lifespan(app: FastAPI):
         conn = psycopg2.connect(**DB_CONFIG)
         cursor = conn.cursor()
 
-        local_parquet_dir = os.environ.get("PARQUET_DATA_DIR", "./dags/data/parquet")
-
-        try:
-            dm = PrepareData(liked_th=3.5, parquet_dir=local_parquet_dir)
-        except TypeError:
-            dm = PrepareData(liked_th=3.5)
-        conn_uri = f"postgresql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['dbname']}"
-        dm.setup(cursor, conn_uri)
+        dm = PrepareData(liked_th=3.5)
+        dm.setup(cursor)
 
         model_state["recommender"] = NaiveBayesRecommender(
             liked_data=dm.get_liked_df(),

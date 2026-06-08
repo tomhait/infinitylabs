@@ -1,12 +1,8 @@
-import polars as pl
-import os
+import pandas as pd
 
 class PrepareData:
-    def __init__(self, liked_th = 3.5, parquet_dir="/opt/airflow/dags/data/parquet"):
+    def __init__(self, liked_th = 3.5):
         self.liked_th = liked_th
-        self.parquet_path = os.path.join(parquet_dir, "ratings_history.parquet")
-        os.makedirs(parquet_dir, exist_ok=True)
-
         self.liked_df = None
         self.rating_pivot = None
         self.movie_rating_counts = None
@@ -15,88 +11,61 @@ class PrepareData:
         self.movies = None
         self.links = None
 
-    def setup(self, cursor, conn_uri):
+    def setup(self, cursor):
         try:
-            new_ratings_query = "SELECT user_id, movie_id, rating, timestamp FROM ratings WHERE is_processed = FALSE;"
-            new_ratings = pl.read_database_uri(query=new_ratings_query, uri=conn_uri)
-            print(f"Retrieved {new_ratings.height} new rows from ratings.")
+            self.ratings = pd.read_sql_query("SELECT * FROM ratings;", cursor.connection)
+            print(f"Successfully retrieved {len(self.ratings)} rows from ratings.")
 
-            if new_ratings.height > 0:
-                new_ratings = new_ratings.rename({'user_id': 'userId', 'movie_id': 'movieId'})
+            self.ratings.columns = [
+                'userId' if c == 'user_id' else 'movieId' if c == 'movie_id' else c
+                for c in self.ratings.columns
+            ]
 
-            if os.path.exists(self.parquet_path):
-                historical_ratings = pl.read_parquet(self.parquet_path)
-                if new_ratings.height > 0:
-                    self.ratings = pl.concat([historical_ratings, new_ratings])
-                    self.ratings.write_parquet(self.parquet_path)
-                else:
-                    self.ratings = historical_ratings
-            else:
-                self.ratings = new_ratings
-                self.ratings.write_parquet(self.parquet_path)
+            self.movies = pd.read_sql_query("SELECT * FROM movies;", cursor.connection)
+            self.movies.columns = [
+                'movieId' if c == 'movie_id' else c for c in self.movies.columns
+            ]
+            print(f"Successfully retrieved {len(self.movies)} rows from movies.")
 
-            if new_ratings.height > 0:
-                cursor.execute("UPDATE ratings SET is_processed = TRUE WHERE is_processed = FALSE;")
-                cursor.connection.commit()
-
-            self.movies = pl.read_database_uri(query="SELECT * FROM movies;", uri=conn_uri).rename(
-                {'movie_id': 'movieId'})
-
-            self.links = pl.read_database_uri(query="SELECT * FROM links;", uri=conn_uri).rename(
-                {'movie_id': 'movieId', 'imdb_id': 'imdbId'})
-
-            self.links = self.links.with_columns(
-                pl.when(pl.col("imdbId").is_not_null())
-                .then(
-                    pl.lit("tt") + pl.col("imdbId").cast(pl.Int64).cast(pl.String).str.zfill(7)
-                )
-                .otherwise(None)
-                .alias("imdbId")
+            self.links = pd.read_sql_query("SELECT * FROM links;", cursor.connection)
+            self.links.columns = [
+                'movieId' if c == 'movie_id' else 'imdbId' if c == 'imdb_id' else c
+                for c in self.links.columns
+            ]
+            self.links['imdbId'] = self.links['imdbId'].apply(
+                lambda x: f"tt{str(int(x)).zfill(7)}" if pd.notna(x) else None
             )
 
-            self.num_ratings_per_user = self.ratings.group_by("userId").count()
-            self.movie_rating_counts = self.ratings.group_by("movieId").count()
+            self.num_ratings_per_user = self.ratings['userId'].value_counts()
+            self.movie_rating_counts = self.ratings['movieId'].value_counts()
 
-            print('Pivoting matrix via Polars...')
-            self.rating_pivot = (
-                self.ratings
-                .pivot(index="movieId", on="userId", values="rating")
-                .fill_null(0)
-            )
+            self.rating_pivot = self.ratings.pivot_table(
+                index='movieId', columns='userId', values='rating'
+            ).fillna(0)
 
-            movie_id_col = self.rating_pivot["movieId"]
-            matrix_only = self.rating_pivot.drop("movieId")
-
-            self.liked_df = matrix_only.select([
-                (pl.col(c) >= self.liked_th).cast(pl.Int8).alias(c) for c in matrix_only.columns
-            ])
-            self.liked_df.insert_column(0, movie_id_col)
-
+            print('Shape of ratings pivot table:', self.rating_pivot.shape)
+            self.liked_df = (self.rating_pivot >= self.liked_th).astype(int)
         except Exception as e:
             print(f"Error while manipulating data: {e}")
             raise e
 
     def get_liked_df(self):
-        df = self.liked_df.to_pandas().set_index("movieId")
-        df.columns = df.columns.astype(int)
-        return df
+        return self.liked_df
 
     def get_ratings_pivot(self):
-        df = self.rating_pivot.to_pandas().set_index("movieId")
-        df.columns = df.columns.astype(int)
-        return df
+        return self.rating_pivot
 
     def get_movie_rating_count(self):
-        return self.movie_rating_counts.to_pandas().set_index("movieId")["count"]
+        return self.movie_rating_counts
 
     def get_num_ratings_per_user(self):
-        return self.num_ratings_per_user.to_pandas().set_index("userId")["count"]
+        return self.num_ratings_per_user
 
     def get_ratings(self):
-        return self.ratings.to_pandas()
+        return self.ratings
 
     def get_movies(self):
-        return self.movies.to_pandas()
+        return self.movies
 
     def get_links(self):
-        return self.links.to_pandas()
+        return self.links

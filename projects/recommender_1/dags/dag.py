@@ -22,30 +22,29 @@ DB_CONFIG = {
     "dbname": "movielens"
 }
 
-def run_model_pipeline(liked_th=3.5, min_ratings=200):
-    conn_uri = f"postgresql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['dbname']}"
+def run_model_pipeline(liked_th=3.5, min_ratings=200, top_k = 10):
     conn = psycopg2.connect(**DB_CONFIG)
     cursor = conn.cursor()
 
     try:
         dm = PrepareData(liked_th=liked_th)
-        dm.setup(cursor, conn_uri)
+        dm.setup(cursor)
         trainer = TrainModel(dm, min_ratings=min_ratings)
         metrics = trainer.train()
 
         if metrics:
             avg_prec, avg_rec, avg_hit_rate, avg_f1 = metrics
 
-            p_k10 = float(avg_prec[9])
-            r_k10 = float(avg_rec[9])
-            f1_k10 = float(avg_f1[9])
-            hit_rate_k10 = float(avg_hit_rate[9])
+            p_topk = float(avg_prec[top_k-1])
+            r_topk = float(avg_rec[top_k-1])
+            f1_topk = float(avg_f1[top_k-1])
+            hit_rate_topk = float(avg_hit_rate[top_k - 1])
 
             insert_query = """
             INSERT INTO model_metrics (execution_date, liked_threshold, min_ratings, avg_precision_k10, avg_recall_k10, avg_f1_k10, avg_hit_rate_k10)
             VALUES (NOW(), %s, %s, %s, %s, %s, %s);
             """
-            cursor.execute(insert_query, (liked_th, min_ratings, p_k10, r_k10, f1_k10, hit_rate_k10))
+            cursor.execute(insert_query, (liked_th, min_ratings, p_topk, r_topk, f1_topk, hit_rate_topk))
             conn.commit()
             print("Metrics successfully saved to database.")
 
@@ -61,7 +60,6 @@ def run_manipulation(liked_th = 3.5):
     cursor = conn.cursor()
     dm = PrepareData(liked_th = liked_th)
     try:
-        dm.get_rating_pivot_table(cursor)
         return dm
     except Exception as e:
         print(f"Data manipulation failed: {e}")
@@ -93,7 +91,7 @@ def run_save_model(model):
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': pendulum.datetime(2026, 5, 1, tz="UTC"),
+    'start_date': pendulum.datetime(2026, 6, 7, tz="UTC"),
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
 }
@@ -103,7 +101,7 @@ with DAG(
     default_args=default_args,
     description='Pipeline to monitor, ingest, manipulate and train on MovieLens CSV inputs',
     schedule='@hourly',
-    catchup=True,
+    catchup=False,
 ) as dag:
 
     sensor_tasks = []
