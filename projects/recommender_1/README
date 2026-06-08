@@ -1,5 +1,5 @@
 # To run airflow in docker:
-docker compose up -d
+docker compose up -d --build
 
 # To run ETL directly to postgres-1 container:
 python main.py

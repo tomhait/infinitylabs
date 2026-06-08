@@ -148,7 +148,7 @@ async def fetch_enriched_movie_metadata(row, movies_df, links_df, ext_provider) 
 
 
 @app.get("/recommend")
-async def get_recommendations(user_id: int = Query(..., description="Target User ID")):
+async def get_recommendations(user_id: int = Query(..., description="Target User ID"), top_k = 10):
     recommender = model_state.get("recommender")
     dm = model_state.get("data_manager")
     ext_provider = model_state.get("external_provider")
@@ -169,7 +169,7 @@ async def get_recommendations(user_id: int = Query(..., description="Target User
     if error_msg:
         raise HTTPException(status_code=400, detail=error_msg)
 
-    top_10 = recommendations_df.head(10)
+    top_10 = recommendations_df.head(top_k)
     tasks = [
         fetch_enriched_movie_metadata(row, dm.get_movies(), dm.get_links(), ext_provider)
         for _, row in top_10.iterrows()
