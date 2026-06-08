@@ -1,0 +1,54 @@
+# To run airflow in docker:
+docker compose up -d
+
+# To run ETL directly to postgres-1 container:
+python main.py
+
+# To run AirFlow dag:
+docker exec -it recommender_1-airflow-scheduler-1 airflow connections add 'fs_default' \
+    --conn-type 'path' \
+    --conn-extra '{"path": "/opt/airflow/dags/data"}'
+cp ml-latest-small/* dags/data
+# go to http://localhost:8080/ and observe if the dag is active and running
+
+# show the databases
+docker exec -it recommender_1-postgres-1 psql -U airflow -d postgres -l
+
+# Show that the tables were created:
+docker exec -it recommender_1-postgres-1 psql -U airflow -d movielens -c "\dt"
+
+docker exec -it recommender_1-postgres-1 psql -U airflow -d movielens -c "
+SELECT * FROM links LIMIT 5;
+SELECT * FROM movies LIMIT 5;
+SELECT * FROM ratings LIMIT 5;
+SELECT * FROM tags LIMIT 5;
+SELECT * FROM model_metrics LIMIT 5;
+"
+
+docker exec -it recommender_1-postgres-1 psql -U airflow -d movielens -c "
+SELECT 'links' AS table_name, COUNT(*) AS total_rows FROM links
+UNION ALL
+SELECT 'movies', COUNT(*) FROM movies
+UNION ALL
+SELECT 'ratings', COUNT(*) FROM ratings
+UNION ALL
+SELECT 'tags', COUNT(*) FROM tags;"
+
+# close recommender-1 AirFlow compose
+docker compose down
+
+
+# Running HTTP server for user recommendations
+# Rename src/.template.env to src/.env
+# Fill the missing API key from OMDb API
+# Run:
+uvicorn app:app --reload
+# open browser at: http://127.0.0.1:8000/
+
+########## Test commands #########
+docker exec -it recommender_1-postgres-1 psql -U airflow -d postgres -c "DROP DATABASE movielens;"
+
+head -n 1 ml-latest-small/links.csv > ml-latest_large/links.csv && for i in {1..1000}; do tail -n +2 ml-latest-small/links.csv; done >> ml-latest_large/links.csv
+head -n 1 ml-latest-small/movies.csv > ml-latest_large/movies.csv && for i in {1..1000}; do tail -n +2 ml-latest-small/movies.csv; done >> ml-latest_large/movies.csv
+head -n 1 ml-latest-small/tags.csv > ml-latest_large/tags.csv && for i in {1..1000}; do tail -n +2 ml-latest-small/tags.csv; done >> ml-latest_large/tags.csv
+head -n 1 ml-latest-small/ratings.csv > ml-latest_large/ratings.csv && for i in {1..100}; do tail -n +2 ml-latest-small/ratings.csv; done >> ml-latest_large/ratings.csv
