@@ -23,19 +23,19 @@ DB_CONFIG = {
 }
 
 def run_model_pipeline(liked_th=3.5, min_ratings=200):
+    conn_uri = f"postgresql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['dbname']}"
     conn = psycopg2.connect(**DB_CONFIG)
     cursor = conn.cursor()
 
     try:
         dm = PrepareData(liked_th=liked_th)
-        dm.setup(cursor)
+        dm.setup(cursor, conn_uri)
         trainer = TrainModel(dm, min_ratings=min_ratings)
         metrics = trainer.train()
 
         if metrics:
             avg_prec, avg_rec, avg_hit_rate, avg_f1 = metrics
 
-            # select k=10 as baseline for performance comparison
             p_k10 = float(avg_prec[9])
             r_k10 = float(avg_rec[9])
             f1_k10 = float(avg_f1[9])

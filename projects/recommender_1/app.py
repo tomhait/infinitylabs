@@ -1,3 +1,4 @@
+import os
 import psycopg2
 import asyncio
 import aiohttp
@@ -35,8 +36,14 @@ async def lifespan(app: FastAPI):
         conn = psycopg2.connect(**DB_CONFIG)
         cursor = conn.cursor()
 
-        dm = PrepareData(liked_th=3.5)
-        dm.setup(cursor)
+        local_parquet_dir = os.environ.get("PARQUET_DATA_DIR", "./dags/data/parquet")
+
+        try:
+            dm = PrepareData(liked_th=3.5, parquet_dir=local_parquet_dir)
+        except TypeError:
+            dm = PrepareData(liked_th=3.5)
+        conn_uri = f"postgresql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['dbname']}"
+        dm.setup(cursor, conn_uri)
 
         model_state["recommender"] = NaiveBayesRecommender(
             liked_data=dm.get_liked_df(),

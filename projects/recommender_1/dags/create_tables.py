@@ -36,6 +36,7 @@ def _create_ratings_table(cursor):
         movie_id INT REFERENCES movies(movie_id),
         rating NUMERIC(2, 1),
         timestamp BIGINT,
+        is_processed BOOLEAN DEFAULT FALSE,
         PRIMARY KEY (user_id, movie_id)
     );
     """
@@ -96,16 +97,34 @@ def create_db(DB_CONFIG):
 
 def bulk_load_csv(cursor, table_name, file_path):
     cursor.execute(f"ALTER TABLE {table_name} DROP CONSTRAINT IF EXISTS fk_{table_name}_movies;")
-    cursor.execute(f"TRUNCATE TABLE {table_name} CASCADE;")
     columns = column_mappings.get(table_name, "")
+    cursor.execute(f"CREATE TEMP TABLE temp_{table_name} (LIKE {table_name} INCLUDING DEFAULTS) ON COMMIT DROP;")
+
     with open(file_path, 'r') as f:
         sql = f"""
-                    COPY {table_name} {columns}
-                    FROM STDIN 
-                    WITH (FORMAT CSV, HEADER true, DELIMITER ',', QUOTE '"');
-                """
+            COPY temp_{table_name} {columns}
+            FROM STDIN 
+            WITH (FORMAT CSV, HEADER true, DELIMITER ',', QUOTE '"');
+        """
         cursor.copy_expert(sql, f)
 
+    if table_name == "movies":
+        cursor.execute(f"INSERT INTO movies SELECT * FROM temp_movies ON CONFLICT (movie_id) DO NOTHING;")
+    elif table_name == "links":
+        cursor.execute(f"INSERT INTO links SELECT * FROM temp_links ON CONFLICT (movie_id) DO NOTHING;")
+    elif table_name == "ratings":
+        cursor.execute("""
+            INSERT INTO ratings (user_id, movie_id, rating, timestamp)
+            SELECT user_id, movie_id, rating, timestamp FROM temp_ratings
+            ON CONFLICT (user_id, movie_id) 
+            DO UPDATE SET 
+                rating = EXCLUDED.rating, 
+                timestamp = EXCLUDED.timestamp,
+                is_processed = FALSE;
+        """)
+    elif table_name == "tags":
+        cursor.execute(
+            f"INSERT INTO tags (user_id, movie_id, tag, timestamp) SELECT user_id, movie_id, tag, timestamp FROM temp_tags;")
 
 def reapply_constraints(cursor):
     cursor.execute("ALTER TABLE links DROP CONSTRAINT IF EXISTS fk_links_movies;")
