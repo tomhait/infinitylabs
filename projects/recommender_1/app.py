@@ -14,14 +14,6 @@ from dags.model import NaiveBayesRecommender
 from src.movie_provider import ExternalMovieProvider
 from src.movie import Movie
 
-# DB_CONFIG = {
-#     "host": "localhost",
-#     "port": 5432,
-#     "user": "airflow",
-#     "password": "airflow",
-#     "dbname": "movielens"
-# }
-
 DB_CONFIG = {
     "host": os.getenv("DB_HOST", "localhost"),
     "port": int(os.getenv("DB_PORT", 5432)),
