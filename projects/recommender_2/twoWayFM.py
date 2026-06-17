@@ -5,22 +5,23 @@ class TwoWayFM:
     Models a Factorization Machine
     if reg_penalty is not zero - performs L2 regularization
     """
-    def __init__(self, num_dim, reg_penalty = 0.01, num_epochs = 100, learning_rate = 0.05, batch_size=32):
+    def __init__(self, num_dim, reg_penalty = 0.01, num_epochs = 100, learning_rate = 0.05, batch_size=32, random_seed=42):
         self.k = num_dim
         self.reg_penalty = reg_penalty if reg_penalty is not None else 0.0
         self.epoch = num_epochs
         self.lr = learning_rate
         self.batch_size = batch_size
+        self.random_seed = random_seed
+        self.rng = np.random.default_rng(random_seed)
 
         self.w0 = 0.0
         self.w = None
         self.V = None
 
     def _setup(self, num_features):
-        np.random.seed(42)
         self.w0 = 0.0
         self.w = np.zeros(num_features)
-        self.V = np.random.normal(0.0, 0.1, (num_features, self.k))
+        self.V = self.rng.normal(0.0, 0.1, (num_features, self.k))
 
     def _forward_batch(self, X_batch):
         """
@@ -63,7 +64,7 @@ class TwoWayFM:
             if epoch % 10 == 0:
                 print(f"Epoch number: {epoch}")
             indices = np.arange(num_samples)
-            np.random.shuffle(indices)
+            self.rng.shuffle(indices)
             X_shuffled = X[indices]
             y_shuffled = y[indices]
 
@@ -75,6 +76,8 @@ class TwoWayFM:
 
 
     def predict(self, X):
+        if self.w is None:
+            self._setup(X.shape[1])
         y_hat, _ = self._forward_batch(X)
         return y_hat
 
@@ -90,8 +93,6 @@ if __name__ == "__main__":
     y_train = true_w0 + np.dot(X_train, true_w) + true_interactions + np.random.normal(0, 0.1, num_samples)
 
     model = TwoWayFM(num_dim=2, reg_penalty=0.01, num_epochs=200, learning_rate=0.02, batch_size=10)
-
-    model._setup(num_features)
 
     initial_preds = model.predict(X_train[:5])
     print("Before Training:")
