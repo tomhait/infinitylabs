@@ -40,7 +40,7 @@ class TwoWayFM:
         """
         actual_batch_size = X_batch.shape[0]
         y_hat, sum_v_x = self._forward_batch(X_batch)
-        errors = y_hat - y_batch
+        errors = 2 * (y_hat - y_batch)
         grad_w0 = np.mean(errors) + self.reg_penalty * self.w0
 
         grad_w = np.dot(errors, X_batch) / actual_batch_size + self.reg_penalty * self.w
