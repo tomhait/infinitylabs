@@ -5,7 +5,8 @@ class TwoWayFM:
     Models a Factorization Machine
     if reg_penalty is not zero - performs L2 regularization
     """
-    def __init__(self, num_dim, reg_penalty = 0.01, num_epochs = 100, learning_rate = 0.05, batch_size=32, random_seed=42):
+    def __init__(self, num_dim, reg_penalty = 0.01, num_epochs = 100,
+                 learning_rate = 0.05, batch_size=32, random_seed=42, verbose = True):
         self.k = num_dim
         self.reg_penalty = 2 * reg_penalty if reg_penalty is not None else 0.0
         self.epoch = num_epochs
@@ -13,6 +14,7 @@ class TwoWayFM:
         self.batch_size = batch_size
         self.random_seed = random_seed
         self.rng = np.random.default_rng(random_seed)
+        self.verbose = verbose
 
         self.w0 = 0.0
         self.w = None
@@ -61,7 +63,7 @@ class TwoWayFM:
         num_samples, num_features = X.shape
         self._setup(num_features)
         for epoch in range(self.epoch):
-            if epoch % 10 == 0:
+            if epoch % 10 == 0 and self.verbose:
                 print(f"Epoch number: {epoch}")
             indices = np.arange(num_samples)
             self.rng.shuffle(indices)
@@ -90,7 +92,8 @@ if __name__ == "__main__":
     true_interactions = X_train[:, 0] * X_train[:, 1] * 3.0
     y_train = true_w0 + np.dot(X_train, true_w) + true_interactions + np.random.normal(0, 0.1, num_samples)
 
-    model = TwoWayFM(num_dim=2, reg_penalty=0.01, num_epochs=200, learning_rate=0.02, batch_size=10)
+    model = TwoWayFM(num_dim=2, reg_penalty=0.01, num_epochs=200,
+                     learning_rate=0.02, batch_size=10, verbose = False)
 
     initial_preds = model.predict(X_train[:5])
     print("Before Training:")
