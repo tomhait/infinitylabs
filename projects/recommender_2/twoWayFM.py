@@ -7,7 +7,7 @@ class TwoWayFM:
     """
     def __init__(self, num_dim, reg_penalty = 0.01, num_epochs = 100, learning_rate = 0.05, batch_size=32, random_seed=42):
         self.k = num_dim
-        self.reg_penalty = reg_penalty if reg_penalty is not None else 0.0
+        self.reg_penalty = 2 * reg_penalty if reg_penalty is not None else 0.0
         self.epoch = num_epochs
         self.lr = learning_rate
         self.batch_size = batch_size
@@ -80,8 +80,6 @@ class TwoWayFM:
             self._setup(X.shape[1])
         y_hat, _ = self._forward_batch(X)
         return y_hat
-
-
 
 if __name__ == "__main__":
     num_samples = 100
