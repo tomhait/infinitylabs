@@ -15,6 +15,8 @@ class TwoWayFM:
         self.random_seed = random_seed
         self.rng = np.random.default_rng(random_seed)
         self.verbose = verbose
+        self.std = 1
+        self.mean = 0
 
         self.w0 = 0.0
         self.w = None
@@ -24,6 +26,13 @@ class TwoWayFM:
         self.w0 = 0.0
         self.w = np.zeros(num_features)
         self.V = self.rng.normal(0.0, 0.1, (num_features, self.k))
+
+    def _standardize(self, X, is_train = False):
+        if is_train:
+            self.std = np.std(X, axis=0)
+            self.mean = np.mean(X, axis=0)
+        X_standardized = (X - self.mean) / (self.std + 1e-8)
+        return X_standardized
 
     def _forward_batch(self, X_batch):
         """
@@ -62,6 +71,7 @@ class TwoWayFM:
         """
         num_samples, num_features = X.shape
         self._setup(num_features)
+        X = self._standardize(X, is_train = True)
         for epoch in range(self.epoch):
             if epoch % 10 == 0 and self.verbose:
                 print(f"Epoch number: {epoch}")
@@ -80,6 +90,7 @@ class TwoWayFM:
     def predict(self, X):
         if self.w is None:
             self._setup(X.shape[1])
+        X = self._standardize(X)
         y_hat, _ = self._forward_batch(X)
         return y_hat
 
