@@ -6,7 +6,8 @@ class TwoWayFM:
     if reg_penalty is not zero - performs L2 regularization
     """
     def __init__(self, num_dim, reg_penalty = 0.01, num_epochs = 100,
-                 learning_rate = 0.05, batch_size=32, random_seed=42, verbose = True):
+                 learning_rate = 0.05, batch_size=32, random_seed=42, verbose = True,
+                 standardize_y = True):
         self.k = num_dim
         self.reg_penalty = 2 * reg_penalty if reg_penalty is not None else 0.0
         self.epoch = num_epochs
@@ -15,8 +16,12 @@ class TwoWayFM:
         self.random_seed = random_seed
         self.rng = np.random.default_rng(random_seed)
         self.verbose = verbose
-        self.std = 1
-        self.mean = 0
+        self.standardize_y = standardize_y
+        self.mean = None
+        self.std = None
+        self.y_mean = None
+        self.y_std = None
+        self._fitted = False
 
         self.w0 = 0.0
         self.w = None
@@ -27,12 +32,27 @@ class TwoWayFM:
         self.w = np.zeros(num_features)
         self.V = self.rng.normal(0.0, 0.1, (num_features, self.k))
 
-    def _standardize(self, X, is_train = False):
-        if is_train:
-            self.std = np.std(X, axis=0)
+    def _standardize_X(self, X, fit = False):
+        if fit:
             self.mean = np.mean(X, axis=0)
-        X_standardized = (X - self.mean) / (self.std + 1e-8)
-        return X_standardized
+            self.std = np.std(X, axis=0)
+        if self.mean is None or self.std is None:
+            raise ValueError("Call fit() before predict() so feature statistics are available.")
+        return (X - self.mean) / (self.std + 1e-8)
+
+    def _standardize_y(self, y, fit = False):
+        y = np.asarray(y, dtype=float)
+        if not self.standardize_y:
+            return y
+        if fit:
+            self.y_mean = np.mean(y)
+            self.y_std = np.std(y)
+        return (y - self.y_mean) / (self.y_std + 1e-8)
+
+    def _inverse_standardize_y(self, y_hat):
+        if not self.standardize_y:
+            return y_hat
+        return y_hat * (self.y_std + 1e-8) + self.y_mean
 
     def _forward_batch(self, X_batch):
         """
@@ -71,7 +91,9 @@ class TwoWayFM:
         """
         num_samples, num_features = X.shape
         self._setup(num_features)
-        X = self._standardize(X, is_train = True)
+        X = self._standardize_X(X, fit=True)
+        y = self._standardize_y(y, fit=True)
+        self._fitted = True
         for epoch in range(self.epoch):
             if epoch % 10 == 0 and self.verbose:
                 print(f"Epoch number: {epoch}")
@@ -88,30 +110,25 @@ class TwoWayFM:
 
 
     def predict(self, X):
-        if self.w is None:
-            self._setup(X.shape[1])
-        X = self._standardize(X)
+        if not self._fitted:
+            raise ValueError("Call fit() before predict().")
+        X = self._standardize_X(X)
         y_hat, _ = self._forward_batch(X)
-        return y_hat
+        return self._inverse_standardize_y(y_hat)
 
 if __name__ == "__main__":
     num_samples = 100
     num_features = 5
-    X_train = np.random.normal(0, 1, (num_samples, num_features))
+    X_train = np.random.normal(1, 4, (num_samples, num_features))
     true_w0 = 1.5
     true_w = np.array([0.5, -1.0, 2.0, 0.0, -0.5])
     true_interactions = X_train[:, 0] * X_train[:, 1] * 3.0
     y_train = true_w0 + np.dot(X_train, true_w) + true_interactions + np.random.normal(0, 0.1, num_samples)
 
     model = TwoWayFM(num_dim=2, reg_penalty=0.01, num_epochs=200,
-                     learning_rate=0.02, batch_size=10, verbose = False)
+                     learning_rate=0.02, batch_size=10, verbose=False, standardize_y=True)
 
-    initial_preds = model.predict(X_train[:5])
-    print("Before Training:")
-    print(f"Target values:      {np.round(y_train[:5], 3)}")
-    print(f"Initial predictions:{np.round(initial_preds, 3)}")
-
-    print("\nTraining the model...")
+    print("Training the model...")
     model.fit(X_train, y_train)
 
     post_preds = model.predict(X_train[:5])
