@@ -37,7 +37,7 @@ class TwoWayFM:
             self.mean = np.mean(X, axis=0)
             self.std = np.std(X, axis=0)
         if self.mean is None or self.std is None:
-            raise ValueError("Call fit() before predict() so feature statistics are available.")
+            raise ValueError("Call fit() before predict().")
         return (X - self.mean) / (self.std + 1e-8)
 
     def _standardize_y(self, y, fit = False):
