@@ -53,7 +53,36 @@ def _feature_maps_from_info(feature_info):
         'age': feature_info['age_map'],
         'gender': feature_info['gender_map'],
         'occupation': feature_info['occupation_map'],
+        'genre': feature_info['genre_map'],
     }
+
+
+def _build_genre_map(movies):
+    genres = set()
+    for value in movies['genres'].dropna():
+        genres.update(str(value).split('|'))
+    return {genre: index for index, genre in enumerate(sorted(genres))}
+
+
+def _build_movie_genres_lookup(movies):
+    return {
+        row['movieId']: str(row['genres']) if pd.notna(row['genres']) else ''
+        for _, row in movies[['movieId', 'genres']].iterrows()
+    }
+
+
+def _encode_genre_columns(data, movie_genres, genre_map, genre_offset):
+    row_idx = []
+    col_idx = []
+    for row_i, movie_id in enumerate(data['movieId'].to_numpy()):
+        genres_str = movie_genres.get(movie_id, '')
+        if not genres_str:
+            continue
+        for genre in genres_str.split('|'):
+            if genre in genre_map:
+                row_idx.append(row_i)
+                col_idx.append(genre_offset + genre_map[genre])
+    return np.array(row_idx, dtype=np.int64), np.array(col_idx, dtype=np.int64)
 
 
 def _encode_feature_columns(data, feature_maps, offsets):
@@ -71,7 +100,15 @@ def _transform_timestamp(timestamps, timestamp_stats):
     return (ts - timestamp_stats['mean']) / timestamp_stats['std']
 
 
-def _build_sparse_matrix(n_samples, categorical_columns, timestamps, timestamp_col, n_features):
+def _build_sparse_matrix(
+    n_samples,
+    categorical_columns,
+    genre_row_idx,
+    genre_col_idx,
+    timestamps,
+    timestamp_col,
+    n_features,
+):
     n_categorical = categorical_columns.shape[1]
     row_idx_cat = np.repeat(np.arange(n_samples), n_categorical)
     col_idx_cat = categorical_columns.ravel()
@@ -81,9 +118,10 @@ def _build_sparse_matrix(n_samples, categorical_columns, timestamps, timestamp_c
     col_idx_cont = np.full(n_samples, timestamp_col, dtype=np.int64)
     vals_cont = np.asarray(timestamps, dtype=np.float64)
 
-    row_idx = np.concatenate([row_idx_cat, row_idx_cont])
-    col_idx = np.concatenate([col_idx_cat, col_idx_cont])
-    values = np.concatenate([vals_cat, vals_cont])
+    vals_genre = np.ones(len(genre_row_idx), dtype=np.float64)
+    row_idx = np.concatenate([row_idx_cat, genre_row_idx, row_idx_cont])
+    col_idx = np.concatenate([col_idx_cat, genre_col_idx, col_idx_cont])
+    values = np.concatenate([vals_cat, vals_genre, vals_cont])
     return sparse.csr_matrix((values, (row_idx, col_idx)), shape=(n_samples, n_features))
 
 
@@ -101,6 +139,12 @@ def _encode_fm_user_movie_pairs(user_id, movie_ids, users, feature_info, referen
         'occupation': np.full(n_candidates, user_row['occupation']),
     })
     feature_columns = _encode_feature_columns(pair_data, feature_maps, offsets)
+    genre_row_idx, genre_col_idx = _encode_genre_columns(
+        pair_data,
+        feature_info['movie_genres'],
+        feature_maps['genre'],
+        offsets['genre'],
+    )
     timestamps = _transform_timestamp(
         np.full(n_candidates, reference_timestamp),
         feature_info['timestamp_stats'],
@@ -108,6 +152,8 @@ def _encode_fm_user_movie_pairs(user_id, movie_ids, users, feature_info, referen
     return _build_sparse_matrix(
         n_candidates,
         feature_columns,
+        genre_row_idx,
+        genre_col_idx,
         timestamps,
         feature_info['timestamp_col'],
         n_features,
@@ -519,14 +565,15 @@ class TrainFactorMachineModel(TrainModel):
             'age': self._build_index_map(users['age'].unique()),
             'gender': self._build_index_map(users['gender'].unique()),
             'occupation': self._build_index_map(users['occupation'].unique()),
+            'genre': _build_genre_map(movies),
         }
 
     def _build_feature_offsets(self, feature_maps):
         offset = 0
         offsets = {}
-        for name, feature_map in feature_maps.items():
+        for name in ('user', 'movie', 'age', 'gender', 'occupation', 'genre'):
             offsets[name] = offset
-            offset += len(feature_map)
+            offset += len(feature_maps[name])
         offsets['timestamp'] = offset
         return offsets, offset + 1
 
@@ -541,15 +588,30 @@ class TrainFactorMachineModel(TrainModel):
     def _encode_feature_columns(self, data, feature_maps, offsets):
         return _encode_feature_columns(data, feature_maps, offsets)
 
-    def _build_sparse_matrix(self, n_samples, categorical_columns, timestamps, timestamp_col, n_features):
+    def _build_sparse_matrix(
+        self,
+        n_samples,
+        categorical_columns,
+        genre_row_idx,
+        genre_col_idx,
+        timestamps,
+        timestamp_col,
+        n_features,
+    ):
         return _build_sparse_matrix(
-            n_samples, categorical_columns, timestamps, timestamp_col, n_features
+            n_samples,
+            categorical_columns,
+            genre_row_idx,
+            genre_col_idx,
+            timestamps,
+            timestamp_col,
+            n_features,
         )
 
     def _feature_maps_from_info(self, feature_info):
         return _feature_maps_from_info(feature_info)
 
-    def _build_feature_info(self, feature_maps, offsets, n_features, timestamp_stats):
+    def _build_feature_info(self, feature_maps, offsets, n_features, timestamp_stats, movies):
         return {
             'offsets': offsets,
             'user_map': feature_maps['user'],
@@ -557,6 +619,8 @@ class TrainFactorMachineModel(TrainModel):
             'age_map': feature_maps['age'],
             'gender_map': feature_maps['gender'],
             'occupation_map': feature_maps['occupation'],
+            'genre_map': feature_maps['genre'],
+            'movie_genres': _build_movie_genres_lookup(movies),
             'timestamp_col': offsets['timestamp'],
             'timestamp_stats': timestamp_stats,
             'n_features': n_features,
@@ -566,14 +630,16 @@ class TrainFactorMachineModel(TrainModel):
         feature_maps = self._build_feature_maps(users, movies)
         offsets, n_features = self._build_feature_offsets(feature_maps)
         timestamp_stats = self._fit_timestamp_stats(data['timestamp'].to_numpy())
-        return self._build_feature_info(feature_maps, offsets, n_features, timestamp_stats)
+        return self._build_feature_info(feature_maps, offsets, n_features, timestamp_stats, movies)
 
     def create_feature_matrix_from_data(self, data, users, movies, feature_info=None):
         if feature_info is None:
             feature_maps = self._build_feature_maps(users, movies)
             offsets, n_features = self._build_feature_offsets(feature_maps)
             timestamp_stats = self._fit_timestamp_stats(data['timestamp'].to_numpy())
-            feature_info = self._build_feature_info(feature_maps, offsets, n_features, timestamp_stats)
+            feature_info = self._build_feature_info(
+                feature_maps, offsets, n_features, timestamp_stats, movies
+            )
         else:
             feature_maps = self._feature_maps_from_info(feature_info)
             offsets = feature_info['offsets']
@@ -581,10 +647,18 @@ class TrainFactorMachineModel(TrainModel):
             timestamp_stats = feature_info['timestamp_stats']
 
         feature_columns = self._encode_feature_columns(data, feature_maps, offsets)
+        genre_row_idx, genre_col_idx = _encode_genre_columns(
+            data,
+            feature_info['movie_genres'],
+            feature_maps['genre'],
+            offsets['genre'],
+        )
         timestamps = self._transform_timestamp(data['timestamp'].to_numpy(), timestamp_stats)
         X = self._build_sparse_matrix(
             len(data),
             feature_columns,
+            genre_row_idx,
+            genre_col_idx,
             timestamps,
             feature_info['timestamp_col'],
             n_features,
