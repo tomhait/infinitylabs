@@ -1,0 +1,248 @@
+Successfully retrieved 1000209 rows from ratings.
+Successfully retrieved 3883 rows from movies.
+Successfully retrieved 6040 rows from users.
+Shape of ratings pivot table: (3706, 6040)
+Number of users with at least 200 ratings: 1589
+Evaluating 1589 users with shared train/test splits (metrics @k=1..10).
+
+--- Naive Bayes ---
+Naive Bayes evaluation progress: 1/1589 users
+Naive Bayes evaluation progress: 50/1589 users
+Naive Bayes evaluation progress: 100/1589 users
+Naive Bayes evaluation progress: 150/1589 users
+Naive Bayes evaluation progress: 200/1589 users
+Naive Bayes evaluation progress: 250/1589 users
+Naive Bayes evaluation progress: 300/1589 users
+Naive Bayes evaluation progress: 350/1589 users
+Naive Bayes evaluation progress: 400/1589 users
+Naive Bayes evaluation progress: 450/1589 users
+Naive Bayes evaluation progress: 500/1589 users
+Naive Bayes evaluation progress: 550/1589 users
+Naive Bayes evaluation progress: 600/1589 users
+Naive Bayes evaluation progress: 650/1589 users
+Naive Bayes evaluation progress: 700/1589 users
+Naive Bayes evaluation progress: 750/1589 users
+Naive Bayes evaluation progress: 800/1589 users
+Naive Bayes evaluation progress: 850/1589 users
+Naive Bayes evaluation progress: 900/1589 users
+Naive Bayes evaluation progress: 950/1589 users
+Naive Bayes evaluation progress: 1000/1589 users
+Naive Bayes evaluation progress: 1050/1589 users
+Naive Bayes evaluation progress: 1100/1589 users
+Naive Bayes evaluation progress: 1150/1589 users
+Naive Bayes evaluation progress: 1200/1589 users
+Naive Bayes evaluation progress: 1250/1589 users
+Naive Bayes evaluation progress: 1300/1589 users
+Naive Bayes evaluation progress: 1350/1589 users
+Naive Bayes evaluation progress: 1400/1589 users
+Naive Bayes evaluation progress: 1450/1589 users
+Naive Bayes evaluation progress: 1500/1589 users
+Naive Bayes evaluation progress: 1550/1589 users
+Naive Bayes evaluation progress: 1589/1589 users
+Naive Bayes @k=10: precision=0.1397, recall=0.0432, mrr=0.2932, ndcg=0.3714
+
+--- Factorization Machine ---
+Training FM on 946154 ratings after holding out test liked movies.
+Epoch 1/50 MSE: 1.195725
+Epoch 2/50 MSE: 1.179118
+Epoch 3/50 MSE: 1.168995
+Epoch 4/50 MSE: 1.160998
+Epoch 5/50 MSE: 1.153299
+Epoch 6/50 MSE: 1.147093
+Epoch 7/50 MSE: 1.140320
+Epoch 8/50 MSE: 1.134274
+Epoch 9/50 MSE: 1.128834
+Epoch 10/50 MSE: 1.123956
+Epoch 11/50 MSE: 1.119639
+Epoch 12/50 MSE: 1.115971
+Epoch 13/50 MSE: 1.113618
+Epoch 14/50 MSE: 1.109962
+Epoch 15/50 MSE: 1.107658
+Epoch 16/50 MSE: 1.105843
+Epoch 17/50 MSE: 1.104078
+Epoch 18/50 MSE: 1.102802
+Epoch 19/50 MSE: 1.101948
+Epoch 20/50 MSE: 1.101298
+Epoch 21/50 MSE: 1.100040
+Epoch 22/50 MSE: 1.099702
+Epoch 23/50 MSE: 1.099224
+Epoch 24/50 MSE: 1.099277
+Epoch 25/50 MSE: 1.098471
+Epoch 26/50 MSE: 1.097957
+Epoch 27/50 MSE: 1.099210
+Epoch 28/50 MSE: 1.097891
+Epoch 29/50 MSE: 1.098276
+Epoch 30/50 MSE: 1.097519
+Epoch 31/50 MSE: 1.097563
+Epoch 32/50 MSE: 1.097656
+Epoch 33/50 MSE: 1.097366
+Epoch 34/50 MSE: 1.097130
+Epoch 35/50 MSE: 1.097311
+Epoch 36/50 MSE: 1.097112
+Epoch 37/50 MSE: 1.097406
+Epoch 38/50 MSE: 1.097832
+Epoch 39/50 MSE: 1.097164
+Epoch 40/50 MSE: 1.097177
+Epoch 41/50 MSE: 1.097318
+Epoch 42/50 MSE: 1.097507
+Epoch 43/50 MSE: 1.097211
+Epoch 44/50 MSE: 1.097249
+Epoch 45/50 MSE: 1.097138
+Epoch 46/50 MSE: 1.097672
+Epoch 47/50 MSE: 1.097383
+Epoch 48/50 MSE: 1.098612
+Epoch 49/50 MSE: 1.097220
+Epoch 50/50 MSE: 1.097101
+FM evaluation progress: 1/1589 users
+FM evaluation progress: 50/1589 users
+FM evaluation progress: 100/1589 users
+FM evaluation progress: 150/1589 users
+FM evaluation progress: 200/1589 users
+FM evaluation progress: 250/1589 users
+FM evaluation progress: 300/1589 users
+FM evaluation progress: 350/1589 users
+FM evaluation progress: 400/1589 users
+FM evaluation progress: 450/1589 users
+FM evaluation progress: 500/1589 users
+FM evaluation progress: 550/1589 users
+FM evaluation progress: 600/1589 users
+FM evaluation progress: 650/1589 users
+FM evaluation progress: 700/1589 users
+FM evaluation progress: 750/1589 users
+FM evaluation progress: 800/1589 users
+FM evaluation progress: 850/1589 users
+FM evaluation progress: 900/1589 users
+FM evaluation progress: 950/1589 users
+FM evaluation progress: 1000/1589 users
+FM evaluation progress: 1050/1589 users
+FM evaluation progress: 1100/1589 users
+FM evaluation progress: 1150/1589 users
+FM evaluation progress: 1200/1589 users
+FM evaluation progress: 1250/1589 users
+FM evaluation progress: 1300/1589 users
+FM evaluation progress: 1350/1589 users
+FM evaluation progress: 1400/1589 users
+FM evaluation progress: 1450/1589 users
+FM evaluation progress: 1500/1589 users
+FM evaluation progress: 1550/1589 users
+FM evaluation progress: 1589/1589 users
+Factorization Machine @k=10: precision=0.0411, recall=0.0129, mrr=0.0889, ndcg=0.1352
+
+--- Matrix Factorization ---
+Training NMF on 946154 ratings after holding out test liked movies.
+NMF training MSE on observed ratings: 6.264007
+NMF evaluation progress: 1/1589 users
+NMF evaluation progress: 50/1589 users
+NMF evaluation progress: 100/1589 users
+NMF evaluation progress: 150/1589 users
+NMF evaluation progress: 200/1589 users
+NMF evaluation progress: 250/1589 users
+NMF evaluation progress: 300/1589 users
+NMF evaluation progress: 350/1589 users
+NMF evaluation progress: 400/1589 users
+NMF evaluation progress: 450/1589 users
+NMF evaluation progress: 500/1589 users
+NMF evaluation progress: 550/1589 users
+NMF evaluation progress: 600/1589 users
+NMF evaluation progress: 650/1589 users
+NMF evaluation progress: 700/1589 users
+NMF evaluation progress: 750/1589 users
+NMF evaluation progress: 800/1589 users
+NMF evaluation progress: 850/1589 users
+NMF evaluation progress: 900/1589 users
+NMF evaluation progress: 950/1589 users
+NMF evaluation progress: 1000/1589 users
+NMF evaluation progress: 1050/1589 users
+NMF evaluation progress: 1100/1589 users
+NMF evaluation progress: 1150/1589 users
+NMF evaluation progress: 1200/1589 users
+NMF evaluation progress: 1250/1589 users
+NMF evaluation progress: 1300/1589 users
+NMF evaluation progress: 1350/1589 users
+NMF evaluation progress: 1400/1589 users
+NMF evaluation progress: 1450/1589 users
+NMF evaluation progress: 1500/1589 users
+NMF evaluation progress: 1550/1589 users
+NMF evaluation progress: 1589/1589 users
+Matrix Factorization @k=10: precision=0.0623, recall=0.0203, mrr=0.1366, ndcg=0.1908
+
+--- Svd ---
+Training TruncatedSVD on 946154 ratings after holding out test liked movies.
+TruncatedSVD training MSE on observed ratings: 4.034827
+TruncatedSVD evaluation progress: 1/1589 users
+TruncatedSVD evaluation progress: 50/1589 users
+TruncatedSVD evaluation progress: 100/1589 users
+TruncatedSVD evaluation progress: 150/1589 users
+TruncatedSVD evaluation progress: 200/1589 users
+TruncatedSVD evaluation progress: 250/1589 users
+TruncatedSVD evaluation progress: 300/1589 users
+TruncatedSVD evaluation progress: 350/1589 users
+TruncatedSVD evaluation progress: 400/1589 users
+TruncatedSVD evaluation progress: 450/1589 users
+TruncatedSVD evaluation progress: 500/1589 users
+TruncatedSVD evaluation progress: 550/1589 users
+TruncatedSVD evaluation progress: 600/1589 users
+TruncatedSVD evaluation progress: 650/1589 users
+TruncatedSVD evaluation progress: 700/1589 users
+TruncatedSVD evaluation progress: 750/1589 users
+TruncatedSVD evaluation progress: 800/1589 users
+TruncatedSVD evaluation progress: 850/1589 users
+TruncatedSVD evaluation progress: 900/1589 users
+TruncatedSVD evaluation progress: 950/1589 users
+TruncatedSVD evaluation progress: 1000/1589 users
+TruncatedSVD evaluation progress: 1050/1589 users
+TruncatedSVD evaluation progress: 1100/1589 users
+TruncatedSVD evaluation progress: 1150/1589 users
+TruncatedSVD evaluation progress: 1200/1589 users
+TruncatedSVD evaluation progress: 1250/1589 users
+TruncatedSVD evaluation progress: 1300/1589 users
+TruncatedSVD evaluation progress: 1350/1589 users
+TruncatedSVD evaluation progress: 1400/1589 users
+TruncatedSVD evaluation progress: 1450/1589 users
+TruncatedSVD evaluation progress: 1500/1589 users
+TruncatedSVD evaluation progress: 1550/1589 users
+TruncatedSVD evaluation progress: 1589/1589 users
+Svd @k=10: precision=0.0663, recall=0.0216, mrr=0.1441, ndcg=0.1983
+
+Naive Bayes @k=10
+  precision: 0.1397
+  recall:    0.0432
+  f1:        0.0660
+  hit_rate:  0.6539
+  mrr:       0.2932
+  ndcg:      0.3714
+
+Factorization Machine @k=10
+  precision: 0.0411
+  recall:    0.0129
+  f1:        0.0196
+  hit_rate:  0.2914
+  mrr:       0.0889
+  ndcg:      0.1352
+
+NMF @k=10
+  precision: 0.0623
+  recall:    0.0203
+  f1:        0.0306
+  hit_rate:  0.3726
+  mrr:       0.1366
+  ndcg:      0.1908
+
+TruncatedSVD @k=10
+  precision: 0.0663
+  recall:    0.0216
+  f1:        0.0326
+  hit_rate:  0.3839
+  mrr:       0.1441
+  ndcg:      0.1983
+
+Best model by NDCG @k=10: Naive Bayes (0.3714)
+Saved trained model to models/naive_bayes.pkl.
+Saved trained model to models/factorization_machine.pkl.
+Saved trained model to models/matrix_factorization.pkl.
+Saved trained model to models/svd.pkl.
+Saved manifest to models/manifest.pkl (best_model=naive_bayes).
+
+Generating top-10 recommendations for users: [1, 52, 64]
+Saved recommendations to /Users/tomhait/git/tom.aharon-hait/projects/recommender_2/output/recommendations.txt.
+Log saved to /Users/tomhait/git/tom.aharon-hait/projects/recommender_2/output/main_20260621_145644.log
