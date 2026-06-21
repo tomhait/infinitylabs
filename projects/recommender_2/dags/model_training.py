@@ -480,7 +480,7 @@ class TrainFactorMachineModel(TrainModel):
         max_eval_k=None,
         n_jobs=1,
         eval_backend='threading',
-        num_dim=8,
+        num_dim=16,
         num_epochs=10,
         learning_rate=0.05,
         batch_size=1024,
