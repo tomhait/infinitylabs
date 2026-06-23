@@ -1,0 +1,51 @@
+# To run airflow in docker:
+docker compose up -d --build
+
+# To run ETL directly to postgres-1 container:
+python main.py
+
+# To activate AirFlow new data processing:
+cp ml-latest-small/* dags/data
+
+# To activate new candidate model AirFlow processing:
+cp candidate_model.pkl dags/saved_models
+
+# go to http://localhost:8080/ and observe if the dag is active and running
+
+# show the databases
+docker exec -it recommender_2-postgres-1 psql -U airflow -d postgres -l
+
+# Show that the tables were created:
+docker exec -it recommender_2-postgres-1 psql -U airflow -d movielens_1m -c "\dt"
+
+docker exec -it recommender_2-postgres-1 psql -U airflow -d movielens_1m -c "
+SELECT * FROM users LIMIT 5;
+SELECT * FROM movies LIMIT 5;
+SELECT * FROM ratings LIMIT 5;
+"
+
+docker exec -it recommender_2-postgres-1 psql -U airflow -d movielens_1m -c "
+SELECT 'users' AS table_name, COUNT(*) AS total_rows FROM users
+UNION ALL
+SELECT 'movies', COUNT(*) FROM movies
+UNION ALL
+SELECT 'ratings', COUNT(*) FROM ratings;"
+
+# close recommender-2 AirFlow compose
+docker compose down
+
+
+# Running HTTP server for user recommendations
+# Rename src/.template.env to src/.env
+# Fill the missing API key from OMDb API
+# Run:
+uvicorn app:app --reload
+# open browser at: http://127.0.0.1:8000/
+
+########## Test commands #########
+docker exec -it recommender_1-postgres-1 psql -U airflow -d postgres -c "DROP DATABASE movielens;"
+
+head -n 1 ml-latest-small/links.csv > ml-latest_large/links.csv && for i in {1..1000}; do tail -n +2 ml-latest-small/links.csv; done >> ml-latest_large/links.csv
+head -n 1 ml-latest-small/movies.csv > ml-latest_large/movies.csv && for i in {1..1000}; do tail -n +2 ml-latest-small/movies.csv; done >> ml-latest_large/movies.csv
+head -n 1 ml-latest-small/tags.csv > ml-latest_large/tags.csv && for i in {1..1000}; do tail -n +2 ml-latest-small/tags.csv; done >> ml-latest_large/tags.csv
+head -n 1 ml-latest-small/ratings.csv > ml-latest_large/ratings.csv && for i in {1..100}; do tail -n +2 ml-latest-small/ratings.csv; done >> ml-latest_large/ratings.csv
