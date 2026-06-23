@@ -44,8 +44,9 @@ class TwoLayerMLP:
         return np.argmax(output, axis=1)
 
 class MLP:
-    def __init__(self, layer_sizes):
-        self.lr = 0.01
+    def __init__(self, layer_sizes, alpha=None, lr=0.01):
+        self.lr = lr
+        self.alpha = alpha
         self.layer_sizes = layer_sizes
         self.num_layers = len(layer_sizes) - 1
         self.weights = []
@@ -55,6 +56,12 @@ class MLP:
             self.weights.append(np.random.randn(fan_in, fan_out))
             self.biases.append(np.zeros((1, fan_out)))
 
+    def _leaky_relu(self, x):
+        return np.where(x > 0, x, x * self.alpha)
+
+    def _leaky_relu_derivative(self, x):
+        return np.where(x > 0, 1.0, self.alpha)
+
     def sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
 
@@ -63,24 +70,36 @@ class MLP:
         return exp_x / exp_x.sum(axis=1, keepdims=True)
 
     def forward(self, X):
+        self.Z_steps = []
         self.activations = [X]
         current = X
         for i in range(self.num_layers - 1):
             z = np.dot(current, self.weights[i]) + self.biases[i]
-            current = self.sigmoid(z)
+            if self.alpha is None:
+                current = self.sigmoid(z)
+            else:
+                current = self._leaky_relu(z)
+            self.Z_steps.append(z)
             self.activations.append(current)
         z = np.dot(current, self.weights[-1]) + self.biases[-1]
         output = self.softmax(z)
+        self.Z_steps.append(z)
         self.activations.append(output)
         return output
 
     def backward(self, y, output):
-        delta = output - y
+        delta = (output - y)
+        if self.alpha is not None:
+            delta /= output.shape[0]
         for i in reversed(range(self.num_layers)):
             dW = np.dot(self.activations[i].T, delta)
             db = np.sum(delta, axis=0, keepdims=True)
             if i > 0:
-                delta = np.dot(delta, self.weights[i].T) * self.activations[i] * (1 - self.activations[i])
+                if self.alpha is None:
+                    delta = np.dot(delta, self.weights[i].T) * self.activations[i] * (1 - self.activations[i])
+                else:
+                    dA = np.dot(delta, self.weights[i].T)
+                    delta = dA * self._leaky_relu_derivative(self.Z_steps[i-1])
             self.weights[i] -= self.lr * dW
             self.biases[i] -= self.lr * db
 
