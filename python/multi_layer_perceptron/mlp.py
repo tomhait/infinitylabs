@@ -103,8 +103,7 @@ class MLP:
             self.weights[i] -= self.lr * dW
             self.biases[i] -= self.lr * db
 
-    def train(self, X, y, epochs, learning_rate):
-        self.lr = learning_rate
+    def train(self, X, y, epochs):
         for epoch in range(epochs):
             output = self.forward(X)
             self.backward(y, output)
