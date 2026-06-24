@@ -1,0 +1,17 @@
+1. Should you overfit an autoencoder?
+No. Unseen images can be badly restored if overfitted to training set.
+
+2. Dif you overfit?
+No. with 9-dim latent space, according to the loss_9.png image test mse loss is 0.0183, which is similar to the ones obtained in train and validation losses.
+
+3. Are the reconstructed images any good?
+Reconstructed test images preserved the shapes but seem little blurred.
+
+4. Are the reduced vectors any good?
+Yes. For a 9-dimensional latent vectors, the autoencoder is able to restore the images with good results.
+If we take for example 2-dimensional latent space, the results degrade significantly.
+(latent_noise_9.png vs latent_noise_2.png). Especially the shape's borders.
+
+5. What happens if you add some noise to a reduced vector before decoding it?
+MSE loss is increased on test set as std noise of normal dist is increased.
+Reconstructed images get more and more blurred.
