@@ -2,7 +2,7 @@
 No. Unseen images can be badly restored if overfitted to training set.
 
 2. Dif you overfit?
-No. with 9-dim latent space, according to the loss_9.png image test mse loss is 0.0183, which is similar to the ones obtained in train and validation losses.
+No. with 9-dim latent space, according to the loss_9.png image validation loss continues to drop with the training loss suggesting no overfit even at 20 epochs.
 
 3. Are the reconstructed images any good?
 Reconstructed test images preserved the shapes but seem little blurred.
