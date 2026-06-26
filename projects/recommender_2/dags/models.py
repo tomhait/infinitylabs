@@ -10,7 +10,7 @@ class TwoWayFM:
     """
     def __init__(self, num_dim, reg_penalty = 0.01, num_epochs = 100,
                  learning_rate = 0.05, batch_size=32, random_seed=42, verbose = True,
-                 standardize_y = True, standardize_x = True):
+                 standardize_y = True):
         self.k = num_dim
         self.reg_penalty = 2 * reg_penalty if reg_penalty is not None else 0.0
         self.epoch = num_epochs
@@ -20,9 +20,6 @@ class TwoWayFM:
         self.rng = np.random.default_rng(random_seed)
         self.verbose = verbose
         self.standardize_y = standardize_y
-        self.standardize_x = standardize_x
-        self.mean = None
-        self.std = None
         self.y_mean = None
         self.y_std = None
         self._fitted = False
@@ -35,31 +32,6 @@ class TwoWayFM:
         self.w0 = 0.0
         self.w = np.zeros(num_features)
         self.V = self.rng.normal(0.0, 0.1, (num_features, self.k))
-
-    def _fit_x_stats(self, X):
-        if sparse.issparse(X):
-            mean = np.asarray(X.mean(axis=0)).ravel()
-            sq_mean = np.asarray(X.power(2).mean(axis=0)).ravel()
-            var = np.maximum(sq_mean - mean ** 2, 0.0)
-            std = np.sqrt(var)
-        else:
-            mean = np.mean(X, axis=0)
-            std = np.std(X, axis=0)
-        self.mean = mean
-        self.std = np.where(std < 1e-8, 1.0, std)
-
-    def _transform_X(self, X):
-        if self.mean is None or self.std is None:
-            raise ValueError("Call fit() before predict().")
-        return (X - self.mean) / (self.std + 1e-8)
-
-    def _standardize_X(self, X, fit=False):
-        if fit:
-            self._fit_x_stats(X)
-            if sparse.issparse(X):
-                return X
-            return self._transform_X(X)
-        return self._transform_X(X)
 
     def _standardize_y(self, y, fit = False):
         y = np.asarray(y, dtype=float)
@@ -75,98 +47,74 @@ class TwoWayFM:
             return y_hat
         return y_hat * (self.y_std + 1e-8) + self.y_mean
 
+    @staticmethod
+    def _elementwise_square(X_batch):
+        if sparse.issparse(X_batch):
+            return X_batch.multiply(X_batch)
+        return X_batch ** 2
+
     def _forward_batch(self, X_batch):
         """
-        Computes forward batch for a mini batch
+        Computes forward batch for a mini batch.
+        Works directly on sparse or dense X without densifying.
         """
-        linear_terms = self.w0 + np.dot(X_batch, self.w)
-        sum_v_x = np.dot(X_batch, self.V)
-        sum_v2_x2 = np.dot(X_batch ** 2, self.V ** 2)
+        linear_terms = self.w0 + np.asarray(X_batch @ self.w).ravel()
+        sum_v_x = np.asarray(X_batch @ self.V)
+        sum_v2_x2 = np.asarray(self._elementwise_square(X_batch) @ (self.V ** 2))
         interaction_terms = 0.5 * np.sum(sum_v_x ** 2 - sum_v2_x2, axis=1)
         y_hat = linear_terms + interaction_terms
         return y_hat, sum_v_x
 
     def _gradient(self, X_batch, y_batch):
         """
-        Performs gradient descent on a mini-batch
+        Performs gradient descent on a mini-batch.
+        Returns the sum of squared (standardized) residuals for logging.
         """
         actual_batch_size = X_batch.shape[0]
         y_hat, sum_v_x = self._forward_batch(X_batch)
-        errors = 2 * (y_hat - y_batch)
-        grad_w0 = np.mean(errors) + self.reg_penalty * self.w0
+        residual = y_hat - y_batch
+        errors = 2 * residual
+        grad_w0 = np.mean(errors)
 
-        grad_w = np.dot(errors, X_batch) / actual_batch_size + self.reg_penalty * self.w
-        term1 = np.dot(X_batch.T, errors[:, np.newaxis] * sum_v_x)
-
-        term2 = self.V * np.dot(errors, X_batch ** 2)[:, np.newaxis]
+        grad_w = np.asarray(X_batch.T @ errors).ravel() / actual_batch_size + self.reg_penalty * self.w
+        term1 = np.asarray(X_batch.T @ (errors[:, np.newaxis] * sum_v_x))
+        term2 = self.V * np.asarray(self._elementwise_square(X_batch).T @ errors)[:, np.newaxis]
 
         grad_V = (term1 - term2) / actual_batch_size + self.reg_penalty * self.V
 
         self.w0 -= self.lr * grad_w0
         self.w -= self.lr * grad_w
         self.V -= self.lr * grad_V
-
-    def _to_dense_batch(self, X, indices):
-        if sparse.issparse(X):
-            return X[indices].toarray()
-        return X[indices]
-
-    def _compute_mse(self, X, y):
-        num_samples = X.shape[0]
-        total_sq_error = 0.0
-        for start_idx in range(0, num_samples, self.batch_size):
-            end_idx = min(start_idx + self.batch_size, num_samples)
-            batch_idx = np.arange(start_idx, end_idx)
-            X_batch = self._to_dense_batch(X, batch_idx)
-            if self.standardize_x:
-                X_batch = self._transform_X(X_batch)
-            y_hat = self._forward_batch(X_batch)[0]
-            y_hat = self._inverse_standardize_y(y_hat)
-            total_sq_error += np.sum((y_hat - y[batch_idx]) ** 2)
-        return total_sq_error / num_samples
+        return float(np.sum(residual ** 2))
 
     def fit(self, X, y):
         num_samples, num_features = X.shape
+        if sparse.issparse(X):
+            X = X.tocsr()
         self._setup(num_features)
         y = np.asarray(y, dtype=float)
-        y_original = y.copy()
-        if self.standardize_x:
-            self._fit_x_stats(X)
         y = self._standardize_y(y, fit=True)
         self._fitted = True
+        y_scale = (self.y_std + 1e-8) ** 2 if self.standardize_y else 1.0
         for epoch in range(self.epoch):
             indices = self.rng.permutation(num_samples)
+            total_sq_error = 0.0
             for start_idx in range(0, num_samples, self.batch_size):
                 end_idx = min(start_idx + self.batch_size, num_samples)
                 batch_idx = indices[start_idx:end_idx]
-                X_batch = self._to_dense_batch(X, batch_idx)
-                if self.standardize_x:
-                    X_batch = self._transform_X(X_batch)
+                X_batch = X[batch_idx]
                 y_batch = y[batch_idx]
-                self._gradient(X_batch, y_batch)
+                total_sq_error += self._gradient(X_batch, y_batch)
             if self.verbose:
-                mse = self._compute_mse(X, y_original)
+                mse = total_sq_error / num_samples * y_scale
                 print(f"Epoch {epoch + 1}/{self.epoch} MSE: {mse:.6f}")
 
     def predict(self, X):
         if not self._fitted:
             raise ValueError("Call fit() before predict().")
-        if not sparse.issparse(X):
-            if self.standardize_x:
-                X = self._transform_X(X)
-            y_hat, _ = self._forward_batch(X)
-            return self._inverse_standardize_y(y_hat)
-
-        num_samples = X.shape[0]
-        predictions = []
-        for start_idx in range(0, num_samples, self.batch_size):
-            end_idx = min(start_idx + self.batch_size, num_samples)
-            X_batch = X[start_idx:end_idx].toarray()
-            if self.standardize_x:
-                X_batch = self._transform_X(X_batch)
-            y_hat, _ = self._forward_batch(X_batch)
-            predictions.append(y_hat)
-        y_hat = np.concatenate(predictions)
+        if sparse.issparse(X):
+            X = X.tocsr()
+        y_hat, _ = self._forward_batch(X)
         return self._inverse_standardize_y(y_hat)
 
 class NaiveBayesRecommender:

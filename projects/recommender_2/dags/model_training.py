@@ -677,7 +677,6 @@ class TrainFactorMachineModel(TrainModel):
             num_epochs=self.num_epochs,
             learning_rate=self.learning_rate,
             batch_size=self.batch_size,
-            standardize_x=False,
             standardize_y=True,
             verbose=True,
         )
@@ -740,7 +739,6 @@ class TrainFactorMachineModel(TrainModel):
             num_epochs=self.num_epochs,
             learning_rate=self.learning_rate,
             batch_size=self.batch_size,
-            standardize_x=False,
             standardize_y=True,
             verbose=True,
         )
@@ -1003,6 +1001,7 @@ def compare_models(
     fm_kwargs=None,
     mf_kwargs=None,
     svd_kwargs=None,
+    models=None,
 ):
     fm_kwargs = fm_kwargs or {}
     mf_kwargs = mf_kwargs or {}
@@ -1018,12 +1017,17 @@ def compare_models(
     splits = base._build_user_splits(max_users=max_users)
     print(f"Evaluating {len(splits)} users with shared train/test splits (metrics @k=1..{top_k}).")
 
-    model_trainers = {
+    all_model_trainers = {
         'naive_bayes': TrainNaiveBayesModel(dm, **trainer_kwargs),
         'factorization_machine': TrainFactorMachineModel(dm, **trainer_kwargs, **fm_kwargs),
         'matrix_factorization': TrainMatrixFactorizationModel(dm, **trainer_kwargs, **mf_kwargs),
         'svd': TrainSVDModel(dm, **trainer_kwargs, **svd_kwargs),
     }
+    if models is not None:
+        unknown_models = set(models) - set(all_model_trainers)
+        if unknown_models:
+            raise ValueError(f"Unknown model(s): {sorted(unknown_models)}")
+    model_trainers = all_model_trainers if models is None else {name: all_model_trainers[name] for name in models}
 
     results = {'splits': splits, 'artifacts': {}}
     k = top_k - 1
