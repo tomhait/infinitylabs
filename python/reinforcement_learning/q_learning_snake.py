@@ -56,10 +56,7 @@ def is_danger(game, direction):
     """checks whether moving a given direction would hit the snake's own body"""
     body = game.snake[:-1]
     point = move_point(game, game.head, direction)
-    if point in body:
-        return 1
-    else:
-        return 0
+    return 1 if point in body else 0
 
 
 def get_state(game):

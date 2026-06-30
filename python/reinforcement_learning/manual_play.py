@@ -56,4 +56,3 @@ def play():
 
 if __name__ == "__main__":
     play()
-    # game = SnakeGame(speed=BASE_SPEED)
