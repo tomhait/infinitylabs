@@ -25,6 +25,7 @@ PRODUCTION_ONEBP_KWARGS = {
     'n_negatives': 5,
     'beta': 0.99,
     'temperature': 1.0,
+    'margin': 0.0,
     'liked_th': 4,
     'dislike_th': 2,
     'batch_size': 1024,

@@ -533,14 +533,20 @@ def _default_torch_device():
     return torch.device("cpu")
 
 
-def infonce_loss(user_vecs, pos_vecs, neg_vecs, temperature=1.0):
-    """InfoNCE / sampled-softmax loss: classify the positive among negatives."""
+def infonce_loss(user_vecs, pos_vecs, neg_vecs, temperature=1.0, margin=0.0):
+    """InfoNCE / sampled-softmax loss: classify the positive among negatives.
+
+    When margin > 0, it is added to negative logits so the positive must satisfy
+    pos_score > neg_score + margin (triplet-style separation in similarity space).
+    """
     user_n = _normalize(user_vecs)
     pos_n = _normalize(pos_vecs)
     neg_n = _normalize(neg_vecs)
 
     pos_scores = (user_n * pos_n).sum(dim=1)
     neg_scores = (neg_n * user_n.unsqueeze(1)).sum(dim=2)
+    if margin != 0.0:
+        neg_scores = neg_scores + margin
     logits = torch.cat([pos_scores.unsqueeze(1), neg_scores], dim=1)
     if temperature != 1.0:
         logits = logits / temperature
@@ -564,6 +570,7 @@ class OneBPModel:
         n_negatives=5,
         beta=0.99,
         temperature=1.0,
+        margin=0.0,
         liked_th=4,
         dislike_th=2,
         reg_penalty=0.0,
@@ -584,6 +591,7 @@ class OneBPModel:
         self.n_negatives = n_negatives
         self.beta = beta
         self.temperature = temperature
+        self.margin = margin
         self.liked_th = liked_th
         self.dislike_th = dislike_th
         self.reg_penalty = reg_penalty
@@ -826,7 +834,11 @@ class OneBPModel:
         pos_vecs = self.model.item_tower(pos_t)
         neg_vecs = self.model.item_tower(neg_t).view(batch_size, n_neg, -1)
 
-        loss = infonce_loss(user_vecs, pos_vecs, neg_vecs, temperature=self.temperature)
+        loss = infonce_loss(
+            user_vecs, pos_vecs, neg_vecs,
+            temperature=self.temperature,
+            margin=self.margin,
+        )
 
         self.item_optimizer.zero_grad()
         loss.backward()

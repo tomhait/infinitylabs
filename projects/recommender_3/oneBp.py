@@ -181,14 +181,20 @@ def default_torch_device():
     return torch.device("cpu")
 
 
-def infonce_loss(user_vecs, pos_vecs, neg_vecs, temperature=1.0):
-    """InfoNCE / sampled-softmax loss: classify the positive among negatives."""
+def infonce_loss(user_vecs, pos_vecs, neg_vecs, temperature=1.0, margin=0.0):
+    """InfoNCE / sampled-softmax loss: classify the positive among negatives.
+
+    When margin > 0, it is added to negative logits so the positive must satisfy
+    pos_score > neg_score + margin.
+    """
     user_n = normalize(user_vecs)
     pos_n = normalize(pos_vecs)
     neg_n = normalize(neg_vecs)
 
     pos_scores = (user_n * pos_n).sum(dim=1)
     neg_scores = (neg_n * user_n.unsqueeze(1)).sum(dim=2)
+    if margin != 0.0:
+        neg_scores = neg_scores + margin
     logits = torch.cat([pos_scores.unsqueeze(1), neg_scores], dim=1)
     if temperature != 1.0:
         logits = logits / temperature
@@ -212,6 +218,7 @@ class OneBPModel:
         n_negatives=5,
         beta=0.99,
         temperature=1.0,
+        margin=0.0,
         liked_th=4,
         dislike_th=2,
         reg_penalty=0.0,
@@ -232,6 +239,7 @@ class OneBPModel:
         self.n_negatives = n_negatives
         self.beta = beta
         self.temperature = temperature
+        self.margin = margin
         self.liked_th = liked_th
         self.dislike_th = dislike_th
         self.reg_penalty = reg_penalty
@@ -474,7 +482,11 @@ class OneBPModel:
         pos_vecs = self.model.item_tower(pos_t)
         neg_vecs = self.model.item_tower(neg_t).view(batch_size, n_neg, -1)
 
-        loss = infonce_loss(user_vecs, pos_vecs, neg_vecs, temperature=self.temperature)
+        loss = infonce_loss(
+            user_vecs, pos_vecs, neg_vecs,
+            temperature=self.temperature,
+            margin=self.margin,
+        )
 
         self.item_optimizer.zero_grad()
         loss.backward()
@@ -581,3 +593,38 @@ def positives_from_ratings(ratings, liked_th=4):
     liked = ratings[ratings['rating'] >= liked_th]
     return liked['userId'].to_numpy(), liked['movieId'].to_numpy()
 
+
+if __name__ == "__main__":
+    rng = np.random.default_rng(0)
+    user_ids_pool = np.arange(1, 51)
+    movie_ids_pool = rng.integers(1, 81, 80)
+    users_df = pd.DataFrame({
+        'userId': user_ids_pool,
+        'gender': rng.choice(['M', 'F'], 50),
+        'age': rng.choice([1, 18, 25, 35, 45, 50, 56], 50),
+        'occupation': rng.integers(0, 21, 50),
+    })
+    movies_df = pd.DataFrame({
+        'movieId': np.unique(movie_ids_pool),
+        'genres': rng.choice(
+            ['Action|Adventure', 'Comedy|Romance', 'Drama', 'Sci-Fi|Action'],
+            len(np.unique(movie_ids_pool)),
+        ),
+    })
+    df = pd.DataFrame({
+        'userId': rng.integers(1, 51, 2000),
+        'movieId': rng.integers(1, 81, 2000),
+        'rating': rng.integers(1, 6, 2000),
+    }).drop_duplicates(['userId', 'movieId'])
+
+    pos_users, pos_movies = positives_from_ratings(df)
+    model = OneBPModel(num_dim=16, num_epochs=20, n_negatives=3, verbose=False)
+    model.fit(pos_users, pos_movies, df, users=users_df, movies=movies_df)
+
+    user_id = int(pos_users[0])
+    candidates = np.unique(pos_movies[:20])
+    user_train = pos_movies[pos_users == user_id][:10]
+    scores = model.predict_user_items(user_id, candidates, train_movies=user_train)
+    assert scores.shape == (len(candidates),)
+    assert np.isfinite(scores).all()
+    print("OneBP smoke test passed.")

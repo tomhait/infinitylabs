@@ -911,6 +911,7 @@ class TrainOneBPModel(TrainLatentFactorModel):
         n_negatives=5,
         beta=0.99,
         temperature=1.0,
+        margin=0.0,
         liked_th=4,
         dislike_th=2,
         reg_penalty=0.0,
@@ -936,6 +937,7 @@ class TrainOneBPModel(TrainLatentFactorModel):
         self.n_negatives = n_negatives
         self.beta = beta
         self.temperature = temperature
+        self.margin = margin
         self.liked_th = liked_th
         self.dislike_th = dislike_th
         self.reg_penalty = reg_penalty
@@ -984,6 +986,7 @@ class TrainOneBPModel(TrainLatentFactorModel):
             n_negatives=self.n_negatives,
             beta=self.beta,
             temperature=self.temperature,
+            margin=self.margin,
             liked_th=self.liked_th,
             dislike_th=self.dislike_th,
             reg_penalty=self.reg_penalty,
@@ -1015,6 +1018,7 @@ class TrainOneBPModel(TrainLatentFactorModel):
                 'n_negatives': self.n_negatives,
                 'beta': self.beta,
                 'temperature': self.temperature,
+                'margin': self.margin,
                 'liked_th': self.liked_th,
                 'dislike_th': self.dislike_th,
                 'reg_penalty': self.reg_penalty,
