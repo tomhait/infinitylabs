@@ -1,0 +1,3 @@
+__pycache__/
+*.pyc
+pytorch_and_ann_intro/pytorch_intro/data/
