@@ -1,0 +1,20 @@
+# To run exercise 1:
+Get the dog and cats dataset from:
+https://www.kaggle.com/datasets/bhavikjikadara/dog-and-cat-classification-dataset
+
+Put a sample image in test_images folder
+
+Set the following variables within ex1.py file:
+RETRAIN = True (to train the models, otherwise False if weights folder is available)
+
+DEMO_IMG  = path to the test image
+
+Output images will be available in outputs folder
+
+According to comparison.png:
+in most cases (see attached examples) SRCNN super-resolution algorithm yields the best restoration results.
+
+Super resolution Algorithms:
+EDSR repo: https://github.com/sanghyun-son/EDSR-PyTorch
+ESPCN repo: https://github.com/leftthomas/ESPCN
+SRCNN repo: https://github.com/yjn870/SRCNN-pytorch
