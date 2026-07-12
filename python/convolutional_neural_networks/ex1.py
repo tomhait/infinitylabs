@@ -39,76 +39,80 @@ def ycbcr_to_rgb(y, cb, cr):
 class ShrinkNet(nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = nn.Conv2d(3, 16, kernel_size=3, padding=1)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(16, 3, kernel_size=3, padding=1)
+        self.net = nn.Sequential(
+            nn.Conv2d(3, 16, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(16, 3, kernel_size=3, padding=1),
+        )
 
     def forward(self, x):
-        res = F.avg_pool2d(x, 2)
-        x = torch.relu(self.conv1(x))
-        x = self.pool(x)
-        x = self.conv2(x)
-        return res + x
+        return F.avg_pool2d(x, 2) + self.net(x)
 
 
 class SRCNN(nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 64, kernel_size=9, padding=4)
-        self.conv2 = nn.Conv2d(64, 32, kernel_size=5, padding=2)
-        self.conv3 = nn.Conv2d(32, 1, kernel_size=5, padding=2)
+        self.net = nn.Sequential(
+            nn.Conv2d(1, 64, kernel_size=9, padding=4),
+            nn.ReLU(),
+            nn.Conv2d(64, 32, kernel_size=5, padding=2),
+            nn.ReLU(),
+            nn.Conv2d(32, 1, kernel_size=5, padding=2),
+        )
 
     def forward(self, x):
-        x = torch.relu(self.conv1(x))
-        x = torch.relu(self.conv2(x))
-        x = self.conv3(x)
-        return x
+        return self.net(x)
 
 
 class ESPCN(nn.Module):
     def __init__(self, scale=2):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 64, kernel_size=5, padding=2)
-        self.conv2 = nn.Conv2d(64, 32, kernel_size=3, padding=1)
-        self.conv3 = nn.Conv2d(32, 1 * (scale ** 2), kernel_size=3, padding=1)
-        self.pixel_shuffle = nn.PixelShuffle(scale)
+        self.net = nn.Sequential(
+            nn.Conv2d(1, 64, kernel_size=5, padding=2),
+            nn.Tanh(),
+            nn.Conv2d(64, 32, kernel_size=3, padding=1),
+            nn.Tanh(),
+            nn.Conv2d(32, 1 * (scale ** 2), kernel_size=3, padding=1),
+            nn.PixelShuffle(scale),
+        )
 
     def forward(self, x):
-        x = torch.tanh(self.conv1(x))
-        x = torch.tanh(self.conv2(x))
-        x = self.pixel_shuffle(self.conv3(x))
-        return x
+        return self.net(x)
 
 
 class ResBlock(nn.Module):
     def __init__(self, channels):
         super().__init__()
-        self.conv1 = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
+        self.block = nn.Sequential(
+            nn.Conv2d(channels, channels, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(channels, channels, kernel_size=3, padding=1),
+        )
 
     def forward(self, x):
-        out = torch.relu(self.conv1(x))
-        out = self.conv2(out)
-        return x + out
+        return x + self.block(x)
 
 
 class EDSR(nn.Module):
     def __init__(self, scale=2, n_blocks=4, n_feats=64):
         super().__init__()
-        self.head = nn.Conv2d(1, n_feats, kernel_size=3, padding=1)
-        self.body = nn.Sequential(*[ResBlock(n_feats) for _ in range(n_blocks)])
-        self.body_conv = nn.Conv2d(n_feats, n_feats, kernel_size=3, padding=1)
-        self.up = nn.Sequential(
+        self.head = nn.Sequential(
+            nn.Conv2d(1, n_feats, kernel_size=3, padding=1),
+        )
+        self.body = nn.Sequential(
+            *[ResBlock(n_feats) for _ in range(n_blocks)],
+            nn.Conv2d(n_feats, n_feats, kernel_size=3, padding=1),
+        )
+        self.tail = nn.Sequential(
             nn.Conv2d(n_feats, n_feats * (scale ** 2), kernel_size=3, padding=1),
             nn.PixelShuffle(scale),
+            nn.Conv2d(n_feats, 1, kernel_size=3, padding=1),
         )
-        self.tail = nn.Conv2d(n_feats, 1, kernel_size=3, padding=1)
 
     def forward(self, x):
         x = self.head(x)
-        res = self.body_conv(self.body(x))
-        x = x + res
-        x = self.up(x)
+        x = x + self.body(x)
         x = self.tail(x)
         return x
 
@@ -287,7 +291,7 @@ DEMO_IMG = os.path.join(os.path.dirname(__file__), "test_images", "test_dog2.jpg
 MAX_IMAGES = 300
 EPOCHS = 3
 BATCH_SIZE = 16
-RETRAIN = False
+RETRAIN = True
 DEVICE = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 
 os.makedirs(WEIGHTS_DIR, exist_ok=True)
