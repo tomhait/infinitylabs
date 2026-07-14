@@ -698,11 +698,11 @@ class OneBPModel:
             return None
 
         item_t = torch.tensor(item_ids, device=self.device, dtype=torch.long)
-        item_vecs = self.model.item_tower(item_t)
-        return item_vecs.mean(dim=0)
+        item_vecs = _normalize(self.model.item_tower(item_t))
+        return _normalize(item_vecs.mean(dim=0))
 
     @torch.no_grad()
-    def _compose_user_vector(self, user_index, train_movies=None):
+    def _compose_user_vector_for_inference(self, user_index, train_movies=None):
         collab = None
         if train_movies is not None:
             collab = self._collab_vector_from_history(train_movies)
@@ -769,7 +769,7 @@ class OneBPModel:
                     n_active = int((genre_counts > 0).sum())
                     top_g = min(self.hard_neg_top_genres, n_active)
                     top_genres = np.argsort(genre_counts)[::-1][:top_g]
-                    genre_hit = genre_mask[:, top_genres].sum(axis=1) > 0
+                    genre_hit = genre_mask[:, top_genres].sum(axis=1) >= min(2, top_g)
                     hard = all_items[unrated_mask & genre_hit]
             self.hard_neg_arr.append(hard)
 
@@ -845,8 +845,8 @@ class OneBPModel:
         self.item_optimizer.step()
 
         with torch.no_grad():
-            new_pos = self.model.item_tower(pos_t)
-            self.user_repr[user_t] = (
+            new_pos = _normalize(self.model.item_tower(pos_t))
+            self.user_repr[user_t] = _normalize(
                 self.beta * self.user_repr[user_t] + (1.0 - self.beta) * new_pos
             )
 
@@ -868,7 +868,7 @@ class OneBPModel:
             if genre_mask is not None:
                 print(
                     f"OneBP negatives: {self.dislike_frac:.0%} dislikes, "
-                    f"{self.hard_neg_frac:.0%} hard (top-{self.hard_neg_top_genres} genres, "
+                    f"{self.hard_neg_frac:.0%} hard (≥2 of top-{self.hard_neg_top_genres} genres, "
                     f"avg pool {avg_hard:.0f}), rest random"
                 )
 
@@ -877,7 +877,7 @@ class OneBPModel:
 
         with torch.no_grad():
             all_users = torch.arange(self.n_users, device=self.device)
-            self.user_repr = self.model.user_tower(all_users).clone()
+            self.user_repr = _normalize(self.model.user_tower(all_users)).clone()
 
         weight_decay = self.reg_penalty or 0.0
         self.item_optimizer = torch.optim.Adam(
@@ -923,7 +923,7 @@ class OneBPModel:
         if user_id not in self.user_map:
             return scores
 
-        user_vec = self._compose_user_vector(self.user_map[user_id], train_movies=train_movies)
+        user_vec = self._compose_user_vector_for_inference(self.user_map[user_id], train_movies=train_movies)
         item_ids = []
         positions = []
         for pos, movie_id in enumerate(movie_ids):
