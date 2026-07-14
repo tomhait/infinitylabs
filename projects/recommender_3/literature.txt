@@ -1,0 +1,19 @@
+1. Two Tower model using Shaped platform:
+https://www.shaped.ai/blog/the-two-tower-model-for-recommendation-systems-a-deep-dive
+
+This is a brief explanation of the model, including pros and cons. Biased towards Shaped platform.
+
+2. Graph neural network recommendation algorithm based on improved dual tower model
+https://www.nature.com/articles/s41598-024-54376-3
+
+Too complicated for a starter like me. Hard to read and understand.
+
+3. One Backpropagation in Two Tower Recommendation Models
+https://arxiv.org/pdf/2403.18227
+
+Recent paper from 2026.
+Simple model (OneBP), NDCG and other metrics seem good enough. I like simple stuff.
+
+
+
+
