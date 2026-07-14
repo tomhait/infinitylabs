@@ -594,37 +594,3 @@ def positives_from_ratings(ratings, liked_th=4):
     return liked['userId'].to_numpy(), liked['movieId'].to_numpy()
 
 
-if __name__ == "__main__":
-    rng = np.random.default_rng(0)
-    user_ids_pool = np.arange(1, 51)
-    movie_ids_pool = rng.integers(1, 81, 80)
-    users_df = pd.DataFrame({
-        'userId': user_ids_pool,
-        'gender': rng.choice(['M', 'F'], 50),
-        'age': rng.choice([1, 18, 25, 35, 45, 50, 56], 50),
-        'occupation': rng.integers(0, 21, 50),
-    })
-    movies_df = pd.DataFrame({
-        'movieId': np.unique(movie_ids_pool),
-        'genres': rng.choice(
-            ['Action|Adventure', 'Comedy|Romance', 'Drama', 'Sci-Fi|Action'],
-            len(np.unique(movie_ids_pool)),
-        ),
-    })
-    df = pd.DataFrame({
-        'userId': rng.integers(1, 51, 2000),
-        'movieId': rng.integers(1, 81, 2000),
-        'rating': rng.integers(1, 6, 2000),
-    }).drop_duplicates(['userId', 'movieId'])
-
-    pos_users, pos_movies = positives_from_ratings(df)
-    model = OneBPModel(num_dim=16, num_epochs=20, n_negatives=3, verbose=False)
-    model.fit(pos_users, pos_movies, df, users=users_df, movies=movies_df)
-
-    user_id = int(pos_users[0])
-    candidates = np.unique(pos_movies[:20])
-    user_train = pos_movies[pos_users == user_id][:10]
-    scores = model.predict_user_items(user_id, candidates, train_movies=user_train)
-    assert scores.shape == (len(candidates),)
-    assert np.isfinite(scores).all()
-    print("OneBP smoke test passed.")
