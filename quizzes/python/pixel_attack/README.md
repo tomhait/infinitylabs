@@ -25,3 +25,13 @@ Both attacks succeeded: the predicted class changed after a small perturbation.
 
 - **dog.jpg** — Cardigan (Welsh Corgi) → papillon: a flip between related dog breeds.
 - **cat.jpg** — tabby → Chihuahua: a larger jump across animal categories (cat → dog), which is expected for untargeted FGSM.
+
+## Plots
+
+### dog.jpg
+
+![FGSM attack on dog.jpg](dog_fgsm.png)
+
+### cat.jpg
+
+![FGSM attack on cat.jpg](cat_fgsm.png)
