@@ -15,10 +15,10 @@ Zhang et al paper: https://arxiv.org/pdf/1509.01626
 
 ## Methods
 
-| Model | Features                                    | Classifier | Notes |
-|-------|---------------------------------------------|------------|--------|
-| Zhang-style baseline | Word unigram TF-IDF (`max_features=50,000`) | Multinomial logistic regression (`saga`) | Closest to their BoW-TF-IDF + logistic regression setup |
-| TF-IDF + Naive Bayes | Word TF-IDF (optional n-grams up to 2)      | Multinomial Naive Bayes | Same style of features; only the classifier changes |
+| Model | Features                                   | Classifier | Notes |
+|-------|--------------------------------------------|------------|--------|
+| Zhang-style baseline | Word unigram TF-IDF | Multinomial logistic regression (`saga`) | Closest to their BoW-TF-IDF + logistic regression setup |
+| TF-IDF + Naive Bayes | Word TF-IDF (optional n-grams up to 2)     | Multinomial Naive Bayes | Same style of features; only the classifier changes |
 
 Hyperparameters (`C` for LR, `alpha` for NB) can be chosen with **stratified 3-fold GridSearchCV** on a 150k training subsample, then models are **refit on the full** training set and evaluated once on the official test set.
 
