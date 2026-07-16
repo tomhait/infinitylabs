@@ -11,7 +11,6 @@ Classical (non–deep learning) baselines for the **Yahoo! Answers Topic Classif
 | Classes | 10 topics |
 
 Each example uses **question title + question content + best answer**, concatenated into one document (Zhang protocol). Labels are integers `1`–`10`.
-Zhang et al paper: https://arxiv.org/pdf/1509.01626
 
 ## Methods
 
