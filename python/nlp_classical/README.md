@@ -38,14 +38,16 @@ python3 train.py
 ```
 
 ## Output
-```=== zhang_tfidf_logreg ===
+```
+=== zhang_tfidf_logreg ===
 Fitting 3 folds for each of 3 candidates, totalling 9 fits
 zhang_tfidf_logreg CV best params: {'clf__C': 1.0}
 zhang_tfidf_logreg CV best score:  69.10%
 Refitting zhang_tfidf_logreg on full train (1,400,000) ...
 zhang_tfidf_logreg: accuracy=72.54%  error=27.46%
 ```
-```=== tfidf_nb ===
+```
+=== tfidf_nb ===
 Fitting 3 folds for each of 3 candidates, totalling 9 fits
 tfidf_nb CV best params: {'clf__alpha': 0.1}
 tfidf_nb CV best score:  68.45%
