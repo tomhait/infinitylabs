@@ -1,0 +1,42 @@
+# For ex4 explanation please refer to ex4/README_LFW file
+
+# To run exercise 1:
+Get the dog and cats dataset from:
+https://www.kaggle.com/datasets/bhavikjikadara/dog-and-cat-classification-dataset
+
+Put a sample image in test_images folder
+
+Set the following variables within ex1.py file:
+RETRAIN = True (to train the models, otherwise False if weights folder is available)
+
+DEMO_IMG  = path to the test image
+
+Output images will be available in outputs folder
+
+According to comparison.png:
+in most cases (see attached examples) SRCNN super-resolution algorithm yields the best restoration results.
+
+Super resolution Algorithms:
+EDSR repo: https://github.com/sanghyun-son/EDSR-PyTorch
+ESPCN repo: https://github.com/leftthomas/ESPCN
+SRCNN repo: https://github.com/yjn870/SRCNN-pytorch
+
+######################################################################
+
+# Ex3 PlantVillage dataset:
+https://www.kaggle.com/datasets/emmarex/plantdisease
+
+Head-only tuning loss:
+plantvillage_loss.png
+
+Fine-tuning loss:
+plantvillage_finetune_loss.png
+
+# Exercise 3 test results on classifying plant diseases:
+fine-tune test loss=0.2278  acc=92.33%
+head-only test acc=82.67%  fine-tune test acc=92.33%
+true=Tomato__Target_Spot  pred=Tomato__Target_Spot
+true=Tomato_Septoria_leaf_spot  pred=Tomato_Septoria_leaf_spot
+true=Tomato__Tomato_YellowLeaf__Curl_Virus  pred=Tomato__Tomato_YellowLeaf__Curl_Virus
+true=Tomato_Late_blight  pred=Tomato_Early_blight
+true=Tomato_Leaf_Mold  pred=Tomato_Leaf_Mold

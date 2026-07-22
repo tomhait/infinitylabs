@@ -1,0 +1,94 @@
+LFW face verification task
+##########################
+
+I compared between three models trained from scratch.
+
+Each model is trained with ResNet18 or simple cnn architecture as a backbone
+for computing the embeddings, which are later used with cosine similarity to verify
+person's identity.
+
+The first model - resnet18 + infoNCE loss is used
+The second model - resnet18 + arcFace loss is used
+The third model - cnn + arcFace loss is used
+
+Dataset:
+I used the following files:
+matchpairsDevTrain.csv - Same-person pairs for View 1 train (~1100)
+mismatchpairsDevTrain.csv - Different-person pairs for View 1 train (~1100)
+matchpairsDevTest.csv - Same-person pairs for View 1 VALIDATION (~500)
+mismatchpairsDevTest.csv - Different-person pairs for View 1 VALIDATION (~500)
+pairs.csv - Official View 2 pairs (~6000) for final 10-fold reporting
+
+For infoNCE model, peopleDevTrain with images >= 2 are used (need a positive pair)
+
+Conclusions:
+All models had a solid LFW-only results of about 81% mean accuracy on the 10-fold final report
+This is far below the 99%+ numbers I saw in other papers that used huge external face datasets.
+I did not expect much more from this setup without pretrained face weights and more identities.
+Below are the output results of each model.
+
+###########################################################
+
+# Output results
+
+First model:
+# LFW verification with ResNet-18 from scratch + InfoNCE
+
+train people with >=2 images: 1184
+DevTest val pairs: 1000
+early stopping at epoch 42
+loaded best model from epoch 37
+saved model to weights/lfw_siamese_infonce.pth
+threshold=0.692  DevTest pair accuracy=81.60%
+saved outputs/lfw_infonce.png
+true=same  pred=same  sim=0.955
+true=same  pred=diff  sim=0.686
+true=same  pred=same  sim=0.880
+true=same  pred=same  sim=0.754
+true=same  pred=same  sim=0.903
+View 2 10-fold with train_epochs=37, threshold=0.692
+View 2 10-fold accuracy: 80.75% +/- 2.03%
+
+###########################################################
+
+Second model:
+# LFW verification with ResNet-18 from scratch + arcFace
+
+num_workers: 4
+backbone: ResNet-18 from scratch + ArcFace
+train identities: 4038
+train images: 9525
+DevTest val pairs: 1000
+early stopping at epoch 25
+loaded best model from epoch 15
+saved model to weights/lfw_arcface.pth
+threshold=0.945  DevTest pair accuracy=82.00%
+saved outputs/lfw_arcface.png
+true=same  pred=same  sim=0.993
+true=same  pred=same  sim=0.952
+true=same  pred=same  sim=0.985
+true=same  pred=same  sim=0.966
+true=same  pred=same  sim=0.961
+View 2 10-fold with train_epochs=15, threshold=0.945
+View 2 10-fold accuracy: 79.87% +/- 2.04%
+
+###########################################################
+
+Third model:
+# LFW verification with cnn from scratch + arcFace
+
+train identities: 4038
+train images: 9525
+DevTest val pairs: 1000
+early stopping at epoch 36
+loaded best model from epoch 26
+saved model to weights/lfw_cnn_arcface.pth
+threshold=0.365  DevTest pair accuracy=83.50%
+saved outputs/lfw_cnn_arcface.png
+true=same  pred=same  sim=0.573
+true=same  pred=diff  sim=0.323
+true=same  pred=same  sim=0.630
+true=same  pred=same  sim=0.512
+true=same  pred=same  sim=0.596
+View 2 10-fold with train_epochs=26, threshold=0.365
+View 2 10-fold accuracy: 81.72% +/- 2.12%
