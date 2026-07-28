@@ -14,7 +14,7 @@ def _fmt_pct(value: float) -> str:
 def render_cli_banner(summary: dict[str, Any], *, generator_model: str, reviewer_model: str) -> str:
     totals = summary.get("totals", {})
     lines = [
-        "Ex3 Code-Review Eval",
+        "Code-Review Eval",
         "====================",
         f"Trials: {summary.get('trials', 0)} | Generator: {generator_model} | Reviewer: {reviewer_model}",
         (
@@ -154,7 +154,7 @@ def render_summary_markdown(
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     totals = summary.get("totals", {})
     lines = [
-        "# Ex3 Aggregate Review Report",
+        "# Aggregate Review Report",
         "",
         f"Generated: `{now}`",
         "",
