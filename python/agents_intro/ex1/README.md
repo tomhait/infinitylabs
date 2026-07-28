@@ -1,4 +1,4 @@
-# Ex1 - Llama 3 Agent (No Library)
+# Llama 3 Agent (No Library)
 
 This exercise builds a minimal agent without an agent framework:
 - LLM call through Ollama (`llama3`).

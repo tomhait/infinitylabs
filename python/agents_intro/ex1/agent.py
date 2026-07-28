@@ -132,7 +132,7 @@ class OllamaClient:
         return content.strip()
 
 
-class Ex1Agent:
+class Agent:
     def __init__(self, client: OllamaClient):
         self.client = client
         self.tools: dict[str, Callable[..., Any]] = {
@@ -294,7 +294,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def run_interactive(agent: Ex1Agent, max_turns: int) -> None:
+def run_interactive(agent: Agent, max_turns: int) -> None:
     print("Ex1 agent ready. Type 'exit' or 'quit' to stop.")
     while True:
         prompt = input("\nYou> ").strip()
@@ -313,7 +313,7 @@ def run_interactive(agent: Ex1Agent, max_turns: int) -> None:
 def main() -> None:
     args = build_parser().parse_args()
     client = OllamaClient(model=args.model, base_url=args.base_url, timeout_seconds=args.timeout)
-    agent = Ex1Agent(client)
+    agent = Agent(client)
 
     if args.prompt:
         try:

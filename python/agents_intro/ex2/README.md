@@ -1,4 +1,4 @@
-# Ex2 - LangChain Agent (Local Ollama Only)
+# LangChain Agent (Local Ollama Only)
 
 This exercise reproduces Ex1 behavior using LangChain:
 - local Ollama model (`llama3` by default)
