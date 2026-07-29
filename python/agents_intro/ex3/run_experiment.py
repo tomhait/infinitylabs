@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from evaluate import aggregate_trials, evaluate_trial
+from evaluate import MATCH_MODES, aggregate_trials, evaluate_trial
 from generator import DEFAULT_X, generate_buggy_module
 from report import render_cli_banner, render_summary_markdown, render_trial_markdown, write_text
 from reviewer import review_python_code
@@ -31,7 +31,12 @@ def run_one_trial(
     base_url: str,
     timeout: int,
     topic_hint: str | None,
+    match_mode: str,
     match_threshold: float,
+    embed_threshold: float,
+    judge_threshold: float,
+    embed_model: str,
+    judge_model: str,
 ) -> dict[str, Any]:
     trial_dir = out_dir / trial_id
     trial_dir.mkdir(parents=True, exist_ok=True)
@@ -69,11 +74,20 @@ def run_one_trial(
     metrics = evaluate_trial(
         generated["bugs"],
         review["findings"],
+        match_mode=match_mode,
         threshold=match_threshold,
+        embed_threshold=embed_threshold,
+        judge_threshold=judge_threshold,
+        embed_model=embed_model,
+        judge_model=judge_model,
+        base_url=base_url,
+        timeout=timeout,
+        allow_llm=True,
     )
     _dump_json(
         trial_dir / "matches.json",
         {
+            "match_mode": metrics.get("match_mode"),
             "matches": metrics["matches"],
             "false_negatives": metrics["false_negatives"],
             "false_positives": metrics["false_positives"],
@@ -84,6 +98,9 @@ def run_one_trial(
             "recall": metrics["recall"],
             "f1": metrics["f1"],
             "match_threshold": match_threshold,
+            "embed_threshold": embed_threshold,
+            "judge_threshold": judge_threshold,
+            "embedding_backend": metrics.get("embedding_backend"),
         },
     )
 
@@ -93,6 +110,8 @@ def run_one_trial(
         "topic": generated["topic"],
         "generator_model": generator_model,
         "reviewer_model": reviewer_model,
+        "judge_model": judge_model,
+        "match_mode": match_mode,
         "latency_seconds": round(latency, 3),
         "metrics": metrics,
         "artifact_dir": str(trial_dir),
@@ -122,10 +141,44 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--base-url", type=str, default="http://localhost:11434")
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument(
+        "--match-mode",
+        type=str,
+        default="deterministic",
+        choices=list(MATCH_MODES),
+        help=(
+            "Matching strategy: deterministic | embeddings | llm_judge | all "
+            "(all = yes if any method says yes)."
+        ),
+    )
+    parser.add_argument(
         "--match-threshold",
         type=float,
         default=0.55,
-        help="Similarity threshold for TP matching.",
+        help="Threshold for deterministic matcher.",
+    )
+    parser.add_argument(
+        "--embed-threshold",
+        type=float,
+        default=0.72,
+        help="Cosine threshold for embeddings matcher.",
+    )
+    parser.add_argument(
+        "--judge-threshold",
+        type=float,
+        default=0.5,
+        help="Minimum confidence for llm_judge match=true.",
+    )
+    parser.add_argument(
+        "--embed-model",
+        type=str,
+        default="nomic-embed-text",
+        help="Ollama embedding model (falls back to local TF-IDF if unavailable).",
+    )
+    parser.add_argument(
+        "--judge-model",
+        type=str,
+        default="llama3.1",
+        help="Ollama chat model used as match judge.",
     )
     parser.add_argument(
         "--output-dir",
@@ -147,7 +200,16 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def run_demo(out_dir: Path, match_threshold: float) -> list[dict[str, Any]]:
+def run_demo(
+    out_dir: Path,
+    *,
+    match_mode: str,
+    match_threshold: float,
+    embed_threshold: float,
+    judge_threshold: float,
+    embed_model: str,
+    judge_model: str,
+) -> list[dict[str, Any]]:
     """Offline path to validate evaluation + reporting without Ollama."""
     trials: list[dict[str, Any]] = []
     planted = [
@@ -229,10 +291,21 @@ def run_demo(out_dir: Path, match_threshold: float) -> list[dict[str, Any]]:
         )
         review = {"summary": "demo review", "findings": findings, "finding_count": len(findings)}
         _dump_json(trial_dir / "review_findings.json", review)
-        metrics = evaluate_trial(planted, findings, threshold=match_threshold)
+        metrics = evaluate_trial(
+            planted,
+            findings,
+            match_mode=match_mode,
+            threshold=match_threshold,
+            embed_threshold=embed_threshold,
+            judge_threshold=judge_threshold,
+            embed_model=embed_model,
+            judge_model=judge_model,
+            allow_llm=False,
+        )
         _dump_json(
             trial_dir / "matches.json",
             {
+                "match_mode": metrics.get("match_mode"),
                 "matches": metrics["matches"],
                 "false_negatives": metrics["false_negatives"],
                 "false_positives": metrics["false_positives"],
@@ -242,6 +315,7 @@ def run_demo(out_dir: Path, match_threshold: float) -> list[dict[str, Any]]:
                 "precision": metrics["precision"],
                 "recall": metrics["recall"],
                 "f1": metrics["f1"],
+                "embedding_backend": metrics.get("embedding_backend"),
             },
         )
         trial = {
@@ -249,6 +323,8 @@ def run_demo(out_dir: Path, match_threshold: float) -> list[dict[str, Any]]:
             "topic": f"demo topic {idx}",
             "generator_model": "demo-generator",
             "reviewer_model": "demo-reviewer",
+            "judge_model": judge_model,
+            "match_mode": match_mode,
             "latency_seconds": 0.01 * idx,
             "metrics": metrics,
             "artifact_dir": str(trial_dir),
@@ -273,7 +349,15 @@ def main() -> None:
     trials: list[dict[str, Any]] = []
 
     if args.demo:
-        trials = run_demo(out_dir, match_threshold=args.match_threshold)
+        trials = run_demo(
+            out_dir,
+            match_mode=args.match_mode,
+            match_threshold=args.match_threshold,
+            embed_threshold=args.embed_threshold,
+            judge_threshold=args.judge_threshold,
+            embed_model=args.embed_model,
+            judge_model=args.judge_model,
+        )
         generator_model = "demo-generator"
         reviewer_model = "demo-reviewer"
     else:
@@ -281,7 +365,7 @@ def main() -> None:
         reviewer_model = args.reviewer_model
         for i in range(1, args.trials + 1):
             trial_id = f"trial_{i:02d}"
-            print(f"Running {trial_id} ...")
+            print(f"Running {trial_id} ({args.match_mode}) ...")
             try:
                 trial = run_one_trial(
                     trial_id=trial_id,
@@ -291,7 +375,12 @@ def main() -> None:
                     base_url=args.base_url,
                     timeout=args.timeout,
                     topic_hint=topic_hint,
+                    match_mode=args.match_mode,
                     match_threshold=args.match_threshold,
+                    embed_threshold=args.embed_threshold,
+                    judge_threshold=args.judge_threshold,
+                    embed_model=args.embed_model,
+                    judge_model=args.judge_model,
                 )
             except Exception as error:
                 print(f"Agent error in {trial_id}: {error}")
@@ -308,8 +397,13 @@ def main() -> None:
         "created_at": datetime.now(timezone.utc).isoformat(),
         "generator_model": generator_model,
         "reviewer_model": reviewer_model,
+        "judge_model": args.judge_model,
+        "embed_model": args.embed_model,
+        "match_mode": args.match_mode,
         "x": DEFAULT_X,
         "match_threshold": args.match_threshold,
+        "embed_threshold": args.embed_threshold,
+        "judge_threshold": args.judge_threshold,
         "output_dir": str(out_dir),
         "summary": summary,
         "trials": [

@@ -1,94 +1,11 @@
-"""Deterministic matching + precision/recall evaluation for Ex3."""
+"""Precision/recall evaluation for Ex3."""
 
 from __future__ import annotations
 
-import re
 from collections import defaultdict
 from typing import Any
 
-
-def _tokenize(text: str) -> set[str]:
-    return {t for t in re.findall(r"[a-z0-9_]+", text.lower()) if len(t) > 2}
-
-
-def _jaccard(a: set[str], b: set[str]) -> float:
-    if not a or not b:
-        return 0.0
-    return len(a & b) / len(a | b)
-
-
-def _line_overlap(a_start: int, a_end: int, b_start: int, b_end: int, slack: int = 5) -> bool:
-    # Expand ranges slightly to tolerate localization noise.
-    a0, a1 = a_start - slack, a_end + slack
-    b0, b1 = b_start - slack, b_end + slack
-    return not (a1 < b0 or b1 < a0)
-
-
-def finding_similarity(planted: dict[str, Any], found: dict[str, Any]) -> float:
-    """Score how likely a reviewer finding matches a planted bug."""
-    score = 0.0
-    if planted["category"] == found["category"]:
-        score += 0.35
-    if _line_overlap(
-        planted["line_start"],
-        planted["line_end"],
-        found["line_start"],
-        found["line_end"],
-    ):
-        score += 0.35
-
-    planted_text = f"{planted['title']} {planted['detail']}"
-    found_text = f"{found['title']} {found['detail']}"
-    score += 0.30 * _jaccard(_tokenize(planted_text), _tokenize(found_text))
-    return score
-
-
-def match_findings(
-    planted_bugs: list[dict[str, Any]],
-    review_findings: list[dict[str, Any]],
-    *,
-    threshold: float = 0.55,
-) -> dict[str, Any]:
-    """Greedy one-to-one matching by descending similarity."""
-    candidates: list[tuple[float, str, str]] = []
-    for planted in planted_bugs:
-        for found in review_findings:
-            sim = finding_similarity(planted, found)
-            if sim >= threshold:
-                candidates.append((sim, planted["id"], found["id"]))
-    candidates.sort(reverse=True, key=lambda x: x[0])
-
-    matched_planted: set[str] = set()
-    matched_found: set[str] = set()
-    matches: list[dict[str, Any]] = []
-    for sim, planted_id, found_id in candidates:
-        if planted_id in matched_planted or found_id in matched_found:
-            continue
-        matched_planted.add(planted_id)
-        matched_found.add(found_id)
-        planted = next(b for b in planted_bugs if b["id"] == planted_id)
-        found = next(f for f in review_findings if f["id"] == found_id)
-        matches.append(
-            {
-                "planted_id": planted_id,
-                "finding_id": found_id,
-                "similarity": round(sim, 4),
-                "planted_title": planted["title"],
-                "finding_title": found["title"],
-                "category": planted["category"],
-            }
-        )
-
-    false_negatives = [b for b in planted_bugs if b["id"] not in matched_planted]
-    false_positives = [f for f in review_findings if f["id"] not in matched_found]
-    return {
-        "matches": matches,
-        "false_negatives": false_negatives,
-        "false_positives": false_positives,
-        "tp": len(matches),
-        "fp": len(false_positives),
-        "fn": len(false_negatives),
-    }
+from matching import MATCH_MODES, match_findings
 
 
 def compute_rates(tp: int, fp: int, fn: int) -> dict[str, float]:
@@ -140,9 +57,29 @@ def evaluate_trial(
     planted_bugs: list[dict[str, Any]],
     review_findings: list[dict[str, Any]],
     *,
+    match_mode: str = "deterministic",
     threshold: float = 0.55,
+    embed_threshold: float = 0.72,
+    judge_threshold: float = 0.5,
+    embed_model: str = "nomic-embed-text",
+    judge_model: str = "llama3.1",
+    base_url: str = "http://localhost:11434",
+    timeout: int = 180,
+    allow_llm: bool = True,
 ) -> dict[str, Any]:
-    matching = match_findings(planted_bugs, review_findings, threshold=threshold)
+    matching = match_findings(
+        planted_bugs,
+        review_findings,
+        match_mode=match_mode,
+        threshold=threshold,
+        embed_threshold=embed_threshold,
+        judge_threshold=judge_threshold,
+        embed_model=embed_model,
+        judge_model=judge_model,
+        base_url=base_url,
+        timeout=timeout,
+        allow_llm=allow_llm,
+    )
     rates = compute_rates(matching["tp"], matching["fp"], matching["fn"])
     by_category = category_breakdown(
         planted_bugs,
@@ -155,7 +92,6 @@ def evaluate_trial(
         "planted_count": len(planted_bugs),
         "finding_count": len(review_findings),
         "by_category": by_category,
-        "match_threshold": threshold,
     }
 
 
@@ -193,7 +129,6 @@ def aggregate_trials(trial_metrics: list[dict[str, Any]]) -> dict[str, Any]:
         "findings": sum(int(t["finding_count"]) for t in trial_metrics),
     }
 
-    # Aggregate category recall across trials.
     cat_planted: dict[str, int] = defaultdict(int)
     cat_tp: dict[str, int] = defaultdict(int)
     for trial in trial_metrics:
@@ -220,4 +155,8 @@ def aggregate_trials(trial_metrics: list[dict[str, Any]]) -> dict[str, Any]:
         "f1_std": round(std(f1), 4),
         "totals": totals,
         "by_category": by_category,
+        "match_mode": trial_metrics[0].get("match_mode"),
     }
+
+
+__all__ = ["MATCH_MODES", "aggregate_trials", "evaluate_trial"]

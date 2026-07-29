@@ -110,10 +110,30 @@ reviews/<timestamp>/
 
 ## How matching works
 
-A reviewer finding is a **true positive** if similarity ≥ threshold, where similarity combines:
-- category match
-- line-range overlap (with ±5 slack)
-- title/detail token Jaccard
+Choose with `--match-mode`:
+
+| Mode | Decision |
+|------|----------|
+| `deterministic` (default) | category + line overlap + token Jaccard ≥ `--match-threshold` |
+| `embeddings` | cosine(embed(truth), embed(finding)) ≥ `--embed-threshold` |
+| `llm_judge` | judge LLM returns `match=true` with confidence ≥ `--judge-threshold` |
+| `all` | **yes if any** of the three methods says yes (OR), else no |
+
+Examples:
+
+```bash
+python run_experiment.py --demo --match-mode deterministic
+python run_experiment.py --demo --match-mode embeddings
+python run_experiment.py --demo --match-mode all
+python run_experiment.py --trials 3 --match-mode llm_judge --judge-model llama3.1
+```
+
+Notes:
+- Embeddings prefer Ollama (`--embed-model`, default `nomic-embed-text`). If unavailable, falls back to local TF-IDF cosine.
+- `all` short-circuits: if deterministic already matches a pair, embeddings/LLM are not required for that pair.
+- Each matched pair in `matches.json` includes `yes_modes` / `votes` for auditability.
+
+A reviewer finding is a **true positive** if the selected matcher accepts the pair, then greedy 1-to-1 assignment is applied.
 
 Then:
 - Precision = TP / (TP + FP)
