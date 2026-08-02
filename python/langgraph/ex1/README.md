@@ -13,7 +13,7 @@ Build a purely deterministic LangGraph with no LLM calls: a node produces a valu
 From this directory (assumes `langgraph` is already installed for your Python):
 
 ```bash
-python3 graph.py
+python3 ex1_graph.py
 ```
 
 ## Files
