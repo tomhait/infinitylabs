@@ -104,7 +104,7 @@ Checks that the question, sources, findings, both arguments, Con↔Pro engagemen
 | `peer_reviewed_source_ratio` | Fraction of retrieved sources classified as peer-reviewed (heuristic: journal/conference vs preprint venues) |
 | `findings_from_peer_reviewed_ratio` | Fraction of findings citing those sources |
 | `doi_source_ratio` | Sources with a DOI |
-| `pro_con_uniqueness` | `1 −` TF‑IDF cosine between Pro and Con (lexical distinctness) |
+| `pro_con_uniqueness` | `1 − TF‑IDF cosine` between Pro and Con (lexical distinctness) |
 | `con_engages_pro` | Con rebuts Pro (phrase overlap and/or rebuttal markers) |
 | `*_overclaim_per_100_words` | Absolute wording (“always”, “never”, “proven”, …) |
 | `*_stance_consistency` | Lexical lean toward the assigned stance |
