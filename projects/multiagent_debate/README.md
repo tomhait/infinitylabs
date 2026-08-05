@@ -1,4 +1,4 @@
-# Multi-Agent Debate System (Milestone 0)
+# Multi-Agent Debate System
 
 Crudest end-to-end debate pipeline: **retrieve real papers → research findings → Pro → Con → neutral synthesis → deterministic scores**.
 
