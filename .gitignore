@@ -77,3 +77,9 @@ python/genetic_alg/brain_result.jpg
 python/genetic_alg/dump.py
 python/genetic_alg/result.png
 python/genetic_alg/test.py
+
+# images — keep local, never track (all folders, recursive)
+*.jpg
+*.JPG
+*.jpeg
+*.JPEG
