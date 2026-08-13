@@ -32,6 +32,7 @@ only**. The frozen test users were scored **once**.
 
 - **Dataset:** 51 subjects, 18 activities (A–S; N unused). Phone + watch, accel + gyro.
 - **Windows:** 5 s, non-overlapping, resampled to 20 Hz (100 samples). First 15 s of each bout dropped. Phone gravity-ish axis mapped to +Y; watch axes unchanged.
+- **LightGBM features (fused):** **106** = 49 phone + 49 watch + 7 `|phone−watch|` diffs + 1 categorical (`sensor`).
 - **Train / test:** subject-disjoint. Test users were frozen until the final champion eval:
 
 ```
@@ -56,11 +57,13 @@ only**. The frozen test users were scored **once**.
 ## Champion architecture (fused + RNN)
 
 Phone and watch streams are repaired, windowed, and fused into one tabular row
-per `(user, activity, sensor, bout)`. Stage 1 LightGBM predicts a 5-way coarse
-group. Non-eating windows go to a 13-class LightGBM. Eating windows go to a
-watch-only BiGRU on paired accel+gyro `(T=100, C=6)`. The eating label is copied
-to both fused accel and gyro rows. If no watch pair exists, the fallback eating
-class is `H` (0 fallbacks on the test set).
+per `(user, activity, sensor, bout)`. **LightGBM uses 106 features:** 49
+`phone_*` + 49 `watch_*` + 7 `|phone−watch|` diffs + categorical `sensor`
+(accel/gyro). Stage 1 (5-way coarse) and stage 2-rest (13 fine labels) both use
+this set. Eating windows go to a watch-only BiGRU on paired accel+gyro
+`(T=100, C=6)`, not the tabular features. The eating label is copied to both
+fused accel and gyro rows. If no watch pair exists, the fallback eating class
+is `H` (0 fallbacks on the test set).
 
 ![Champion architecture](artifacts/champion_architecture.png)
 
@@ -73,7 +76,7 @@ flowchart TB
   R[Repair: 20 Hz · drop 15 s · 5 s windows · phone +Y]
   P --> R
   W --> R
-  F["Fused tabular features<br/>phone_* + watch_* + |phone−watch|"]
+  F["Fused tabular features (106)<br/>49 phone + 49 watch + 7 diffs + sensor"]
   RW["Watch paired window<br/>T=100, C=6"]
   R --> F
   R --> RW
