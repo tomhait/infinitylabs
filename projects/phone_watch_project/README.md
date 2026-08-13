@@ -263,5 +263,5 @@ with high LOSO subject variance.
 **Open issues:** sandwich vs other eating; sit vs stand; two very hard subjects
 on both LOSO and test. Possible next steps (not run): late fusion of watch RNN
 logits with LightGBM, longer windows / bout-level voting, sandwich-specific
-features (bite/pause cadence).
+features (bite/pause cadence). Treating eating activities as 'eating' instead of what is eaten.
 
