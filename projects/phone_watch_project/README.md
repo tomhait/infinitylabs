@@ -99,8 +99,8 @@ All numbers below are **train-subject LOSO**. The test split was not used here.
 
 ### Overall comparison
 
-Fusion of phone + watch is the large gain (~+0.17 macro-F1). The hierarchical
-watch RNN adds a smaller eating-specific gain (~+0.014 overall, ~+0.07 pooled
+Fusion of phone + watch is the large gain (about +0.17 macro-F1). The hierarchical
+watch RNN adds a smaller eating-specific gain (about +0.014 overall, ~+0.07 pooled
 eating F1 vs fused LightGBM).
 
 | Model | Accuracy | Macro-F1 | Eating H–L F1 | Coarse F1 |
