@@ -122,8 +122,12 @@ blur, viewpoint, or local digit structure.
 ### 2. HOG and color
 
 Histogram of Oriented Gradients (HOG) describes local edge directions, while an
-HSV histogram adds sign-color information. HOG raised validation accuracy from
-about 64% to 89%, demonstrating that explicit spatial features matter.
+HSV histogram adds sign-color information. The default 32×32 HOG+color linear
+models raised validation accuracy from about 64% to 89%. A later grid search
+in `gtsrb_baseline.ipynb` (saved as `artifacts/hog_hyperparam_sweep.csv`)
+pushed the same family to **91.3%** accuracy by switching to 48×48 crops,
+finer color histograms, and weaker SGD regularization. Digit-level speed-limit
+confusion remains the ceiling.
 
 ### 3. Hierarchical and specialist models
 
@@ -175,6 +179,7 @@ signs and digits.
 | HOG + color (LR / linear SVM) | HOG(32×32 gray) + HSV histograms | 1,812 |
 | Hierarchical linear (router + specialists) | Same HOG + color vector as above | 1,812 |
 | Speed specialist HOG@48 (used in hybrid variants) | HOG(48×48 gray) + HSV histograms | 4,404 |
+| Tuned HOG@48 + linear SVM | HOG(48×48 gray) + 24-bin HSV histograms | 4,428 |
 | Simple 43-way CNN | Raw 48×48 RGB | learned 4,608-d embedding before FC head |
 | Frozen ResNet18 + FC | Raw 224×224 RGB | learned 512-d backbone embedding to FC |
 
@@ -218,6 +223,7 @@ epochs completed in about 12 minutes on the M1 Pro.
 | HOG + linear SVM | 89.07% | 87.88% | 69.58% |
 | HOG + logistic regression | 89.22% | 88.44% | 69.58% |
 | Hierarchical linear model | 90.00% | 89.27% | 68.33% |
+| Tuned HOG@48 + linear SVM | 91.34% | 91.19% | 78.89% |
 | Hybrid Speed/Danger CNN specialists | 95.11% | 93.09% | 91.00% |
 | **Simple 43-way CNN** | **99.28%** | **98.54%** | **98.75%** |
 
@@ -238,10 +244,13 @@ are omitted here because their saved predictions were not retained):
 ![Validation macro precision vs recall](artifacts/report/validation_macro_precision_vs_recall.png)
 
 The progression is consistent: raw pixels establish a weak floor, HOG adds
-useful spatial structure, specialists improve difficult families, and the
-end-to-end CNN learns the strongest shared representation without routing
-errors. Across these models, macro precision and macro recall rise together —
-the CNN does not buy recall by flooding false alarms.
+useful spatial structure, 48×48 HOG tuning lifts the classical ceiling (minimum
+critical recall 69.6% → 78.9%), specialists then improve difficult families,
+and the end-to-end CNN learns the strongest shared representation without
+routing errors. Across these models, macro precision and macro recall rise
+together — the CNN does not buy recall by flooding false alarms. The tuned HOG
+row is omitted from the two figures above because those plots were generated
+before the sweep.
 
 ## Official test results — selected simple CNN only
 
@@ -395,8 +404,9 @@ The experiment also produced several practical lessons:
   reveals failure modes hidden by class imbalance.
 - Track-aware validation is essential when several frames show the same
   physical sign.
-- HOG is a strong, efficient classical feature, but its digit representation
-  reaches a ceiling on visually similar speed signs.
+- HOG is a strong, efficient classical feature. Raising resolution to 48×48
+  and retuning SGD lifted minimum critical recall from 69.6% to 78.9%, but
+  digit-level speed-limit confusion remains a ceiling that the CNN clears.
 - Frozen ImageNet features are not automatically superior for a specialized,
   low-resolution domain.
 - A purpose-built small CNN can outperform a heavier transfer-learning model
@@ -430,7 +440,7 @@ The main notebooks are:
 
 - `gtsrb_eda.ipynb` — exploratory analysis
 - `gtsrb_flat_baseline.ipynb` — flattened-pixel baseline
-- `gtsrb_baseline.ipynb` — HOG baselines
+- `gtsrb_baseline.ipynb` — HOG baselines and HOG hyperparameter sweep
 - `gtsrb_hierarchical.ipynb` — six-group hierarchy
 - `gtsrb_cnn_speed.ipynb` / `gtsrb_cnn_danger.ipynb` — specialists
 - `gtsrb_simple_cnn.ipynb` — selected 43-class CNN
