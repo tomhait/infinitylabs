@@ -167,6 +167,17 @@ cosine learning-rate schedule, modest affine and color augmentation, and no
 horizontal flips. Horizontal flips would change the meaning of directional
 signs and digits.
 
+### Feature dimensions by model
+
+| Model family | Input representation | Feature dimensions used by classifier |
+|---|---|---:|
+| Flattened pixels (LR / linear SVM) | 32×32 RGB flattened | 3,072 |
+| HOG + color (LR / linear SVM) | HOG(32×32 gray) + HSV histograms | 1,812 |
+| Hierarchical linear (router + specialists) | Same HOG + color vector as above | 1,812 |
+| Speed specialist HOG@48 (used in hybrid variants) | HOG(48×48 gray) + HSV histograms | 4,404 |
+| Simple 43-way CNN | Raw 48×48 RGB | learned 4,608-d embedding before FC head |
+| Frozen ResNet18 + FC | Raw 224×224 RGB | learned 512-d backbone embedding to FC |
+
 ### Training behavior and the overfitting check
 
 Accuracy on a held-out split is not enough to show that a network generalizes,
