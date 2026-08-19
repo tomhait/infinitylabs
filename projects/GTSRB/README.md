@@ -237,6 +237,7 @@ are omitted here because their saved predictions were not retained):
 | Flattened pixels + linear SVM | 62.81% | 63.57% |
 | HOG + linear SVM | 90.65% | 82.66% |
 | HOG + logistic regression | 90.23% | 81.26% |
+| Tuned HOG@48 + linear SVM | 94.08% | 89.62% |
 | **Simple 43-way CNN** | **98.63%** | **98.64%** |
 
 ![Validation macro precision and recall](artifacts/report/validation_macro_precision_recall.png)
@@ -248,9 +249,7 @@ useful spatial structure, 48×48 HOG tuning lifts the classical ceiling (minimum
 critical recall 69.6% → 78.9%), specialists then improve difficult families,
 and the end-to-end CNN learns the strongest shared representation without
 routing errors. Across these models, macro precision and macro recall rise
-together — the CNN does not buy recall by flooding false alarms. The tuned HOG
-row is omitted from the two figures above because those plots were generated
-before the sweep.
+together — the CNN does not buy recall by flooding false alarms.
 
 ## Official test results — selected simple CNN only
 
@@ -374,6 +373,7 @@ Selected latency results:
 |---|---|---:|---:|
 | Flattened pixels + linear SVM | CPU | 0.38 | 2,647 |
 | HOG + linear SVM | CPU | 0.95 | 1,048 |
+| Tuned HOG@48 + linear SVM | CPU | 3.85 | 260 |
 | Hierarchical linear | CPU | 1.05 | 950 |
 | Hybrid Speed/Danger CNN | CPU | 2.55 | 392 |
 | **Simple 43-way CNN** | **CPU** | **2.45** | **408** |
