@@ -47,30 +47,28 @@ Source: BEIR FiQA-2018 (CC-BY-SA-4.0). Titles are unused; all indexing uses docu
 
 ## 3. Metrics and formulas
 
-For a query \(q\) with relevant set \(R_q\) and ranked list \(d_1,\ldots,d_n\):
+For a query `q` with relevant set `R_q` and ranked list `d_1, …, d_n`:
 
 **Recall@k**
 
-\[
-\mathrm{Recall}@k(q)=\frac{|\{d_1,\ldots,d_k\}\cap R_q|}{|R_q|}
-\]
+```text
+Recall@k(q) = |{d_1, …, d_k} ∩ R_q|  /  |R_q|
+```
 
-**MRR@k** (first relevant rank \(r^*\); 0 if none in top-\(k\))
+**MRR@k** (first relevant rank `r*`; 0 if none in top-`k`)
 
-\[
-\mathrm{MRR}@k(q)=\begin{cases}
-1/r^* & \text{if } r^*\le k\\
-0 & \text{otherwise}
-\end{cases}
-\]
+```text
+MRR@k(q) = 1 / r*    if r* ≤ k
+         = 0         otherwise
+```
 
-**NDCG@k** (binary gains; DCG uses \(\log_2\))
+**NDCG@k** (binary gains; DCG uses log₂)
 
-\[
-\mathrm{DCG}@k=\sum_{i=1}^{k}\frac{\mathbf{1}[d_i\in R_q]}{\log_2(i+1)},\quad
-\mathrm{IDCG}@k=\sum_{i=1}^{\min(|R_q|,k)}\frac{1}{\log_2(i+1)},\quad
-\mathrm{NDCG}@k=\frac{\mathrm{DCG}@k}{\mathrm{IDCG}@k}
-\]
+```text
+DCG@k  = Σ_{i=1..k}  1[d_i ∈ R_q] / log2(i + 1)
+IDCG@k = Σ_{i=1..min(|R_q|, k)}  1 / log2(i + 1)
+NDCG@k = DCG@k / IDCG@k
+```
 
 Reported scores are **macro-averages** over queries in the split. Latency is query end-to-end wall time (p50 / p95); for CE systems, end-to-end ≈ first-stage hybrid p50 + CE time.
 
@@ -108,17 +106,17 @@ Summary of every approach tried (dev NDCG@10 in parentheses):
 
 ### Hybrids (RRF)
 
-Reciprocal Rank Fusion with constant \(k_{\mathrm{rrf}}\):
+Reciprocal Rank Fusion with constant `k_rrf`:
 
-\[
-\mathrm{RRF}(d)=\sum_{m\in\mathcal{M}} w_m\cdot\frac{1}{k_{\mathrm{rrf}}+\mathrm{rank}_m(d)}
-\]
+```text
+RRF(d) = Σ_{m ∈ M}  w_m / (k_rrf + rank_m(d))
+```
 
 | Method | Trained on FiQA? | Pros | Cons | Dev NDCG@10 |
 |--------|------------------|------|------|------------:|
 | BM25 + MiniLM RRF (tuned weights) | No (weights on **dev**) | Complements sparse + dense | Extra index + latency | 0.390 |
 | BM25 + BGE RRF | No | Same idea with stronger dense | Did not beat BGE alone on NDCG | 0.391 |
-| **SPLADE + BGE RRF** (\(k=30\), \(w_s=1\), \(w_b=2\)) | No (weights on **dev**) | Best first-stage pool | Needs two indexes | **0.423** |
+| **SPLADE + BGE RRF** (k=30, w_s=1, w_b=2) | No (weights on **dev**) | Best first-stage pool | Needs two indexes | **0.423** |
 
 ### Learned sparse / late interaction
 
@@ -148,7 +146,7 @@ Reciprocal Rank Fusion with constant \(k_{\mathrm{rrf}}\):
 1. **SPLADE** retrieve top-100  
 2. **BGE-small** retrieve top-100 (query prefixed with  
    `Represent this sentence for searching relevant passages: `)  
-3. **Weighted RRF:** \(k_{\mathrm{rrf}}=30\), \(w_{\mathrm{SPLADE}}=1\), \(w_{\mathrm{BGE}}=2\) → candidate pool  
+3. **Weighted RRF:** `k_rrf=30`, `w_SPLADE=1`, `w_BGE=2` → candidate pool  
 4. **`BAAI/bge-reranker-v2-m3`** scores the **top-50** of that pool; sort by CE score for the final list  
 
 ### Dev (selection) vs test (locked)
@@ -192,7 +190,7 @@ Champion **NDCG@10 = 1.0**, **MRR@10 = 1.0**. Gold doc `14255` ranked **#1** (CE
    - `artifacts/splade_cocondenser_ensembledistil/doc_embeddings.npz`  
    - `artifacts/dense_sota_small/bge_small_en_v1_5/doc_embeddings.npy` (+ `doc_ids.json`)  
 2. Serve three Hugging Face models (or ONNX/TensorRT exports): SPLADE, BGE-small, `bge-reranker-v2-m3`.  
-3. API path: encode query → dual top-100 → RRF → CE top-50 → return top-\(k\).  
+3. API path: encode query → dual top-100 → RRF → CE top-50 → return top-`k`.  
 4. Prefer GPU for CE; CPU/MPS works but p50 is multi-second.
 
 ### Inference (reproduce script)
