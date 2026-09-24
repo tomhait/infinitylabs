@@ -29,18 +29,36 @@ Rossmann needs **6-week-ahead daily sales forecasts** per store to plan labor an
 
 ## 2. Metrics — formulas, pros & cons
 
-Primary competition metric (open days with \(y_i \neq 0\)):
+Primary competition metric (open days with **yᵢ ≠ 0**):
 
-\[
-\mathrm{RMSPE} = \sqrt{\frac{1}{n}\sum_{i=1}^{n}\left(\frac{y_i - \hat{y}_i}{y_i}\right)^2}
-\]
+$$
+\mathrm{RMSPE}
+= \sqrt{ \frac{1}{n} \sum_{i=1}^{n} \left( \frac{y_i - \hat{y}_i}{y_i} \right)^2 }
+$$
 
-| Metric | Formula (sketch) | Pros | Cons |
-|--------|------------------|------|------|
-| **RMSPE** | Root mean of squared *percentage* errors | Matches Kaggle; penalizes relative misses; scale-free across stores | Dominated by **small-\(y\)** days; ignores absolute € cost |
-| **MAPE** | \(\frac{1}{n}\sum \lvert y-\hat{y}\rvert / y\) | Easy to explain to ops | Same small-\(y\) issue; not symmetric in over/under |
-| **MAE** | \(\frac{1}{n}\sum \lvert y-\hat{y}\rvert\) | € intuition (“off by X per day”) | Favors large stores; not the LB metric |
-| **Bias** | \(\mathrm{mean}(\hat{y}-y)\) | Flags systematic over/under forecast | Can be near 0 with large canceling errors |
+Other metrics used in notebooks:
+
+$$
+\mathrm{MAPE}
+= \frac{1}{n} \sum_{i=1}^{n} \left| \frac{y_i - \hat{y}_i}{y_i} \right|
+$$
+
+$$
+\mathrm{MAE}
+= \frac{1}{n} \sum_{i=1}^{n} \left| y_i - \hat{y}_i \right|
+$$
+
+$$
+\mathrm{Bias}
+= \frac{1}{n} \sum_{i=1}^{n} \left( \hat{y}_i - y_i \right)
+$$
+
+| Metric | Pros | Cons |
+|--------|------|------|
+| **RMSPE** | Matches Kaggle; relative errors; comparable across store sizes | Dominated by **small-sales** days; ignores absolute € cost |
+| **MAPE** | Easy to explain to ops | Same small-sales issue; not symmetric in over/under |
+| **MAE** | € intuition (“off by X per day”) | Favors large stores; not the leaderboard metric |
+| **Bias** | Flags systematic over/under forecast | Can be near zero while large errors cancel |
 
 ![Metrics intuition](figures/metrics_intuition.png)
 
