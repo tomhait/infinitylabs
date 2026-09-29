@@ -2,7 +2,7 @@
 
 Answering multi-hop questions over a Wikipedia corpus with a local LLM (Llama 3.1 8B via Ollama), on a laptop, with no LLM training. The project moves through cycles (EDA, then basic RAG, improved RAG, a single agent and a multi-agent system), measuring quality, evidence, unsupported answers, LLM calls, tokens and cost, and latency at every step.
 
-**Status:** Cycles 0–2 done. Cycle 2 (improved retrieval + RAG) raised EM from 0.383 to **0.483** with the same LLM (§4). Cycles 3–4 (agents) are next.
+**Status:** Cycles 0–2 done. Cycle 2 (improved retrieval + RAG) raised EM from 0.383 to **0.483** with the same LLM (§4). Sending the LLM only the top 5 selected sentences instead of whole paragraphs keeps that quality (0.503, not significantly different) at less than half the tokens and latency: **1.7 s p50** (§4, Cycle 2c). Cycles 3–4 (agents) are next.
 
 ---
 
@@ -155,6 +155,61 @@ Only the retriever changes. The **oracle** gives the LLM exactly the 2 gold para
 - **More grounded:** unsupported answers dropped from 18.7% to 6.0%, and abstentions from 8.3% to 1.3%.
 - **Nearly free in latency and cost.** Compared within the same session, LTR + Contriever takes 3.9 s p50 / 5.7 s p95 vs 3.6 s / 5.5 s for the single Contriever search (+0.3 s / +0.2 s). The classical LTR is the fastest real system (3.3 s / 4.7 s). Prompts are slightly shorter because LTR picks shorter paragraphs, so the cost per question drops a little.
 
+### Cycle 2c: sentence selection (give the LLM sentences, not paragraphs)
+
+**Idea.** Even with both gold paragraphs retrieved, 3 of the 5 paragraphs are distractors, and inside the gold paragraphs only 1–2 sentences carry the answer. A second reranker picks the sentences most likely to contain evidence, and only those go to the LLM.
+
+**The sentence reranker.** A second LambdaMART model (same setup as §5.4), trained on HotpotQA's labeled **supporting sentences** (`supporting_facts`) using the same splits.
+- Each question is a group made of every sentence of its top-5 reranked paragraphs (about 17 sentences). Label 1 = supporting sentence.
+- **19 features per sentence:**
+  - paragraph rank, and the sentence's position in its paragraph
+  - TF-IDF similarity to the question, and word overlap with the question
+  - overlap with the question words *outside* the entities
+  - share of question entities it mentions
+  - whether it contains the expected answer type
+  - whether it mentions the title of another top paragraph (the bridge sentence)
+  - whether its paragraph is linked from another top paragraph
+- Early stopping on NDCG@4; 97 trees.
+- Selection takes about 14 ms per question.
+
+**Offline: how much evidence survives?** On the 500 test questions, with no LLM involved.
+- *All support kept* = every supporting sentence of the question is among the selected ones.
+- The ceiling is 92.4%, the share of questions whose supporting sentences are all inside the top-5 paragraphs.
+
+| Policy | Sentences | Words | All support kept | Supporting-sentence recall |
+|---|---|---|---|---|
+| Whole paragraphs (current) | 16.7 | 356 | 92.4% | 96.0% |
+| First sentence of each paragraph | 5 | 115 | 27.4% | 56.5% |
+| TF-IDF top 5 | 5 | 102 | 35.6% | 66.1% |
+| LTR top 5, at least 1 per paragraph | 5 | 122 | 48.0% | 72.8% |
+| **LTR top 5** | 5 | 113 | **74.6%** | **86.5%** |
+| LTR top 8 | 8 | 178 | 83.2% | 91.3% |
+
+The learned ranker keeps twice as much evidence as TF-IDF at the same budget. The most important feature is the paragraph's rank (53% of the gain), then overlap with the non-entity question words, then mentioning another top paragraph's title.
+
+**End to end** (Llama 3.1 8B, same 300 questions and prompt; won/lost is EM per question vs the row it's compared with):
+
+| Run | EM | F1 | Unsupported | Prompt tokens | Latency p50 / p95 | Cost / 1k | Won / lost |
+|---|---|---|---|---|---|---|---|
+| LTR + Contriever, 5 paragraphs (§4 Cycle 2) | 0.483 | 0.636 | 6.0% | 647 | 3.9 s / 5.7 s | $0.033 | – |
+| LTR + Contriever, top 8 sentences | 0.487 | 0.643 | 4.0% | 382 | 2.3 s / 3.1 s | $0.020 | 15 / 14 vs paragraphs |
+| **LTR + Contriever, top 5 sentences** | **0.503** | **0.654** | 6.0% | **281** | **1.7 s / 2.3 s** | **$0.014** | 32 / 26 vs paragraphs (p = 0.51) |
+| Oracle: gold paragraphs | 0.577 | 0.736 | 3.3% | 307 | 1.3 s / 2.0 s | $0.016 | – |
+| Oracle: gold supporting sentences | 0.593 | 0.759 | 4.3% | 197 | 1.0 s / 1.5 s | $0.010 | 14 / 9 vs gold paragraphs |
+
+- **Same quality at less than half the cost and latency.** Top 5 sentences cut prompt tokens by 57% and p50/p95 latency by 57%/60%. The +2 EM points are *not* significant (32 won vs 26 lost), so the honest claim is "no loss, twice as fast."
+- **Less text doesn't hurt the LLM, it helps.** Given perfect sentences, Llama scores 0.593, slightly above the 0.577 it gets from the gold paragraphs. An 8B model reads short, clean context better.
+- **Two effects cancel out**, visible when splitting the 300 questions:
+
+  | Questions | Count | EM, top 5 sentences | EM, 5 paragraphs |
+  |---|---|---|---|
+  | All supporting sentences kept | 224 | **0.576** | 0.478 |
+  | Some supporting sentence dropped | 76 | 0.289 | 0.500 |
+
+  Removing distractor text is worth about +10 EM points; dropping evidence costs about 21. **Selector recall is now the lever:** at 90%+ "all support kept", sentence RAG would approach the 0.59 ceiling.
+- **Top 8 isn't better than top 5.** It keeps more evidence (83% vs 75%) but also more noise, and ends up level with whole paragraphs.
+- Retrieval failures (a gold paragraph with no selected sentence) rise from 5% to 12%, while reasoning failures drop from 29% to 20%.
+
 ---
 
 ## 5. The selected model: LambdaMART reranker + Contriever-MSMARCO
@@ -174,7 +229,8 @@ question ──► signal lists (BM25, TF-IDF, title, coverage, answer type, Con
          ──► structured RRF + link following (hop 1 → hop 2)
          ──► candidate pool (union, ~93 paragraphs)            ← candidate generation
          ──► 33 features per (question, paragraph)
-         ──► LambdaMART score → sort → top 5 to the LLM         ← reranking
+         ──► LambdaMART score → sort → top 5 paragraphs         ← reranking
+         ──► sentence LambdaMART → top 5 sentences to the LLM   ← sentence reranking (Cycle 2c)
 ```
 
 ### 5.1 Signals (all computed per question)
@@ -275,6 +331,9 @@ Contriever itself is never fine-tuned. The GBM learns *when* to trust its scores
 | **Title aliases** (comma head, acronyms) | +0.002 when removed | Rarely triggered, and some added links are wrong |
 | **BGE as the main retriever** | Best single-search retriever (0.706) | Trained on the HotpotQA train split: an unfair, in-domain advantage. BGE-large has the same training data |
 | **Unsupervised Contriever** | 0.470 | Weaker than BM25 without MS MARCO fine-tuning |
+| **TF-IDF sentence selection** | All support kept 36% at 5 sentences (learned ranker: 75%) | Similarity to the question misses bridge sentences, which share few words with it |
+| **"At least 1 sentence per paragraph"** | All support kept 48% vs 75% at 5 sentences | Spends the budget on distractor paragraphs; the gold ones often need 2 sentences |
+| **Top 8 sentences** | EM 0.487 vs 0.503 for top 5, with 36% more tokens | More evidence, but also more noise |
 
 ---
 
@@ -285,13 +344,14 @@ Contriever itself is never fine-tuned. The GBM learns *when* to trust its scores
 - **Noise level.** On 500 questions, one question = 0.2 points; differences under about 2 points are within noise.
 - **RAG sample size.** 300 questions (47 comparison questions, so one comparison question ≈ 2 points). Per-type differences between retrievers on comparison questions are within noise.
 - **Shorter-paragraph bias.** Part of the prompt-token and latency saving comes from LTR preferring shorter paragraphs, a corpus artifact (gold paragraphs are shorter than HotpotQA's distractors) that wouldn't necessarily hold on another corpus.
+- **Sentence labels.** The sentence reranker learns from HotpotQA's `supporting_facts`, annotations that don't exist in most real corpora. Without them, one would need weak labels (e.g. sentences containing the answer) or an LLM to label a sample.
 - **Hybrid RRF weights** inside the feature pipeline were tuned with BGE and reused for Contriever. LambdaMART can reweight the raw features, so the effect is small.
 
 ---
 
 ## 8. Next steps
 
-1. **Cycle 3, single agent.** The bar to beat is EM 0.483 at 1 LLM call and about 4 s. Since retrieval failures are down to 5%, the agent must mainly **reason better**: decompose the question, check the answer type ("which aired first" wants a title, not a date), verify the answer against the evidence, and write a follow-up query only when evidence is missing. The same LTR ranker serves as its search tool.
+1. **Cycle 3, single agent.** The bar to beat is EM 0.483–0.503 at 1 LLM call and 1.7–3.9 s p50 (paragraphs or selected sentences). Sentence selection frees budget for extra agent steps, and its remaining lever is recall: when all supporting sentences are kept, EM is already 0.576. Since retrieval failures are down to 5%, the agent must mainly **reason better**: decompose the question, check the answer type ("which aired first" wants a title, not a date), verify the answer against the evidence, and write a follow-up query only when evidence is missing. The same LTR ranker serves as its search tool.
 2. **Cycle 4, multi-agent**, then the final comparison across quality, evidence, unsupported answers, calls, tokens and cost, latency and complexity.
 
 ---
@@ -312,6 +372,8 @@ python -m src.fusion                                         # Cycle 2 classical
 python -m src.fusion --dense                                 # Cycle 2 dense + links, hybrid
 python -m src.ltr                                            # Cycle 2 LambdaMART: 3 variants, ablation, learning curve (~6 min)
 python -m src.rag rag --n 300 --retriever ltr_hybrid_contriever_msmarco   # Cycle 2 RAG (also: ltr_classical, oracle; ~20 min each)
+python -m src.sentences                                      # Cycle 2c sentence reranker: train + offline evidence recall (~4 min)
+python -m src.rag rag --n 300 --retriever ltr_hybrid_contriever_msmarco --sentences ltr5   # Cycle 2c RAG (also: ltr8, ltr5_min1; oracle sentences: --retriever oracle --sentences oracle)
 ```
 
 Notes:
@@ -328,6 +390,7 @@ Notes:
 | `src/entities.py` | Question entities, title gazetteer, aliases, links, backlinks, fuzzy titles |
 | `src/fusion.py` | RRF, structured ranker (routing, slots, links) |
 | `src/ltr.py` | LambdaMART: candidates, features, training, retriever |
+| `src/sentences.py` | Sentence reranker: features, training, selection policies, offline evaluation |
 | `src/rag.py`, `src/llm.py`, `src/evaluate.py` | RAG pipeline, LLM client (Ollama/Groq, cached), metrics |
 | `notebooks/00_eda`, `01_baseline_rag`, `02_classical_ranking`, `03_improved_rag` | Analyses with findings (`.py` sources, `.ipynb` executed) |
 | `results/` | Per-question JSONL for every run, summary CSVs, figures |
