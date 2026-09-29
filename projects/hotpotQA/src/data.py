@@ -70,6 +70,26 @@ def paragraph_text(paragraph):
     return " ".join(paragraph["sentences"])
 
 
+def contains_answer(paragraph, answer):
+    from src.evaluate import normalize_answer
+
+    ans = normalize_answer(answer)
+    text = normalize_answer(paragraph["title"] + " " + paragraph_text(paragraph))
+    return bool(ans) and f" {ans} " in f" {text} "
+
+
+def bridge_hops(ex):
+    """(hop1_title, hop2_title) for a bridge question: hop 2 is the only gold paragraph containing the answer.
+    None when the answer appears in both or neither gold paragraph."""
+    gold = [p for p in ex["paragraphs"] if p["title"] in ex["gold_titles"]]
+    with_answer = [p for p in gold if contains_answer(p, ex["answer"])]
+    if ex["type"] != "bridge" or len(with_answer) != 1:
+        return None
+    hop2 = with_answer[0]["title"]
+    hop1 = next(p["title"] for p in gold if p["title"] != hop2)
+    return hop1, hop2
+
+
 def build_corpus(examples):
     """Union of all context paragraphs, deduplicated by title (Wikipedia titles are unique)."""
     corpus = {}
