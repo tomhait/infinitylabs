@@ -2,7 +2,7 @@
 
 Answering multi-hop questions over a Wikipedia corpus with a local LLM (Llama 3.1 8B via Ollama), on a laptop, with no LLM training. The project moves through cycles (EDA, then basic RAG, improved RAG, a single agent and a multi-agent system), measuring quality, evidence, unsupported answers, LLM calls, tokens and cost, and latency at every step.
 
-**Status:** Cycles 0–1 done. Cycle 2 retrieval done (this README's main topic). The Cycle 2 RAG run with the selected retriever and Cycles 3–4 (agents) are next.
+**Status:** Cycles 0–2 done. Cycle 2 (improved retrieval + RAG) raised EM from 0.383 to **0.483** with the same LLM (§4). Cycles 3–4 (agents) are next.
 
 ---
 
@@ -72,8 +72,8 @@ $$\text{Unsupported} = \frac{1}{|Q|}\sum_{q} \mathbb{1}\left[\text{norm}(\hat a_
 
 | Pipeline step | Primary metric | Why | Secondary |
 |---|---|---|---|
-| **Candidate generation** (recall stage) | **Candidate recall** | A gold paragraph missing here is lost for good; order doesn't matter yet | Pool size (cost of the next stage) |
-| **Ranking** (precision stage) | **Both-gold recall@5** | The LLM sees the top 5; multi-hop needs *both* paragraphs, so a single miss already breaks the answer | Both@2 (small contexts), hop-2 found@5 (diagnosis), retrieval latency p95 |
+| **Candidate generation** | **Candidate recall** | A gold paragraph missing here is lost for good; order doesn't matter yet | Pool size (cost of the next stage) |
+| **Reranking** | **Both-gold recall@5** | The LLM sees the top 5; multi-hop needs *both* paragraphs, so a single miss already breaks the answer | Both@2 (small contexts), hop-2 found@5 (diagnosis), retrieval latency p95 |
 | **Answer generation** | **EM** (headline), **F1** | EM is the official metric; F1 forgives wording differences ("Dara Torres" vs "Dara Grace Torres") | Unsupported rate: a wrong answer grounded in context is better than an invented one |
 | **Whole system** | **EM at an acceptable cost and p95 latency** | The business trade-off | LLM calls per question, tokens, complexity |
 
@@ -105,9 +105,12 @@ $$\text{Unsupported} = \frac{1}{|Q|}\sum_{q} \mathbb{1}\left[\text{norm}(\hat a_
 | Setup | EM | F1 | Both-gold in context | Unsupported | LLM calls | Tokens / question | Cost / 1k questions | Latency p50 / p95 |
 |---|---|---|---|---|---|---|---|---|
 | Closed book (100 questions) | 0.24 | 0.33 | – | – | 1 | 99 | $0.005 | 0.6 s / 1.0 s |
-| BGE-small top 5 + Llama | **0.38** | **0.53** | 0.68 | 19% | 1 | 722 | $0.036 | 4.7 s / 8.4 s |
+| BGE-small top 5 + Llama | **0.38** | **0.53** | 0.68 | 19% | 1 | 722 | $0.036 | 4.7 s / 8.4 s* |
+| Contriever-MSMARCO top 5 + Llama (clean) | 0.35 | 0.46 | 0.57 | 11% | 1 | 724 | $0.036 | 3.6 s / 5.5 s |
 
-Retrieval gives +14 EM points. But 32% of questions still miss a gold paragraph, mostly hop 2, which a single search can't reach.
+\*Measured in an earlier session on a slower machine state. Compare latencies only between runs from the same session (§4, Cycle 2).
+
+Retrieval gives +14 EM points. The clean Contriever-MSMARCO baseline is 3.6 EM points below BGE (not significant, p = 0.17), since it finds both gold paragraphs less often (57% vs 68%). But 32% of questions still miss a gold paragraph, mostly hop 2, which a single search can't reach.
 
 ### Cycle 2: improved retrieval (500 test questions, no LLM)
 
@@ -132,26 +135,46 @@ Retrieval gives +14 EM points. But 32% of questions still miss a gold paragraph,
 3. **A learned combiner beats hand-tuned rules by a wide margin:** LambdaMART goes from 0.806 to 0.898 on the same classical signals. It wins 48 questions and loses 2 (sign test p ≈ 2e-12), and both-gold@2 rises from 0.47 to 0.71.
 4. **BGE's advantage is likely in-domain training.** BAAI lists HotpotQA (train split) in BGE's fine-tuning data. BGE leads the clean Contriever-MSMARCO by 10 points as a single search, but the gap disappears once links or LambdaMART are added (0.920 vs 0.924).
 
+### Cycle 2: improved RAG end to end (Llama 3.1 8B, same 300 questions and prompt as Cycle 1)
+
+Only the retriever changes. The **oracle** gives the LLM exactly the 2 gold paragraphs: it isn't a real system, but it shows the ceiling of this LLM with perfect retrieval.
+
+| Run | EM | F1 | Both gold in context | Retrieval / reasoning failures | Unsupported | Prompt tokens | Latency p50 / p95 | Cost / 1k |
+|---|---|---|---|---|---|---|---|---|
+| Cycle 1: BGE | 0.383 | 0.527 | 68% | 24% / 20% | 18.7% | 716 | (earlier session) | $0.036 |
+| Cycle 1: Contriever-MSMARCO | 0.347 | 0.462 | 57% | 33% / 20% | 10.7% | 719 | 3.6 s / 5.5 s | $0.036 |
+| LTR classical | 0.457 | 0.606 | 89% | 8% / 28% | 5.3% | 646 | 3.3 s / 4.7 s | $0.033 |
+| **LTR + Contriever (selected)** | **0.483** | **0.636** | **91%** | **5% / 29%** | **6.0%** | 647 | **3.9 s / 5.7 s** | $0.033 |
+| Oracle (gold only) | 0.577 | 0.736 | 100% | 0% / 22% | 3.3% | 307 | 1.3 s / 2.0 s | $0.016 |
+
+- **+10 EM points over BGE from retrieval alone,** significant: 43 questions won vs 13 lost (p < 0.001), 95% CI for ΔEM [+0.05, +0.15]. The gain is on bridge questions (EM 0.37 → 0.48).
+- **+13.7 EM points over the clean baseline** with the same dense model: Contriever-MSMARCO as a single search gets 0.347, and inside LTR it gets 0.483 (56 won vs 15 lost). This is the cleanest measure of what Cycle 2 adds.
+- **Half of the gap to perfect retrieval is closed** (0.383 → 0.483 of 0.577).
+- **The bottleneck moved from retrieval to the LLM.** Retrieval failures dropped from 24% to 5%, while reasoning failures rose from 20% to 29%: the same questions now reach the LLM with full evidence, and it answers about 50% of those correctly, as before. Even with perfect retrieval, the 8B model misses 42% by EM.
+- **Distractors still hurt:** with full evidence, 5 paragraphs give EM 0.50 vs 0.56 with only the 2 gold ones.
+- **More grounded:** unsupported answers dropped from 18.7% to 6.0%, and abstentions from 8.3% to 1.3%.
+- **Nearly free in latency and cost.** Compared within the same session, LTR + Contriever takes 3.9 s p50 / 5.7 s p95 vs 3.6 s / 5.5 s for the single Contriever search (+0.3 s / +0.2 s). The classical LTR is the fastest real system (3.3 s / 4.7 s). Prompts are slightly shorter because LTR picks shorter paragraphs, so the cost per question drops a little.
+
 ---
 
 ## 5. The selected model: LambdaMART reranker + Contriever-MSMARCO
 
 **Why this one:**
-- **Best evidence quality:** 0.924 both-gold@5, 0.962 @10, and hop 2 found 93% of the time. The share of questions missing a gold paragraph should drop from 32% in Cycle 1 to about 8%.
+- **Best evidence and best answers:** 0.924 both-gold@5, 0.962 @10, and hop 2 found 93% of the time. End to end: EM 0.483 / F1 0.636 vs 0.383 / 0.527 for Cycle 1.
 - **Contamination-free:** Contriever-MSMARCO was trained on MS MARCO only. LambdaMART was trained on 1,000 of our pool questions, separate from the test questions and fully visible.
-- **Latency is irrelevant here:** 59 ms of retrieval next to about 4 s of LLM time.
+- **Small latency cost:** 50–60 ms of retrieval standalone. End to end, +0.3 s p50 vs a single Contriever search in the same session (3.9 s vs 3.6 s), for +13.7 EM points.
 - **Cheap to train:** about 1 s on a laptop, and 100 questions already give 0.884.
 
 **Fallback:** *LambdaMART with classical features only* (0.898, 16 ms, no neural model, fully explainable). It's the natural low-cost option in the final comparison.
 
-The pipeline has two stages: a **recall stage** (candidates) and a **precision stage** (the learned ranker).
+The pipeline has two stages: **candidate generation** (cheap signals build a wide pool, judged by candidate recall) and **reranking** (the learned ranker orders the pool, judged by both-gold recall@5). Both stages are measured with recall; what differs is the cutoff: the whole pool (~93) versus the 5 paragraphs the LLM reads.
 
 ```
 question ──► signal lists (BM25, TF-IDF, title, coverage, answer type, Contriever)
          ──► structured RRF + link following (hop 1 → hop 2)
-         ──► candidate pool (union, ~93 paragraphs)            ← recall stage
+         ──► candidate pool (union, ~93 paragraphs)            ← candidate generation
          ──► 33 features per (question, paragraph)
-         ──► LambdaMART score → sort → top 5 to the LLM         ← precision stage
+         ──► LambdaMART score → sort → top 5 to the LLM         ← reranking
 ```
 
 ### 5.1 Signals (all computed per question)
@@ -170,7 +193,7 @@ question ──► signal lists (BM25, TF-IDF, title, coverage, answer type, Con
 
 **Routing rule:** a question is treated as comparison-like when it has at least 2 named entities and either a yes/no opener or a comparison cue ("older", "both", "same"…). This agrees with HotpotQA's own labels 90% of the time.
 
-### 5.2 Candidate selection (recall stage)
+### 5.2 Candidate generation
 
 Candidates are the **union of the top 50 of every ranked list**, duplicates removed:
 - **Structured RRF ranking:** weighted RRF, $\text{RRF}(d)=\sum_i \lambda_i/(60+\text{rank}_i(d))$, with routing, reserved slots and link-following.
@@ -198,7 +221,7 @@ Measured on 300 test questions, the structured-RRF top 50 alone already contains
 
 A paragraph absent from a list gets a **missing** rank, which the trees handle natively.
 
-### 5.4 Ranking with LambdaMART (precision stage)
+### 5.4 Reranking with LambdaMART
 
 **The model:** LightGBM `LGBMRanker` with `objective="lambdarank"`, an ensemble of small gradient-boosted decision trees.
 
@@ -260,16 +283,16 @@ Contriever itself is never fine-tuned. The GBM learns *when* to trust its scores
 - **Closed corpus.** 19,260 paragraphs built from the pool's contexts. The title gazetteer (our stand-in for hyperlinks) would find many spurious links against full Wikipedia (about 5M titles); in an open setting, use real hyperlinks.
 - **Supervision.** LambdaMART learns from gold labels on 1,000 HotpotQA questions. That's the same *kind* of in-domain supervision we flagged for BGE, just much smaller, visible, and on separate questions.
 - **Noise level.** On 500 questions, one question = 0.2 points; differences under about 2 points are within noise.
-- **Retrieval ≠ answers.** Better top-5 evidence still has to translate into better EM. That's the next measurement.
+- **RAG sample size.** 300 questions (47 comparison questions, so one comparison question ≈ 2 points). Per-type differences between retrievers on comparison questions are within noise.
+- **Shorter-paragraph bias.** Part of the prompt-token and latency saving comes from LTR preferring shorter paragraphs, a corpus artifact (gold paragraphs are shorter than HotpotQA's distractors) that wouldn't necessarily hold on another corpus.
 - **Hybrid RRF weights** inside the feature pipeline were tuned with BGE and reused for Contriever. LambdaMART can reweight the raw features, so the effect is small.
 
 ---
 
 ## 8. Next steps
 
-1. **Cycle 2 RAG run:** same prompt, Llama 3.1 8B and 300 questions as Cycle 1, with the retriever swapped to LambdaMART + Contriever-MSMARCO (and the classical variant). Measure EM/F1, unsupported rate, tokens and cost, and latency.
-2. **Cycle 3, single agent:** the LLM decides the next query after reading hop 1, targeting the failures links can't fix (connections described rather than named). The same ranker serves as its search tool.
-3. **Cycle 4, multi-agent**, then the final comparison across quality, evidence, unsupported answers, calls, tokens and cost, latency and complexity.
+1. **Cycle 3, single agent.** The bar to beat is EM 0.483 at 1 LLM call and about 4 s. Since retrieval failures are down to 5%, the agent must mainly **reason better**: decompose the question, check the answer type ("which aired first" wants a title, not a date), verify the answer against the evidence, and write a follow-up query only when evidence is missing. The same LTR ranker serves as its search tool.
+2. **Cycle 4, multi-agent**, then the final comparison across quality, evidence, unsupported answers, calls, tokens and cost, latency and complexity.
 
 ---
 
@@ -288,10 +311,11 @@ python -m src.rag rag --n 300                                # Cycle 1 RAG with 
 python -m src.fusion                                         # Cycle 2 classical RRF rankers + ablations
 python -m src.fusion --dense                                 # Cycle 2 dense + links, hybrid
 python -m src.ltr                                            # Cycle 2 LambdaMART: 3 variants, ablation, learning curve (~6 min)
+python -m src.rag rag --n 300 --retriever ltr_hybrid_contriever_msmarco   # Cycle 2 RAG (also: ltr_classical, oracle; ~20 min each)
 ```
 
 Notes:
-- If LightGBM runs in the same process as PyTorch, it must be single-threaded (`n_jobs=1`, already set). The two OpenMP runtimes deadlock on macOS.
+- LightGBM and PyTorch clash on macOS (their OpenMP runtimes deadlock or segfault). Training uses `n_jobs=1`. To load a saved model, `load_ltr_retriever` sets `OMP_NUM_THREADS=1` and must run before PyTorch is imported; retrieval latency is unaffected.
 - For offline runs with cached models, set `HF_HUB_OFFLINE=1`.
 
 ### Project layout
@@ -305,6 +329,6 @@ Notes:
 | `src/fusion.py` | RRF, structured ranker (routing, slots, links) |
 | `src/ltr.py` | LambdaMART: candidates, features, training, retriever |
 | `src/rag.py`, `src/llm.py`, `src/evaluate.py` | RAG pipeline, LLM client (Ollama/Groq, cached), metrics |
-| `notebooks/00_eda`, `01_baseline_rag`, `02_classical_ranking` | Analyses with findings (`.py` sources, `.ipynb` executed) |
+| `notebooks/00_eda`, `01_baseline_rag`, `02_classical_ranking`, `03_improved_rag` | Analyses with findings (`.py` sources, `.ipynb` executed) |
 | `results/` | Per-question JSONL for every run, summary CSVs, figures |
 | `cache/` | Embeddings, entity/link indexes, LTR features and models, LLM responses |
