@@ -7,6 +7,33 @@ Answering multi-hop questions over a Wikipedia corpus with a local LLM (Llama 3.
 - **Cycle 3** (single agent: checks, repair, format trim) reaches **0.537** at 1.1 LLM calls and about 1.6 s median: the best value.
 - **Cycle 4** (two investigators + a Qwen 14B judge) is the most accurate at **0.580**, significantly above every Llama-only system, but it doesn't beat Qwen 14B used alone in the Cycle 3 agent (0.573), at 5× the calls and 3.5× the median latency (9.5 s vs 2.7 s).
 
+## Bottom line
+
+**Winner: the Cycle 3 checked agent on Llama 3.1 8B, on top of the Cycle 2 / 2c retrieval stack.** Better retrieval plus a lightweight, rule-checked single agent beats a multi-agent team on value: spend on a stronger model before spending on more agents.
+
+```mermaid
+flowchart LR
+    Q([Question]) --> C["Candidate generation<br/>signals + RRF + link following<br/>~93 paragraphs, both gold 99%"]
+    C --> P["LambdaMART<br/>top 5 paragraphs<br/>both gold 92%"]
+    P --> S["LambdaMART<br/>top 5 sentences<br/>~280 tokens"]
+    S --> A["Checked agent (Llama 8B)<br/>draft → trim → checks<br/>→ repair on 13%"]
+    A --> O([Answer])
+```
+
+| | Winner: checked agent (Llama 8B) | Cycle 1 basic RAG | Most accurate: team, Qwen 14B judge |
+|---|---|---|---|
+| EM / F1 (300 test questions) | **0.537 / 0.676** | 0.383 / 0.527 | 0.580 / 0.719 |
+| Unsupported answers | **3.0%** | 18.7% | 3.3% |
+| LLM calls per question | **1.1** | 1 | 6.0 |
+| Cost per 1,000 questions | **$0.018** | $0.036 | $0.254 |
+| Latency p50 / p95 | **1.6 s / 4.1 s** | 3.0 s / 4.4 s | 9.5 s / 32.6 s |
+
+- **Why it wins:** retrieval gave +10 EM at no extra LLM cost; the agent adds a significant +3.4 EM over Cycle 2c (13 won / 3 lost, p = 0.02) and halves unsupported answers at almost no extra latency. The best systems nearly reach the gold-paragraph ceiling (0.577).
+- **If accuracy matters more than cost:** the same checked agent with Qwen 14B (EM 0.573, 2.7 s / 8.0 s, 8× the cost).
+- **Why not the team:** it is the most accurate (0.580) but doesn't beat Qwen 14B alone (26 / 24 on test), at 5× the calls and 3.5× the median latency.
+
+Full comparison and recommendation: §5.
+
 | Document | Contents |
 |---|---|
 | **This overview** | Business logic, KPIs, metrics and formulas, data and splits, the system at a glance, final comparison, recommendation |
