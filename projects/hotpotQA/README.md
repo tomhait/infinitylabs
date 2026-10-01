@@ -2,7 +2,17 @@
 
 Answering multi-hop questions over a Wikipedia corpus with a local LLM (Llama 3.1 8B via Ollama), on a laptop, with no LLM training. The project moves through cycles (EDA, then basic RAG, improved RAG, a single agent and a multi-agent system), measuring quality, evidence, unsupported answers, LLM calls, tokens and cost, and latency at every step.
 
-**Status:** Cycles 0–2 done. Cycle 2 (improved retrieval + RAG) raised EM from 0.383 to **0.483** with the same LLM (§4). Sending the LLM only the top 5 selected sentences instead of whole paragraphs keeps that quality (0.503, not significantly different) at less than half the tokens and latency: **1.7 s p50** (§4, Cycle 2c). Cycles 3–4 (agents) are next.
+**Status:** Cycles 0–4 done; final comparison on the 300 test questions in §5.
+- **Cycle 2** (improved retrieval) raised EM from 0.383 to **0.483** with the same LLM; sending only the top 5 selected sentences (Cycle 2c) keeps that quality (0.503) at less than half the tokens and latency.
+- **Cycle 3** (single agent: checks, repair, format trim) reaches **0.537** at 1.1 LLM calls and about 1.6 s median: the best value.
+- **Cycle 4** (two investigators + a Qwen 14B judge) is the most accurate at **0.580**, significantly above every Llama-only system, but it doesn't beat Qwen 14B used alone in the Cycle 3 agent (0.573), at 5× the calls and 3.5× the median latency (9.5 s vs 2.7 s).
+
+| Document | Contents |
+|---|---|
+| **This overview** | Business logic, KPIs, metrics and formulas, data and splits, the system at a glance, final comparison, recommendation |
+| [docs/01_eda.md](docs/01_eda.md) | Cycle 0: dataset numbers, questions and answers, paragraphs, supporting facts, why hop 2 is hard, design decisions |
+| [docs/02_candidates_and_reranking.md](docs/02_candidates_and_reranking.md) | Cycles 1, 2, 2c retrieval: single search, candidate generation, LambdaMART paragraph reranker, sentence reranker |
+| [docs/03_answer_extraction.md](docs/03_answer_extraction.md) | Cycles 1–4 answering: basic RAG, improved RAG, sentence RAG, LangGraph agents, the investigation team |
 
 ---
 
@@ -48,6 +58,9 @@ $$\text{Recall@}K = \frac{1}{|Q|}\sum_{q\in Q} \frac{|G_q \cap R_q^K|}{|G_q|}$$
 
 **Candidate recall**: Both@K where K is the whole candidate pool of the reranker (about 93 paragraphs). It's the ceiling for any reranker: it can't return what isn't in its pool.
 
+**All support kept** (sentence selection): the share of questions whose supporting sentences $S_q$ are all among the selected sentences $\hat S_q$.
+$$\text{AllSupport} = \frac{1}{|Q|}\sum_{q\in Q} \mathbb{1}\left[S_q \subseteq \hat S_q\right]$$
+
 ### Answer metrics (official HotpotQA definitions)
 
 Answers are normalized first: lowercase, strip punctuation and the articles *a/an/the*, collapse whitespace.
@@ -62,10 +75,12 @@ where $\cap$ counts common tokens with multiplicity.
 **Unsupported-answer rate**: the share of answers whose normalized text does *not* appear in the paragraphs given to the LLM. It's a proxy for hallucination; yes/no answers count as supported.
 $$\text{Unsupported} = \frac{1}{|Q|}\sum_{q} \mathbb{1}\left[\text{norm}(\hat a_q) \not\subset \text{norm}(\text{context}_q)\right]$$
 
+**Significance:** per-question sign test on EM between two systems: count the questions only one of them gets right (won / lost) and test against a 50/50 split (binomial test).
+
 ### Cost and latency
 
 - **Tokens and calls:** prompt and completion tokens, retrieval calls and LLM calls per question.
-- **Estimated cost:** $\text{cost} = (\text{prompt tokens}\times p_{in} + \text{completion tokens}\times p_{out})/10^6$. Local inference is free, so for comparability we use a hosted reference price for Llama 3.1 8B ($0.05 / $0.08 per 1M tokens).
+- **Estimated cost:** $\text{cost} = (\text{prompt tokens}\times p_{in} + \text{completion tokens}\times p_{out})/10^6$. Local inference is free, so for comparability we use hosted reference prices: Llama 3.1 8B $0.05 / $0.08 and Qwen2.5 14B $0.35 / $1.40 per 1M tokens.
 - **Latency:** wall-clock time per question for retrieval, the LLM and the total, reported as **p50** (typical) and **p95** (slow tail: what users complain about). Rate-limit waits are tracked separately and never counted.
 
 ### Which metric matters most at each step
@@ -74,6 +89,7 @@ $$\text{Unsupported} = \frac{1}{|Q|}\sum_{q} \mathbb{1}\left[\text{norm}(\hat a_
 |---|---|---|---|
 | **Candidate generation** | **Candidate recall** | A gold paragraph missing here is lost for good; order doesn't matter yet | Pool size (cost of the next stage) |
 | **Reranking** | **Both-gold recall@5** | The LLM sees the top 5; multi-hop needs *both* paragraphs, so a single miss already breaks the answer | Both@2 (small contexts), hop-2 found@5 (diagnosis), retrieval latency p95 |
+| **Sentence selection** | **All support kept** | One dropped supporting sentence costs about 21 EM points on that question | Supporting-sentence recall, words kept |
 | **Answer generation** | **EM** (headline), **F1** | EM is the official metric; F1 forgives wording differences ("Dara Torres" vs "Dara Grace Torres") | Unsupported rate: a wrong answer grounded in context is better than an invented one |
 | **Whole system** | **EM at an acceptable cost and p95 latency** | The business trade-off | LLM calls per question, tokens, complexity |
 
@@ -81,278 +97,163 @@ $$\text{Unsupported} = \frac{1}{|Q|}\sum_{q} \mathbb{1}\left[\text{norm}(\hat a_
 
 ---
 
-## 3. Data and protocol
+## 3. Data and splits
 
-- **Dataset:** HotpotQA, *distractor* setting, validation split. Each question comes with 10 paragraphs: 2 gold and 8 distractors chosen to look relevant.
-  - 80% of questions are **bridge** (find entity A, then use it to find the answer) and 20% are **comparison** (look up two named entities and compare them).
-- **Pool:** 2,000 questions sampled with seed 42, and a **closed corpus of 19,260 paragraphs** (all their paragraphs, de-duplicated). One paragraph = one chunk, with its title prepended; paragraphs are short, with a median of 62 words.
-- **Splits.** Test questions are never used for any decision.
+Details and figures: [docs/01_eda.md](docs/01_eda.md).
+
+- **Dataset:** HotpotQA (Yang et al., 2018), *distractor* setting, validation split (7,405 questions), loaded from the Hugging Face Hub ([`hotpotqa/hotpot_qa`](https://huggingface.co/datasets/hotpotqa/hotpot_qa), config `distractor`); license CC BY-SA 4.0. Questions were written by crowd workers over pairs of English Wikipedia articles, with the supporting sentences annotated; the 8 distractors per question were retrieved by TF-IDF from Wikipedia. Each question comes with 10 paragraphs: 2 gold and 8 distractors chosen to look relevant. 80% of questions are **bridge** (find entity A, then use it to find the answer) and 20% are **comparison** (look up two named entities and compare them).
+- **Pool:** 2,000 questions sampled with seed 42.
+- **Closed corpus:** all the pool's paragraphs, de-duplicated: **19,260 paragraphs** (about 1.7M words; 3,904 are gold for some question). One paragraph = one chunk, with its title prepended; median 79 words (gold paragraphs: 62). Each question must find its 2 gold paragraphs among all 19,260.
+- **Splits.** Test questions are never used for design decisions (exceptions listed in §7).
 
 | Split | Questions | Used for |
 |---|---|---|
-| **Test** `pool[:500]` | 500 | Every reported retrieval number |
-| **Train** `pool[500:1500]` | 1,000 | Training LambdaMART |
-| **Tuning** `pool[1500:2000]` | 500 | RRF weights, BM25 parameters, LambdaMART early stopping and hyperparameters |
+| **Test** `pool[:500]` | 500 | Every reported retrieval number; the first 300 for every LLM run (the LLM is the slow part) |
+| **Train** `pool[500:1500]` | 1,000 | Training the LambdaMART paragraph and sentence rankers |
+| **Tuning** `pool[1500:2000]` | 500 | RRF weights, BM25 parameters, LambdaMART early stopping and hyperparameters; its first 300 ("dev") for designing the Cycle 3–4 agents |
 
-- RAG runs use the first 300 test questions (the LLM is the slow part).
-
----
-
-## 4. Results so far
-
-### Cycle 1: baseline RAG (Llama 3.1 8B, 300 questions)
-
-| Setup | EM | F1 | Both-gold in context | Unsupported | LLM calls | Tokens / question | Cost / 1k questions | Latency p50 / p95 |
-|---|---|---|---|---|---|---|---|---|
-| Closed book (100 questions) | 0.24 | 0.33 | – | – | 1 | 99 | $0.005 | 0.6 s / 1.0 s |
-| BGE-small top 5 + Llama | **0.38** | **0.53** | 0.68 | 19% | 1 | 722 | $0.036 | 4.7 s / 8.4 s* |
-| Contriever-MSMARCO top 5 + Llama (clean) | 0.35 | 0.46 | 0.57 | 11% | 1 | 724 | $0.036 | 3.6 s / 5.5 s |
-
-\*Measured in an earlier session on a slower machine state. Compare latencies only between runs from the same session (§4, Cycle 2).
-
-Retrieval gives +14 EM points. The clean Contriever-MSMARCO baseline is 3.6 EM points below BGE (not significant, p = 0.17), since it finds both gold paragraphs less often (57% vs 68%). But 32% of questions still miss a gold paragraph, mostly hop 2, which a single search can't reach.
-
-### Cycle 2: improved retrieval (500 test questions, no LLM)
-
-| Retriever | Both@2 | **Both@5** | Both@10 | Hop 2 @5 | Latency p50 | Trained on HotpotQA? |
-|---|---|---|---|---|---|---|
-| TF-IDF | – | 0.508 | – | – | ms | no |
-| BM25 | – | 0.544 | – | 0.56 | ms | no |
-| Contriever (unsupervised) | – | 0.470 | – | – | 33 ms | no |
-| Contriever-MSMARCO | – | 0.602 | – | 0.56 | 33 ms | no |
-| BGE-small-en-v1.5 | – | 0.706 | – | 0.69 | 17 ms | **yes** (train split) |
-| RRF over classical lists (plain / weighted) | – | 0.544 / 0.576 | – | – | 10 ms | no |
-| Classical RRF + structure (routing, slots, links) | 0.472 | 0.806 | 0.888 | 0.81 | 10 ms | no |
-| Contriever-MSMARCO + slots + links | 0.506 | 0.836 | 0.900 | 0.82 | 48 ms | no |
-| BGE + slots + links | 0.540 | 0.842 | 0.916 | 0.86 | 27 ms | yes |
-| **LambdaMART, classical features** | 0.710 | 0.898 | 0.936 | 0.91 | 16 ms | no |
-| LambdaMART + BGE | 0.756 | 0.920 | 0.964 | 0.92 | 35 ms | yes |
-| **LambdaMART + Contriever-MSMARCO (selected)** | 0.744 | **0.924** | 0.962 | **0.93** | 59 ms | **no** |
-
-**Main lessons:**
-1. **Following links is the key multi-hop ingredient.** It adds 14–23 points to any first-stage retriever: read the top hop-1 paragraphs, then retrieve the paragraphs whose titles they mention.
-2. **Merging lists with RRF alone barely beats BM25** (0.576 vs 0.544). Structure (question routing, reserved slots, links) is what brought the classical ranker to 0.806.
-3. **A learned combiner beats hand-tuned rules by a wide margin:** LambdaMART goes from 0.806 to 0.898 on the same classical signals. It wins 48 questions and loses 2 (sign test p ≈ 2e-12), and both-gold@2 rises from 0.47 to 0.71.
-4. **BGE's advantage is likely in-domain training.** BAAI lists HotpotQA (train split) in BGE's fine-tuning data. BGE leads the clean Contriever-MSMARCO by 10 points as a single search, but the gap disappears once links or LambdaMART are added (0.920 vs 0.924).
-
-### Cycle 2: improved RAG end to end (Llama 3.1 8B, same 300 questions and prompt as Cycle 1)
-
-Only the retriever changes. The **oracle** gives the LLM exactly the 2 gold paragraphs: it isn't a real system, but it shows the ceiling of this LLM with perfect retrieval.
-
-| Run | EM | F1 | Both gold in context | Retrieval / reasoning failures | Unsupported | Prompt tokens | Latency p50 / p95 | Cost / 1k |
-|---|---|---|---|---|---|---|---|---|
-| Cycle 1: BGE | 0.383 | 0.527 | 68% | 24% / 20% | 18.7% | 716 | (earlier session) | $0.036 |
-| Cycle 1: Contriever-MSMARCO | 0.347 | 0.462 | 57% | 33% / 20% | 10.7% | 719 | 3.6 s / 5.5 s | $0.036 |
-| LTR classical | 0.457 | 0.606 | 89% | 8% / 28% | 5.3% | 646 | 3.3 s / 4.7 s | $0.033 |
-| **LTR + Contriever (selected)** | **0.483** | **0.636** | **91%** | **5% / 29%** | **6.0%** | 647 | **3.9 s / 5.7 s** | $0.033 |
-| Oracle (gold only) | 0.577 | 0.736 | 100% | 0% / 22% | 3.3% | 307 | 1.3 s / 2.0 s | $0.016 |
-
-- **+10 EM points over BGE from retrieval alone,** significant: 43 questions won vs 13 lost (p < 0.001), 95% CI for ΔEM [+0.05, +0.15]. The gain is on bridge questions (EM 0.37 → 0.48).
-- **+13.7 EM points over the clean baseline** with the same dense model: Contriever-MSMARCO as a single search gets 0.347, and inside LTR it gets 0.483 (56 won vs 15 lost). This is the cleanest measure of what Cycle 2 adds.
-- **Half of the gap to perfect retrieval is closed** (0.383 → 0.483 of 0.577).
-- **The bottleneck moved from retrieval to the LLM.** Retrieval failures dropped from 24% to 5%, while reasoning failures rose from 20% to 29%: the same questions now reach the LLM with full evidence, and it answers about 50% of those correctly, as before. Even with perfect retrieval, the 8B model misses 42% by EM.
-- **Distractors still hurt:** with full evidence, 5 paragraphs give EM 0.50 vs 0.56 with only the 2 gold ones.
-- **More grounded:** unsupported answers dropped from 18.7% to 6.0%, and abstentions from 8.3% to 1.3%.
-- **Nearly free in latency and cost.** Compared within the same session, LTR + Contriever takes 3.9 s p50 / 5.7 s p95 vs 3.6 s / 5.5 s for the single Contriever search (+0.3 s / +0.2 s). The classical LTR is the fastest real system (3.3 s / 4.7 s). Prompts are slightly shorter because LTR picks shorter paragraphs, so the cost per question drops a little.
-
-### Cycle 2c: sentence selection (give the LLM sentences, not paragraphs)
-
-**Idea.** Even with both gold paragraphs retrieved, 3 of the 5 paragraphs are distractors, and inside the gold paragraphs only 1–2 sentences carry the answer. A second reranker picks the sentences most likely to contain evidence, and only those go to the LLM.
-
-**The sentence reranker.** A second LambdaMART model (same setup as §5.4), trained on HotpotQA's labeled **supporting sentences** (`supporting_facts`) using the same splits.
-- Each question is a group made of every sentence of its top-5 reranked paragraphs (about 17 sentences). Label 1 = supporting sentence.
-- **19 features per sentence:**
-  - paragraph rank, and the sentence's position in its paragraph
-  - TF-IDF similarity to the question, and word overlap with the question
-  - overlap with the question words *outside* the entities
-  - share of question entities it mentions
-  - whether it contains the expected answer type
-  - whether it mentions the title of another top paragraph (the bridge sentence)
-  - whether its paragraph is linked from another top paragraph
-- Early stopping on NDCG@4; 97 trees.
-- Selection takes about 14 ms per question.
-
-**Offline: how much evidence survives?** On the 500 test questions, with no LLM involved.
-- *All support kept* = every supporting sentence of the question is among the selected ones.
-- The ceiling is 92.4%, the share of questions whose supporting sentences are all inside the top-5 paragraphs.
-
-| Policy | Sentences | Words | All support kept | Supporting-sentence recall |
-|---|---|---|---|---|
-| Whole paragraphs (current) | 16.7 | 356 | 92.4% | 96.0% |
-| First sentence of each paragraph | 5 | 115 | 27.4% | 56.5% |
-| TF-IDF top 5 | 5 | 102 | 35.6% | 66.1% |
-| LTR top 5, at least 1 per paragraph | 5 | 122 | 48.0% | 72.8% |
-| **LTR top 5** | 5 | 113 | **74.6%** | **86.5%** |
-| LTR top 8 | 8 | 178 | 83.2% | 91.3% |
-
-The learned ranker keeps twice as much evidence as TF-IDF at the same budget. The most important feature is the paragraph's rank (53% of the gain), then overlap with the non-entity question words, then mentioning another top paragraph's title.
-
-**End to end** (Llama 3.1 8B, same 300 questions and prompt; won/lost is EM per question vs the row it's compared with):
-
-| Run | EM | F1 | Unsupported | Prompt tokens | Latency p50 / p95 | Cost / 1k | Won / lost |
-|---|---|---|---|---|---|---|---|
-| LTR + Contriever, 5 paragraphs (§4 Cycle 2) | 0.483 | 0.636 | 6.0% | 647 | 3.9 s / 5.7 s | $0.033 | – |
-| LTR + Contriever, top 8 sentences | 0.487 | 0.643 | 4.0% | 382 | 2.3 s / 3.1 s | $0.020 | 15 / 14 vs paragraphs |
-| **LTR + Contriever, top 5 sentences** | **0.503** | **0.654** | 6.0% | **281** | **1.7 s / 2.3 s** | **$0.014** | 32 / 26 vs paragraphs (p = 0.51) |
-| Oracle: gold paragraphs | 0.577 | 0.736 | 3.3% | 307 | 1.3 s / 2.0 s | $0.016 | – |
-| Oracle: gold supporting sentences | 0.593 | 0.759 | 4.3% | 197 | 1.0 s / 1.5 s | $0.010 | 14 / 9 vs gold paragraphs |
-
-- **Same quality at less than half the cost and latency.** Top 5 sentences cut prompt tokens by 57% and p50/p95 latency by 57%/60%. The +2 EM points are *not* significant (32 won vs 26 lost), so the honest claim is "no loss, twice as fast."
-- **Less text doesn't hurt the LLM, it helps.** Given perfect sentences, Llama scores 0.593, slightly above the 0.577 it gets from the gold paragraphs. An 8B model reads short, clean context better.
-- **Two effects cancel out**, visible when splitting the 300 questions:
-
-  | Questions | Count | EM, top 5 sentences | EM, 5 paragraphs |
-  |---|---|---|---|
-  | All supporting sentences kept | 224 | **0.576** | 0.478 |
-  | Some supporting sentence dropped | 76 | 0.289 | 0.500 |
-
-  Removing distractor text is worth about +10 EM points; dropping evidence costs about 21. **Selector recall is now the lever:** at 90%+ "all support kept", sentence RAG would approach the 0.59 ceiling.
-- **Top 8 isn't better than top 5.** It keeps more evidence (83% vs 75%) but also more noise, and ends up level with whole paragraphs.
-- Retrieval failures (a gold paragraph with no selected sentence) rise from 5% to 12%, while reasoning failures drop from 29% to 20%.
+No LLM is trained; the only trained models are the two small LambdaMART rankers (about 1 s each on a laptop).
 
 ---
 
-## 5. The selected model: LambdaMART reranker + Contriever-MSMARCO
+## 4. The system at a glance
 
-**Why this one:**
-- **Best evidence and best answers:** 0.924 both-gold@5, 0.962 @10, and hop 2 found 93% of the time. End to end: EM 0.483 / F1 0.636 vs 0.383 / 0.527 for Cycle 1.
-- **Contamination-free:** Contriever-MSMARCO was trained on MS MARCO only. LambdaMART was trained on 1,000 of our pool questions, separate from the test questions and fully visible.
-- **Small latency cost:** 50–60 ms of retrieval standalone. End to end, +0.3 s p50 vs a single Contriever search in the same session (3.9 s vs 3.6 s), for +13.7 EM points.
-- **Cheap to train:** about 1 s on a laptop, and 100 questions already give 0.884.
+```mermaid
+flowchart TD
+    Q([Question]) --> CG["Candidate generation (Cycle 2)<br/>BM25 · TF-IDF · title · coverage · answer type · Contriever-MSMARCO<br/>structured RRF + link following → ~93 paragraphs"]
+    CG --> RR["LambdaMART paragraph reranker (Cycle 2)<br/>33 features → top 5 paragraphs"]
+    RR --> SR["LambdaMART sentence reranker (Cycle 2c)<br/>19 features → top 5 sentences"]
+    SR --> ANS["Answer — Llama 3.1 8B (Cycle 3 checked agent)<br/>draft → format trim → checks → repair if needed"]
+    ANS --> OUT([Answer + its evidence sentences])
 
-**Fallback:** *LambdaMART with classical features only* (0.898, 16 ms, no neural model, fully explainable). It's the natural low-cost option in the final comparison.
+    SR -. "optional, for accuracy (Cycle 4)" .-> TEAM["Investigation team<br/>direct + chain investigators → consensus<br/>→ Qwen 14B judge on disagreements"]
+    TEAM -.-> OUT
 
-The pipeline has two stages: **candidate generation** (cheap signals build a wide pool, judged by candidate recall) and **reranking** (the learned ranker orders the pool, judged by both-gold recall@5). Both stages are measured with recall; what differs is the cutoff: the whole pool (~93) versus the 5 paragraphs the LLM reads.
-
-```
-question ──► signal lists (BM25, TF-IDF, title, coverage, answer type, Contriever)
-         ──► structured RRF + link following (hop 1 → hop 2)
-         ──► candidate pool (union, ~93 paragraphs)            ← candidate generation
-         ──► 33 features per (question, paragraph)
-         ──► LambdaMART score → sort → top 5 paragraphs         ← reranking
-         ──► sentence LambdaMART → top 5 sentences to the LLM   ← sentence reranking (Cycle 2c)
+    classDef ret fill:#e8f1ff,stroke:#5b8def
+    classDef llm fill:#fff3e0,stroke:#f0a030
+    class CG,RR,SR ret
+    class ANS,TEAM llm
 ```
 
-### 5.1 Signals (all computed per question)
+Blue = retrieval ([docs/02](docs/02_candidates_and_reranking.md)), orange = answer extraction ([docs/03](docs/03_answer_extraction.md)).
 
-| Signal | What it measures |
-|---|---|
-| `bm25` | BM25 over stemmed unigrams (k1 = 1.2, b = 0.9) |
-| `tfidf` | TF-IDF cosine similarity over unigrams and bigrams |
-| `title` | Question entities matching a paragraph's **title**: exact 1.0, partial 0.7, fuzzy (character-trigram Dice ≥ 0.75), weighted by entity rarity (IDF) |
-| `coverage` | Rarity-weighted share of question entities mentioned in the paragraph (first sentence 1.0, body 0.6) |
-| `anstype` | The paragraph contains an entity of the expected answer type (a DATE for "what year"…) |
-| `dense` | Contriever-MSMARCO dot-product similarity, a frozen model with paragraph embeddings cached |
-| **Links** | A paragraph *links* to another if it mentions that paragraph's title or an alias (title gazetteer: a classical stand-in for Wikipedia hyperlinks) |
-
-**Question entities** come from four sources: spaCy NER, a title gazetteer (question n-grams that equal a corpus title), quoted strings, and capitalized runs.
-
-**Routing rule:** a question is treated as comparison-like when it has at least 2 named entities and either a yes/no opener or a comparison cue ("older", "both", "same"…). This agrees with HotpotQA's own labels 90% of the time.
-
-### 5.2 Candidate generation
-
-Candidates are the **union of the top 50 of every ranked list**, duplicates removed:
-- **Structured RRF ranking:** weighted RRF, $\text{RRF}(d)=\sum_i \lambda_i/(60+\text{rank}_i(d))$, with routing, reserved slots and link-following.
-- **Reserved slots:** the best paragraph for each named entity that exactly matches a title.
-- **Each signal list:** BM25, TF-IDF, title, coverage, answer type, Contriever.
-- **Bridge and comparison RRF rankings:** the hop-1 rankings.
-- **Forward-link candidates:** paragraphs mentioned by the top-5 hop-1 paragraphs. A candidate reached from the hop-1 paragraph at rank $r$ scores $0.5^{r-1}\big(1+\text{ov}(\text{linking sentence})+\text{ov}(\text{candidate's first sentence})\big)$, where ov is the summed IDF of the question words outside the entities that the text contains.
-- **Backlink candidates:** paragraphs that mention a top-5 hop-1 paragraph.
-
-**Result:** 54–171 candidates per question (mean 93). Both gold paragraphs are in the pool for **99.2%** of test questions.
-
-Measured on 300 test questions, the structured-RRF top 50 alone already contains 99% of the gold paragraphs. The other sources rarely add new golds; their value is **information**, since each list's scores and ranks become features. They also provide realistic **hard negatives** for training, such as same-name look-alikes and near-miss BM25 matches.
-
-### 5.3 Features (33 per candidate)
-
-| Group | Features |
-|---|---|
-| Question | `is_comparison`, `n_entities`, `n_named`, `question_len`, `has_anstype` |
-| Lexical | `bm25`, `bm25_rel` (÷ max for the question), `bm25_rank`, `tfidf`, `tfidf_rel`, `tfidf_rank` |
-| Dense | `dense`, `dense_gap` (question's best score − this score), `dense_rank` |
-| Entity | `title_score`, `title_rank`, `is_slot`, `coverage`, `coverage_rank`, `anstype` |
-| RRF | `bridge_rrf_rank`, `comparison_rrf_rank`, `structured_rank` |
-| Link | `fwd_score`, `fwd_rank`, `fwd_parent_rank` (rank of the best hop-1 paragraph linking to it), `fwd_parent_count`, `back_score`, `back_rank`, `back_parent_rank` |
-| Paragraph | `first_sentence_overlap`, `title_in_question`, `paragraph_len` |
-
-A paragraph absent from a list gets a **missing** rank, which the trees handle natively.
-
-### 5.4 Reranking with LambdaMART
-
-**The model:** LightGBM `LGBMRanker` with `objective="lambdarank"`, an ensemble of small gradient-boosted decision trees.
-
-**Training:**
-- Each question is a **group** of about 93 rows (candidates × features). Label 1 = gold paragraph, 0 = other.
-- On each boosting round, for every (gold, non-gold) pair *within a question*, the gradient pushes the gold paragraph up. The push is weighted by $|\Delta \text{NDCG@5}|$, the change in NDCG@5 if the two swapped, so errors near the top count most.
-- Settings:
-  - learning rate 0.05
-  - rows subsampled at 80% and features at 80% per tree
-  - up to 1,000 trees, with **early stopping** on validation NDCG@5 (patience 50)
-- **Hyperparameters:** a 6-point grid (`num_leaves` ∈ {7, 15, 31} × `min_child_samples` ∈ {20, 50}), selected on validation both-gold@5. All six points land within 0.006 of each other, so the model isn't sensitive to them. The selected Contriever model has 15 leaves, minimum leaf size 50, and 245 trees.
-
-**Scoring at query time:**
-- Each candidate goes through every tree; each tree ends in a leaf value, and **score = sum of the leaf values**.
-- Candidates are sorted by score and the top 5 go to the LLM.
-- Scores only mean something *within* a question.
-- Model inference takes about 0.6 ms per question; the rest of the latency is feature extraction.
-
-**How Contriever enters the model:**
-1. Its top 50 is a candidate source.
-2. `dense`, `dense_gap` and `dense_rank` are direct features.
-3. Its list is fused into the structured RRF (weight 2), which shapes the hop-1 ranking, which links get followed, and the RRF features.
-
-Contriever itself is never fine-tuned. The GBM learns *when* to trust its scores.
-
-### 5.5 What the model relies on
-
-| Analysis | Finding |
-|---|---|
-| **Ablation** (retrain without a feature group, classical model) | Links −0.028 (the only group it can't do without); entity −0.010; lexical −0.008; question −0.002; paragraph 0.000; RRF features +0.004 (not needed: the trees rebuild them from raw features) |
-| **Gain importance** | `structured_rank` takes about 68% of the gain, but the ablation shows it isn't necessary. Importance shows what the model split on, not what it needs |
-| **Learning curve** | 100 training questions: 0.884; 1,000: 0.898. The gain comes from the model's flexibility, not from data volume |
-| **Failures fixed vs RRF + structure** | "Only a backlink" 11/16, "link outranked" 4/5, "hop 1 missed" 14/25, "no link in either direction" 8/27 |
-
-### 5.6 Leakage checks (a 9-point jump deserves suspicion)
-
-- **No preference for "gold-looking" paragraphs:** 10% of LambdaMART's wrong top-5 picks are gold for *another* question, versus 14% for RRF (20% of the corpus is gold for some question).
-- **Validation and test agree:** 0.880 vs 0.898 for the classical model.
-- **One mild corpus artifact:** gold paragraphs are shorter than HotpotQA's TF-IDF-chosen distractors. Length alone reaches 0.13 both@5 (random ordering: about 0.002), but removing the paragraph features doesn't change the score.
+| Cycle | Best method | Test EM | What it changed |
+|---|---|---|---|
+| 0 | EDA | – | Chunk = paragraph; both-gold recall as the retrieval KPI; hop 2 is the hard part |
+| 1 | BGE top 5 + Llama | 0.383 | Retrieval +14 EM over closed book; 32% still miss a gold paragraph |
+| 2 | Candidates + LambdaMART + Llama | 0.483 | Both@5 0.706 → 0.924; retrieval failures 24% → 5% |
+| 2c | + sentence reranker | 0.503 | Same quality at 57% fewer tokens, half the latency |
+| 3 | Checked agent (LangGraph) | 0.537 | Format trim + checks + repair; unsupported answers halve |
+| 4 | Team with Qwen 14B judge | 0.580 | Most accurate; matches Qwen 14B alone at 3.5× its latency |
 
 ---
 
-## 6. Rejected technologies (and why)
+## 5. Final comparison
 
-| Technology | Result | Reason rejected |
+All cycles on the 300 test questions:
+
+| Cycle | System | EM | F1 | Both gold in context | Unsupported | LLM calls | Prompt tokens | Cost / 1k | Latency p50 / p95 |
+|---|---|---|---|---|---|---|---|---|---|
+| 0 | Closed book (100 questions) | 0.24 | 0.33 | – | – | 1 | 99 | $0.005 | 0.35 s / 0.57 s |
+| 1 | RAG: BGE top 5 | 0.383 | 0.527 | 68% | 18.7% | 1 | 716 | $0.036 | 3.0 s / 4.4 s |
+| 1 | RAG: Contriever-MSMARCO top 5 | 0.347 | 0.462 | 57% | 10.7% | 1 | 719 | $0.036 | *3.6 s / 5.5 s* |
+| 2 | LTR classical, 5 paragraphs | 0.457 | 0.606 | 89% | 5.3% | 1 | 646 | $0.033 | *3.3 s / 4.7 s* |
+| 2 | LTR + Contriever, 5 paragraphs | 0.483 | 0.636 | 91% | 6.0% | 1 | 647 | $0.033 | 3.7 s / 5.0 s |
+| 2c | LTR + Contriever, top 5 sentences | 0.503 | 0.654 | 80% | 6.0% | 1 | 281 | $0.014 | 1.5 s / 2.0 s |
+| 3 | **Checked agent (Llama 8B)** | **0.537** | 0.676 | 84% | 3.0% | 1.11 | 357 | $0.018 | **1.6 s / 4.1 s** |
+| 3 | Decomposed agent (Llama 8B) | 0.533 | 0.686 | 94% | 2.3% | 4.24 | 1,438 | $0.076 | 6.6 s / 10.0 s |
+| 3 | Checked agent, Qwen 14B (control) | 0.573 | 0.722 | 85% | 5.0% | 1.16 | 402 | $0.148 | 2.7 s / 8.0 s |
+| 4 | Self-consistency, 5 samples (control) | 0.527 | 0.673 | 84% | 2.0% | 5.11 | 1,482 | $0.076 | 2.3 s / 4.0 s |
+| 4 | Team, 8B judge | 0.563 | 0.702 | 85% | 3.0% | 5.96 | 2,199 | $0.115 | 7.0 s / 13.6 s |
+| 4 | **Team, 14B judge** | **0.580** | **0.719** | 87% | 3.3% | 5.96 | 2,213 | $0.254 | 9.5 s / 32.6 s§ |
+| – | Oracle: gold paragraphs (ceiling) | 0.577 | 0.736 | 100% | 3.3% | 1 | 307 | $0.016 | *1.3 s / 2.0 s* |
+| – | Oracle: gold supporting sentences | 0.593 | 0.759 | 100% | 4.3% | 1 | 197 | $0.010 | *1.0 s / 1.5 s* |
+
+Latency comes from the clean benchmark below (first 50 test questions, one session, LLM cache off); *italic* rows weren't re-timed and keep their main-run values. § Includes swapping Llama and Qwen in and out of GPU memory on every disagreement. "Both gold in context" counts the paragraphs behind the final answer's evidence.
+
+**Clean latency benchmark.** The main runs were timed in different sessions (machine state, overlapping Ollama runs) and partly replayed from the LLM cache, so their latencies weren't comparable. `src/latency_bench.py` re-times the systems live on the same 50 test questions, one system after another in a single session, after a 2-question warm-up. Ollama is emptied before each system: it keeps a large in-memory prompt cache, and without the reset the checked agent (whose first prompt is the Cycle 2c prompt) ran 3× faster than Cycle 2c on identical prompts.
+
+| System | LLM calls | Seconds per call | p50 | p95 | p50 vs checked agent |
+|---|---|---|---|---|---|
+| Cycle 2c, top 5 sentences | 1.00 | 1.43 | 1.5 s | 2.0 s | 1.0× |
+| Checked agent (Llama 8B) | 1.08 | 1.58 | 1.6 s | 4.1 s | – |
+| Self-consistency, 5 samples | 5.08 | 0.47 | 2.3 s | 4.0 s | 1.4× |
+| Checked agent, Qwen 14B | 1.12 | 2.55 | 2.7 s | 8.0 s | 1.7× |
+| Decomposed agent | 4.18 | 1.58 | 6.6 s | 10.0 s | 4.2× |
+| Team, 8B judge | 5.66 | 1.32 | 7.0 s | 13.6 s | 4.5× |
+| Team, 14B judge (with model swaps) | 5.66 | 2.18 | 9.5 s | 32.6 s | 6.0× |
+
+- **Qwen 14B alone is much faster than the main run suggested:** 2.7 s / 8.0 s, not 10.6 s / 21.9 s; that run was slowed by memory pressure from other Ollama runs. It costs 1.7× the checked agent's median latency, against 6× for the 14B-judge team.
+- **The team's slow tail comes from the judge.** The 11 of 50 questions that reach the judge take a median 25.6 s (model swaps included) vs 8.3 s for the others; that is the 32.6 s p95.
+- **Self-consistency is cheaper than its call count suggests:** its 5 samples share one prompt, which Ollama processes once (0.47 s per call).
+- **The checked agent's repair call costs nothing at the median** (1.6 s vs 1.5 s for Cycle 2c) and shows only in the tail (p95 4.1 s vs 2.0 s).
+- **Resolution: about 20%.** Even in one quiet session the machine drifts. Run sequentially, Cycle 1 BGE looked faster than Cycle 2 paragraphs (3.0 s vs 3.7 s); alternating the two question by question on 30 questions reversed it (3.5 s vs 3.1 s, consistent with Cycle 2's shorter prompts). Ratios above about 1.5× are robust; smaller gaps are not.
+
+Per-question significance (sign test on EM):
+
+| Comparison (test) | Won / lost | p |
 |---|---|---|
-| **Plain / weighted RRF** as the final ranker | 0.544 / 0.576 | Ranks only, with no confidence or interactions; barely beats BM25 |
-| **Always-on backlinks** | Coverage 65% → 84%, but both@5 unchanged or worse | Backlink candidates push correct forward links out of the top 5; only a learned model can decide when to trust them |
-| **Stemming / lemmatization for title matching** | +0.7 points of link coverage | Word-level matching tops out at about 70% coverage; the misses are paraphrases, not inflections |
-| **Word-vector (GloVe) soft title matching** | About +2% coverage | Noisy matches, a 480 MB dependency |
-| **Title aliases** (comma head, acronyms) | +0.002 when removed | Rarely triggered, and some added links are wrong |
-| **BGE as the main retriever** | Best single-search retriever (0.706) | Trained on the HotpotQA train split: an unfair, in-domain advantage. BGE-large has the same training data |
-| **Unsupervised Contriever** | 0.470 | Weaker than BM25 without MS MARCO fine-tuning |
-| **TF-IDF sentence selection** | All support kept 36% at 5 sentences (learned ranker: 75%) | Similarity to the question misses bridge sentences, which share few words with it |
-| **"At least 1 sentence per paragraph"** | All support kept 48% vs 75% at 5 sentences | Spends the budget on distractor paragraphs; the gold ones often need 2 sentences |
-| **Top 8 sentences** | EM 0.487 vs 0.503 for top 5, with 36% more tokens | More evidence, but also more noise |
+| Cycle 2 paragraphs vs Cycle 1 BGE | 43 / 13 | < 0.001 |
+| Checked agent vs Cycle 2c | 13 / 3 | 0.02 |
+| Team (14B judge) vs checked agent | 16 / 3 | 0.004 |
+| Team (14B judge) vs self-consistency | 24 / 8 | 0.007 |
+| Team (14B judge) vs Qwen 14B alone | 26 / 24 | 0.89 |
+| Qwen 14B alone vs checked agent (Llama) | 33 / 22 | 0.18 |
+
+**What the comparison says:**
+1. **Retrieval was the biggest lever:** +10 EM points from Cycle 1 to Cycle 2 at no extra LLM cost. The best systems nearly reach the gold-paragraph oracle (0.577).
+2. **The checked agent is the best value:** +5.4 EM over the Cycle 2 paragraphs (+3.4 over 2c), half the cost of Cycle 1, the same median latency as Cycle 2c (1.6 s, about half of Cycles 1–2), and half the unsupported answers of the Cycle 2 systems (3.0% vs 6.0%). Two deterministic steps (format trim, checks) do most of the work.
+3. **The 14B-judge team is the most accurate system (0.580)** and significantly beats every Llama-only system, including self-consistency at similar call counts: two investigators that fail differently plus a judge that reads the evidence. It closes about half of the gap to the two-investigator upper bound (judge right on 41 of the 55 test disagreements with exactly one right answer; always taking the direct answer: 28).
+4. **But it doesn't beat the bigger model used alone.** Qwen 14B as a single checked agent reaches 0.573 (dev: 0.583, same as Llama). Team vs Qwen alone is 33 / 20 on dev and 26 / 24 on test (pooled p ≈ 0.17): no demonstrated advantage for the multi-agent structure over simply using the larger model, which needs 1.2 calls instead of 6 and no model swapping.
+5. **More calls without diversity don't help:** self-consistency (5 samples) is no better than one answer.
+
+**How it compares with published work.** Fine-tuned HotpotQA readers reach about 0.70 EM in the distractor setting, and prompted LLMs over full Wikipedia typically 0.30–0.45. Our closed 19k-paragraph corpus sits between those settings, and a zero-shot 8B model can't be compared directly with either; the relevant ceiling is our own oracle (0.577 with the gold paragraphs), which the best systems reach.
+
+**Recommendation.**
+- **Default:** the Cycle 3 checked agent on Llama 3.1 8B: EM 0.537, 1.1 calls, about 1.6 s median, $0.018 per 1,000 questions, 3% unsupported.
+- **If accuracy matters more than cost:** a stronger model in the same checked agent (Qwen 14B: +3.6 EM, not significant on 300 questions; 2.7 s / 8.0 s) is simpler than the team for the same quality, at a third of its median latency and a quarter of its p95.
+- **The team** is worth it only where a single strong model isn't available for every question but a stronger *verifier* can be used on the 30% of disagreements, e.g. a hosted judge, or batch investigations with a local judge.
+
+---
+
+## 6. Rejected technologies
+
+Full tables with numbers: [retrieval](docs/02_candidates_and_reranking.md#rejected-retrieval-technologies) and [answer extraction](docs/03_answer_extraction.md#rejected-answer-extraction-technologies).
+
+| Technology | Stage | Why rejected (short) |
+|---|---|---|
+| Full Wikipedia index (fullwiki) | Data | Beyond a laptop budget; a closed 19k corpus keeps the research question |
+| BGE as the main retriever | Retrieval | Trained on the HotpotQA train split (unfair advantage); its lead vanishes inside LambdaMART |
+| Unsupervised Contriever | Retrieval | Weaker than BM25 (0.470 vs 0.544) |
+| Plain / weighted RRF as the final ranker | Retrieval | Barely beats BM25 (0.576); no confidence or interactions |
+| Always-on backlinks | Retrieval | Push correct forward links out of the top 5; left to LambdaMART |
+| Stemming, GloVe soft matching, title aliases | Retrieval | Tiny coverage gains, noisy links, heavy dependencies |
+| Cross-encoder reranker | Retrieval | Not tested: deprioritized once LambdaMART reached 0.924 of a 0.992 ceiling; it can't use links |
+| TF-IDF / "1 per paragraph" / top-8 sentence selection | Sentences | Keep less evidence (36% / 48%) or add noise (top 8: EM 0.487 vs 0.503) |
+| Free-form ReAct agent | Agent | An 8B model plans tool calls unreliably; a fixed LangGraph flow is measurable |
+| Decomposition as the main agent | Agent | 4× calls and latency for no gain; kept as the second investigator |
+| Self-consistency | Agent | 4.6× calls, no gain: samples share the same mistakes |
+| 8B judge, rule-based judge | Team | Position bias and leniency; rules separate only 11 of 91 disagreements |
 
 ---
 
 ## 7. Caveats
 
-- **Closed corpus.** 19,260 paragraphs built from the pool's contexts. The title gazetteer (our stand-in for hyperlinks) would find many spurious links against full Wikipedia (about 5M titles); in an open setting, use real hyperlinks.
-- **Supervision.** LambdaMART learns from gold labels on 1,000 HotpotQA questions. That's the same *kind* of in-domain supervision we flagged for BGE, just much smaller, visible, and on separate questions.
-- **Noise level.** On 500 questions, one question = 0.2 points; differences under about 2 points are within noise.
-- **RAG sample size.** 300 questions (47 comparison questions, so one comparison question ≈ 2 points). Per-type differences between retrievers on comparison questions are within noise.
-- **Shorter-paragraph bias.** Part of the prompt-token and latency saving comes from LTR preferring shorter paragraphs, a corpus artifact (gold paragraphs are shorter than HotpotQA's distractors) that wouldn't necessarily hold on another corpus.
-- **Sentence labels.** The sentence reranker learns from HotpotQA's `supporting_facts`, annotations that don't exist in most real corpora. Without them, one would need weak labels (e.g. sentences containing the answer) or an LLM to label a sample.
-- **Hybrid RRF weights** inside the feature pipeline were tuned with BGE and reused for Contriever. LambdaMART can reweight the raw features, so the effect is small.
+Stage-specific caveats are in [docs/02](docs/02_candidates_and_reranking.md#retrieval-caveats) and [docs/03](docs/03_answer_extraction.md#answer-extraction-caveats).
+
+- **Closed corpus.** 19,260 paragraphs built from the pool's contexts; numbers don't transfer directly to full Wikipedia.
+- **Test-set decisions.** Two Cycle 2 choices were made after seeing test numbers: the final retriever variant (chosen for BGE's contamination, not its 0.004 gap) and top 5 over top 8 sentences (0.503 vs 0.487, not significant). All Cycle 3–4 design choices were made on dev.
+- **Sample size.** 300 questions give ±2.8 EM points of standard error (47 comparison questions, so one comparison question ≈ 2 points); differences among the top systems need the sign tests.
+- **Latency resolution.** Per-call latency varied by about 25% between sessions and drifts by up to about 20% within one. The final table uses the clean single-session benchmark (50 questions); treat latency gaps under about 1.5× as noise. Latencies in the per-cycle documents come from the main runs.
+- **Prompts were developed with Llama.** The Qwen 14B runs reuse the same prompts; a model-specific prompt could change its numbers.
 
 ---
 
 ## 8. Next steps
 
-1. **Cycle 3, single agent.** The bar to beat is EM 0.483–0.503 at 1 LLM call and 1.7–3.9 s p50 (paragraphs or selected sentences). Sentence selection frees budget for extra agent steps, and its remaining lever is recall: when all supporting sentences are kept, EM is already 0.576. Since retrieval failures are down to 5%, the agent must mainly **reason better**: decompose the question, check the answer type ("which aired first" wants a title, not a date), verify the answer against the evidence, and write a follow-up query only when evidence is missing. The same LTR ranker serves as its search tool.
-2. **Cycle 4, multi-agent**, then the final comparison across quality, evidence, unsupported answers, calls, tokens and cost, latency and complexity.
+1. **Sentence-selector recall.** When all supporting sentences are kept, EM is 0.576; the selector keeps them for 75% of questions. Higher recall would lift every system built on it.
+2. **A better hop 1.** The chain investigator wins 7 points when its bridge entity is right; verifying hop 1 (and retrying with the second-best entity) attacks its main failure.
+3. **A larger evaluation** (e.g. 1,000 questions) to settle the differences among the top systems, in particular team vs Qwen 14B alone.
 
 ---
 
@@ -361,6 +262,8 @@ Contriever itself is never fine-tuned. The GBM learns *when* to trust its scores
 **Environment**
 - Python 3.14 virtual environment in `.venv`.
 - Ollama running `llama3.1` locally (for the RAG cycles).
+- LangGraph (`pip install langgraph`, tested with 1.2.12) for the Cycle 3–4 agents.
+- For the Cycle 4 judge and the Qwen control: `ollama pull qwen2.5:14b`. On a 16–18 GB machine it can't share GPU memory with Llama; the team runner unloads Llama before judging.
 - In VS Code, choose the Jupyter kernel **"hotpotQA (.venv, Python 3.14)"**.
 - `.env` holds API keys, is git-ignored and must never be committed.
 
@@ -374,16 +277,37 @@ python -m src.ltr                                            # Cycle 2 LambdaMAR
 python -m src.rag rag --n 300 --retriever ltr_hybrid_contriever_msmarco   # Cycle 2 RAG (also: ltr_classical, oracle; ~20 min each)
 python -m src.sentences                                      # Cycle 2c sentence reranker: train + offline evidence recall (~4 min)
 python -m src.rag rag --n 300 --retriever ltr_hybrid_contriever_msmarco --sentences ltr5   # Cycle 2c RAG (also: ltr8, ltr5_min1; oracle sentences: --retriever oracle --sentences oracle)
+python -m src.agent checked --split test                     # Cycle 3 checked agent (also: decomposed, self_consistency; --model qwen2.5:14b; --split dev for design runs)
+python -m src.team --judge pairwise --judge-model qwen2.5:14b --split test   # Cycle 4 team (also: --judge pointwise; no --judge-model = 8B judge)
+python -m src.latency_bench --n 50                           # clean latency benchmark, all systems live in one session (~45 min; nothing else on Ollama)
 ```
 
 Notes:
 - LightGBM and PyTorch clash on macOS (their OpenMP runtimes deadlock or segfault). Training uses `n_jobs=1`. To load a saved model, `load_ltr_retriever` sets `OMP_NUM_THREADS=1` and must run before PyTorch is imported; retrieval latency is unaffected.
 - For offline runs with cached models, set `HF_HUB_OFFLINE=1`.
 
+### Citation
+
+The dataset ([project page](https://hotpotqa.github.io), [paper](https://aclanthology.org/D18-1259/)):
+
+> Zhilin Yang, Peng Qi, Saizheng Zhang, Yoshua Bengio, William W. Cohen, Ruslan Salakhutdinov and Christopher D. Manning. 2018. *HotpotQA: A Dataset for Diverse, Explainable Multi-hop Question Answering.* In Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing (EMNLP), pages 2369–2380.
+
+```bibtex
+@inproceedings{yang2018hotpotqa,
+  title     = {{HotpotQA}: A Dataset for Diverse, Explainable Multi-hop Question Answering},
+  author    = {Yang, Zhilin and Qi, Peng and Zhang, Saizheng and Bengio, Yoshua and Cohen, William W. and Salakhutdinov, Ruslan and Manning, Christopher D.},
+  booktitle = {Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing},
+  pages     = {2369--2380},
+  year      = {2018},
+  url       = {https://aclanthology.org/D18-1259/}
+}
+```
+
 ### Project layout
 
 | Path | Contents |
 |---|---|
+| `docs/` | Topic documents: EDA, candidates and reranking, answer extraction |
 | `src/data.py` | Dataset loading, fixed pool, corpus, hop labels |
 | `src/classical.py` | BM25, TF-IDF |
 | `src/retrievers.py` | Dense retrievers (BGE, Contriever, Contriever-MSMARCO) |
@@ -391,6 +315,10 @@ Notes:
 | `src/fusion.py` | RRF, structured ranker (routing, slots, links) |
 | `src/ltr.py` | LambdaMART: candidates, features, training, retriever |
 | `src/sentences.py` | Sentence reranker: features, training, selection policies, offline evaluation |
+| `src/agent.py` | Cycle 3 agents as LangGraph graphs (checked, decomposed) and the self-consistency control; also an earlier multi-judge prototype, superseded by `src/team.py` |
+| `src/team.py` | Cycle 4 investigation team: two investigators, consensus, judge (pairwise or pointwise, optional stronger judge model) |
+| `src/judge_eval.py` | Offline comparison of judge prompt variants on the dev disagreements |
+| `src/latency_bench.py` | Clean latency benchmark: every system live (LLM cache off) on the same questions in one session |
 | `src/rag.py`, `src/llm.py`, `src/evaluate.py` | RAG pipeline, LLM client (Ollama/Groq, cached), metrics |
 | `notebooks/00_eda`, `01_baseline_rag`, `02_classical_ranking`, `03_improved_rag` | Analyses with findings (`.py` sources, `.ipynb` executed) |
 | `results/` | Per-question JSONL for every run, summary CSVs, figures |
