@@ -44,7 +44,6 @@ Full comparison and recommendation: §5.
 | [docs/03_answer_extraction.md](docs/03_answer_extraction.md) | Cycles 1–4 answering: basic RAG, improved RAG, sentence RAG, LangGraph agents, the investigation team |
 | [docs/04_final_presentation.md](docs/04_final_presentation.md) | Final presentation: talk outline, mandatory comparison table, the five required cases, rejected technologies, answers to the assignment's "Questions you must be able to answer" |
 | [docs/presentation.html](docs/presentation.html) | The same content as a slide deck: open in a browser, arrow keys to navigate, `P` to print to PDF |
-
 ---
 
 ## 1. Business logic: why retrieval is the core of RAG
