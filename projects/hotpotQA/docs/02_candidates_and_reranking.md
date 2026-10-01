@@ -1,6 +1,6 @@
 # Candidate selection and reranking (Cycles 1, 2 and 2c)
 
-[← Overview](../README.md) · [EDA](01_eda.md) · **Candidates and reranking** · [Answer extraction](03_answer_extraction.md)
+[← Overview](../README.md) · [EDA](01_eda.md) · **Candidates and reranking** · [Answer extraction](03_answer_extraction.md) · [Final presentation](04_final_presentation.md)
 
 **Goal:** get **both** gold paragraphs (and then the right sentences) into the few slots the LLM reads. Retrieval-only numbers below use the 500 test questions, with no LLM involved; end-to-end answer quality is in [Answer extraction](03_answer_extraction.md). Sources: `notebooks/01_baseline_rag`, `02_classical_ranking`, `03_improved_rag`; code in `src/retrievers.py`, `src/classical.py`, `src/entities.py`, `src/fusion.py`, `src/ltr.py`, `src/sentences.py`.
 

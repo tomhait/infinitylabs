@@ -42,6 +42,8 @@ Full comparison and recommendation: §5.
 | [docs/01_eda.md](docs/01_eda.md) | Cycle 0: dataset numbers, questions and answers, paragraphs, supporting facts, why hop 2 is hard, design decisions |
 | [docs/02_candidates_and_reranking.md](docs/02_candidates_and_reranking.md) | Cycles 1, 2, 2c retrieval: single search, candidate generation, LambdaMART paragraph reranker, sentence reranker |
 | [docs/03_answer_extraction.md](docs/03_answer_extraction.md) | Cycles 1–4 answering: basic RAG, improved RAG, sentence RAG, LangGraph agents, the investigation team |
+| [docs/04_final_presentation.md](docs/04_final_presentation.md) | Final presentation: talk outline, mandatory comparison table, the five required cases, rejected technologies, answers to the assignment's "Questions you must be able to answer" |
+| [docs/presentation.html](docs/presentation.html) | The same content as a slide deck: open in a browser, arrow keys to navigate, `P` to print to PDF |
 
 ---
 
@@ -336,7 +338,7 @@ The dataset ([project page](https://hotpotqa.github.io), [paper](https://aclanth
 
 | Path | Contents |
 |---|---|
-| `docs/` | Topic documents: EDA, candidates and reranking, answer extraction |
+| `docs/` | Topic documents (EDA, candidates and reranking, answer extraction, final presentation), the HTML slide deck, and diagrams in `docs/figures/` |
 | `src/data.py` | Dataset loading, fixed pool, corpus, hop labels |
 | `src/classical.py` | BM25, TF-IDF |
 | `src/retrievers.py` | Dense retrievers (BGE, Contriever, Contriever-MSMARCO) |

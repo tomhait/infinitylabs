@@ -1,6 +1,6 @@
 # Answer extraction methods (Cycles 1–4)
 
-[← Overview](../README.md) · [EDA](01_eda.md) · [Candidates and reranking](02_candidates_and_reranking.md) · **Answer extraction**
+[← Overview](../README.md) · [EDA](01_eda.md) · [Candidates and reranking](02_candidates_and_reranking.md) · **Answer extraction** · [Final presentation](04_final_presentation.md)
 
 **Goal:** turn the retrieved evidence into a short, correct, grounded answer. Every run uses Llama 3.1 8B (Ollama, temperature 0) on the first 300 test questions unless stated; design decisions for Cycles 3–4 were made on 300 tuning-split questions ("dev"). Code: `src/rag.py`, `src/agent.py`, `src/team.py`.
 

@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HotpotQA: From RAG to Multi-Agent Investigation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #ffffff; --ink: #1d2433; --muted: #5d6677; --accent: #2f6fdb; --accent2: #f08c00;
+    --good: #2e8b57; --bad: #c0392b; --soft: #f3f6fb; --line: #dde3ec;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #e9edf3; font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color: var(--ink); }
+  .deck { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+  .slide {
+    position: absolute; inset: 0; margin: auto; width: min(100vw, 177.78vh); height: min(100vh, 56.25vw);
+    background: var(--bg); padding: 3.2% 4.5% 4%; display: none; flex-direction: column; overflow: hidden;
+    font-size: min(1.55vw, 2.75vh);
+  }
+  .slide.active { display: flex; }
+  h1 { font-size: 2.3em; margin: 0 0 .35em; line-height: 1.15; }
+  h2 { font-size: 1.75em; margin: 0 0 .5em; color: var(--accent); }
+  h3 { font-size: 1.1em; margin: .3em 0 .3em; }
+  p, li { line-height: 1.38; }
+  ul { margin: .2em 0 .4em; padding-left: 1.2em; }
+  li { margin: .18em 0; }
+  .section { font-size: .72em; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: .3em; }
+  .cols { display: flex; gap: 3%; flex: 1; min-height: 0; }
+  .cols > div { flex: 1; min-width: 0; }
+  .cols .narrow { flex: .75; }
+  .cols .wide { flex: 1.35; }
+  .fig { display: flex; align-items: center; justify-content: center; min-height: 0; }
+  .fig img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  table { border-collapse: collapse; width: 100%; font-size: .82em; }
+  th, td { border-bottom: 1px solid var(--line); padding: .32em .45em; text-align: left; vertical-align: top; }
+  th { background: var(--soft); font-weight: 600; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  .hl { background: #fff6e0; }
+  .big { font-size: 1.25em; }
+  .kpi { display: flex; gap: 2%; margin: .6em 0; }
+  .kpi div { flex: 1; background: var(--soft); border-radius: .5em; padding: .55em .7em; }
+  .kpi b { display: block; font-size: 1.55em; color: var(--accent); }
+  .case { border-left: .35em solid var(--accent2); background: #fffaf2; padding: .5em .9em; margin: .3em 0 .6em; border-radius: 0 .4em .4em 0; }
+  .case.ok { border-color: var(--good); background: #f2faf5; }
+  .case.ko { border-color: var(--bad); background: #fdf3f2; }
+  .q { font-style: italic; }
+  .ok-t { color: var(--good); font-weight: 600; }
+  .ko-t { color: var(--bad); font-weight: 600; }
+  .muted { color: var(--muted); }
+  .small { font-size: .78em; }
+  .tag { display: inline-block; font-size: .7em; padding: .1em .55em; border-radius: 1em; background: var(--soft); color: var(--muted); margin-left: .4em; vertical-align: middle; }
+  .footer { position: absolute; left: 4.5%; right: 4.5%; bottom: 1.6%; display: flex; justify-content: space-between; font-size: .62em; color: var(--muted); }
+  .progress { position: fixed; left: 0; top: 0; height: 4px; background: var(--accent); transition: width .2s; z-index: 10; }
+  .title-slide { justify-content: center; }
+  .title-slide h1 { font-size: 2.9em; }
+  .answer { background: var(--soft); border-radius: .6em; padding: .8em 1.1em; margin-top: .8em; }
+  code { background: var(--soft); padding: .05em .3em; border-radius: .25em; font-size: .92em; }
+  .help { position: fixed; right: 12px; top: 10px; font-size: 12px; color: #7a8394; z-index: 10; }
+  @media print {
+    @page { size: 13.333in 7.5in; margin: 0; }
+    html, body { background: #fff; }
+    .deck { width: auto; height: auto; overflow: visible; }
+    .slide { display: flex !important; position: relative; width: 13.333in; height: 7.5in; page-break-after: always; font-size: 15px; }
+    .progress, .help { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="help">← → navigate · P print</div>
+<div class="deck" id="deck">
+
+<!-- 1 -->
+<section class="slide title-slide">
+  <div class="section">Student assignment 1 · IR, RAG, agentic RAG</div>
+  <h1>HotpotQA: From RAG to<br>Multi-Agent Investigation</h1>
+  <p class="big muted">An AI investigation assistant that answers questions from evidence spread over two documents, with a local Llama 3.1 8B on a laptop and no LLM training.</p>
+  <div class="answer">
+    <b>Research question:</b> when does iterative or multi-agent investigation provide enough benefit over conventional RAG to justify the extra cost and complexity?<br>
+    <b>Short answer:</b> rarely here. Better retrieval and a cheap rule-checked agent pay off; iteration and a multi-agent team add little over a bigger model in the same single agent.
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <div class="section">1 · Problem</div>
+  <h2>Multi-hop questions: the second document is never named</h2>
+  <div class="cols">
+    <div>
+      <div class="case">
+        <span class="q">"In what year was the university where Sergei Aleksandrovich Tokarev was a professor founded?"</span>
+        <ul>
+          <li><b>Hop 1</b> [Sergei Tokarev]: professor at <b>Moscow State University</b></li>
+          <li><b>Hop 2</b> [Moscow State University]: "founded on January 25, <b>1755</b>"</li>
+          <li>The question never mentions Moscow; the distractors are 7 other "Sergei Aleksandrovich"s</li>
+        </ul>
+      </div>
+      <h3>Why it's harder than ordinary QA</h3>
+      <ul>
+        <li>Evidence is split over two documents; neither answers alone</li>
+        <li>The second one is described only indirectly</li>
+        <li>Errors compound: miss either paragraph, or connect the wrong bridge entity</li>
+        <li>Distractors are adversarial: chosen to look like the question</li>
+      </ul>
+    </div>
+    <div class="narrow">
+      <h3>Business use</h3>
+      <p>Investigations, due diligence, support, research: answers must be <b>right</b>, <b>traceable to evidence</b>, <b>cheap</b> and <b>fast</b>.</p>
+      <h3>KPIs</h3>
+      <table>
+        <tr><th>KPI</th><th>Metric</th></tr>
+        <tr><td>Answer quality</td><td>EM, F1</td></tr>
+        <tr><td>Evidence quality</td><td>Both-gold recall@K</td></tr>
+        <tr><td>Trust</td><td>Unsupported-answer rate</td></tr>
+        <tr><td>Cost</td><td>Calls, tokens, $ / 1k</td></tr>
+        <tr><td>Responsiveness</td><td>Latency p50 / p95</td></tr>
+        <tr><td>Complexity</td><td>Components, debuggability</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <div class="section">2 · Dataset</div>
+  <h2>HotpotQA (Yang et al., EMNLP 2018), distractor setting</h2>
+  <div class="cols">
+    <div class="narrow">
+      <div class="kpi">
+        <div><b>2,000</b>questions (seed 42) of 7,405 validation</div>
+        <div><b>19,260</b>unique paragraphs: our closed corpus</div>
+      </div>
+      <ul>
+        <li>10 paragraphs per question: 2 gold + 8 TF-IDF distractors; supporting sentences annotated</li>
+        <li>80% bridge, 20% comparison; answers short (83% ≤ 3 words)</li>
+        <li><b>Extractive:</b> the answer is word-for-word in a gold paragraph for &gt;99% of non-yes/no questions → retrieval is the bottleneck</li>
+        <li><b>Hop 2 is hidden:</b> named in the question only <b>14%</b> of the time (hop 1: 61%); a distractor overlaps the question more in <b>53%</b></li>
+        <li><b>But linked:</b> the hop-2 title appears in the hop-1 text <b>66%</b> of the time → follow links</li>
+      </ul>
+      <p class="small muted">Splits of the pool: test 500 (LLM runs: first 300) · train 1,000 (rankers) · tuning 500 (first 300 = "dev" for agent design).</p>
+    </div>
+    <div class="fig"><img src="../results/figures/eda_lexical_overlap.png" alt="Lexical overlap"></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <div class="section">4 · Evaluation</div>
+  <h2>What we measure, at each stage</h2>
+  <div class="cols">
+    <div>
+      <table>
+        <tr><th>Stage</th><th>Primary metric</th><th>Why</th></tr>
+        <tr><td>Candidate generation</td><td>Candidate recall</td><td>A gold paragraph missing here is lost for good</td></tr>
+        <tr><td>Reranking</td><td><b>Both-gold recall@5</b></td><td>The LLM reads 5; one missing hop breaks the answer</td></tr>
+        <tr><td>Sentence selection</td><td>All support kept</td><td>A dropped supporting sentence costs ~21 EM points</td></tr>
+        <tr><td>Answer</td><td><b>EM</b> (official), F1</td><td>F1 forgives wording ("Dara Torres" vs "Dara Grace Torres")</td></tr>
+        <tr><td>System</td><td>EM at acceptable cost and p95</td><td>The business trade-off</td></tr>
+      </table>
+      <p><b>Both@K</b> = share of questions whose <i>two</i> gold paragraphs are both in the top K &nbsp;·&nbsp; <b>unsupported</b> = the answer isn't found in the context it was given.</p>
+    </div>
+    <div class="narrow">
+      <h3>Protocol</h3>
+      <ul>
+        <li>Retrieval: 500 test questions, no LLM</li>
+        <li>End to end: 300 test questions; agents designed on 300 separate <b>dev</b> questions</li>
+        <li>Errors split into <b>retrieval</b> (a gold paragraph missing) vs <b>reasoning</b> failures</li>
+        <li>Per-question <b>sign tests</b>; 300 questions ≈ ±2.8 EM</li>
+        <li>Cost at hosted reference prices; latency re-timed in <b>one clean session</b> (cache off)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <div class="section">3 · Baseline (Cycle 1)</div>
+  <h2>Basic RAG: one dense search, top 5 paragraphs, one LLM call</h2>
+  <div class="fig" style="flex:0 0 18%"><img src="figures/cycle1_basic_rag.png" alt="Cycle 1 basic RAG"></div>
+  <div class="cols">
+    <div>
+      <table>
+        <tr><th>Setup (300 test)</th><th class="num">EM</th><th class="num">F1</th><th class="num">Both gold</th><th class="num">Unsupported</th></tr>
+        <tr><td>Closed book (100)</td><td class="num">0.24</td><td class="num">0.33</td><td class="num">–</td><td class="num">–</td></tr>
+        <tr class="hl"><td>BGE-small top 5 + Llama 8B</td><td class="num">0.383</td><td class="num">0.527</td><td class="num">68%</td><td class="num">18.7%</td></tr>
+        <tr><td>Contriever-MSMARCO top 5 (clean)</td><td class="num">0.347</td><td class="num">0.462</td><td class="num">57%</td><td class="num">10.7%</td></tr>
+      </table>
+    </div>
+    <div class="narrow">
+      <ul>
+        <li><b>Chunk</b> = paragraph + title (short, self-contained)</li>
+        <li><b>K = 5</b>: the knee (both-gold 46% at K=2, 71% at 5, +9 at 10 for 2× tokens)</li>
+        <li>RAG vs closed book: +13 EM on the same 100; closed book invents ("1880" for MSU)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <div class="section">5 · Failure analysis</div>
+  <h2>32% miss a gold paragraph, and it's hop 2</h2>
+  <div class="cols">
+    <div>
+      <ul>
+        <li>Comparison questions: both@5 = 99% (both entities named)</li>
+        <li>Bridge questions: both@5 = 64%; hop 1 found 92% (median rank 1), <b>hop 2 only 69%</b></li>
+        <li>Wrong answers: 24% retrieval failures, 20% reasoning failures</li>
+        <li>Half the unsupported answers are abstentions, almost all when a gold paragraph really was missing</li>
+      </ul>
+      <div class="case ko">
+        <b>Required case: a baseline failure</b> <span class="tag">fixed in Cycle 2</span><br>
+        <span class="q">"The Distribution of Industry act was passed by a man who was prime minister when?"</span> Gold: <b>1945 to 1951</b><br>
+        Cycle 1 retrieved the act and a <i>distractor</i> prime minister (Gladstone), not <b>Clement Attlee</b> → <span class="ko-t">"1868–74"</span>, a confident wrong answer.
+      </div>
+      <p><b>Hypothesis:</b> following links from the hop-1 paragraphs, plus a learned reranker, will recover hop 2.</p>
+    </div>
+    <div class="fig narrow"><img src="../results/figures/cycle1_hop_ranks.png" alt="Hop ranks"></div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <div class="section">6 · Improved pipeline (Cycle 2)</div>
+  <h2>Candidates from many signals, then a LambdaMART reranker</h2>
+  <div class="cols">
+    <div class="fig narrow"><img src="figures/cycle2_retrieval_pipeline.png" alt="Retrieval pipeline"></div>
+    <div class="wide">
+      <table>
+        <tr><th>Retriever (500 test)</th><th class="num">Both@5</th><th class="num">Hop 2 @5</th><th class="num">p50</th></tr>
+        <tr><td>BM25</td><td class="num">0.544</td><td class="num">0.56</td><td class="num">ms</td></tr>
+        <tr><td>Contriever-MSMARCO</td><td class="num">0.602</td><td class="num">0.56</td><td class="num">33 ms</td></tr>
+        <tr><td>BGE-small (trained on HotpotQA!)</td><td class="num">0.706</td><td class="num">0.69</td><td class="num">17 ms</td></tr>
+        <tr><td>Weighted RRF of classical lists</td><td class="num">0.576</td><td class="num">–</td><td class="num">10 ms</td></tr>
+        <tr><td>Classical RRF + routing, slots, links</td><td class="num">0.806</td><td class="num">0.81</td><td class="num">10 ms</td></tr>
+        <tr><td>LambdaMART, classical features</td><td class="num">0.898</td><td class="num">0.91</td><td class="num">16 ms</td></tr>
+        <tr class="hl"><td><b>LambdaMART + Contriever-MSMARCO</b></td><td class="num"><b>0.924</b></td><td class="num"><b>0.93</b></td><td class="num">59 ms</td></tr>
+      </table>
+      <ul>
+        <li><b>Links</b> add 14–23 points to any first stage: the multi-hop ingredient</li>
+        <li><b>Learned beats hand-tuned:</b> 0.806 → 0.898 on the same signals (48 won / 2 lost)</li>
+        <li>Candidate pool (~93) holds both gold for 99.2%; 33 features; trains in ~1 s</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="slide">
+  <div class="section">6 · Improved pipeline (Cycles 2, 2c)</div>
+  <h2>+10 EM from retrieval alone; sentences halve the cost</h2>
+  <div class="cols">
+    <div>
+      <table>
+        <tr><th>Run (300 test)</th><th class="num">EM</th><th class="num">Both gold</th><th class="num">Retr. / reas. failures</th><th class="num">Tokens</th></tr>
+        <tr><td>Cycle 1: BGE</td><td class="num">0.383</td><td class="num">68%</td><td class="num">24% / 20%</td><td class="num">716</td></tr>
+        <tr><td>Cycle 2: LTR, 5 paragraphs</td><td class="num">0.483</td><td class="num">91%</td><td class="num">5% / 29%</td><td class="num">647</td></tr>
+        <tr class="hl"><td>Cycle 2c: LTR, top 5 sentences</td><td class="num">0.503</td><td class="num">80%</td><td class="num">12% / 20%</td><td class="num">281</td></tr>
+        <tr><td>Oracle: gold paragraphs</td><td class="num">0.577</td><td class="num">100%</td><td class="num">0% / 22%</td><td class="num">307</td></tr>
+      </table>
+      <ul>
+        <li>43 won / 13 lost vs Cycle 1 (p &lt; 0.001); unsupported 18.7% → 6.0%</li>
+        <li><b>The bottleneck moved to the LLM:</b> even with gold paragraphs it misses 42%</li>
+        <li>Sentences: same quality, 57% fewer tokens, half the latency; when all support is kept EM is 0.576</li>
+      </ul>
+    </div>
+    <div class="narrow">
+      <div class="case ok">
+        <b>The baseline failure, fixed</b><br>
+        The act's paragraph mentions Attlee → link following pulls in <b>[Clement Attlee]</b>, LambdaMART ranks it top 5 → <span class="ok-t">"1945 to 1951"</span>, correct in every later system.
+      </div>
+      <div class="fig"><img src="figures/cycle2c_sentence_reranker.png" alt="Sentence reranker"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 -->
+<section class="slide">
+  <div class="section">7 · Single agent (Cycle 3)</div>
+  <h2>Checked agent: code fixes the flow, the LLM does one task per node</h2>
+  <div class="cols">
+    <div class="fig narrow"><img src="figures/cycle3_checked_agent.png" alt="Checked agent"></div>
+    <div class="wide">
+      <table>
+        <tr><th>Step (dev)</th><th class="num">EM</th><th class="num">Won / lost</th></tr>
+        <tr><td>Cycle 2c draft</td><td class="num">0.527</td><td class="num">–</td></tr>
+        <tr><td>+ format trim (no LLM)</td><td class="num">0.553</td><td class="num">8 / 0</td></tr>
+        <tr class="hl"><td>+ checks and repair</td><td class="num">0.583</td><td class="num">10 / 1</td></tr>
+      </table>
+      <p><b>Test:</b> 0.537 vs 0.503 (13 won / 3 lost, p = 0.02), 1.1 calls, same median latency, unsupported 6.0% → 3.0%.</p>
+      <div class="case ok">
+        <b>Required case: an agent helped</b><br>
+        <span class="q">"The 249th episode of The Simpsons was aired on what date?"</span><br>
+        Draft: <span class="ko-t">"Treehouse of Horror XI"</span> (a name, not a date) → check <code>expects_date</code> fails → repair over whole paragraphs, told why → <span class="ok-t">"November 1, 2000"</span>.
+        <br><span class="small muted">Also: "Who created the NBC sitcom … Johnny Pemberton?" draft abstained (the selector dropped the sentence) → repair → Justin Spitzer ✓</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <div class="section">7 · Single agent, iterative (Cycle 3)</div>
+  <h2>Decomposed agent: the next query depends on what it observed</h2>
+  <div class="cols">
+    <div class="fig narrow"><img src="figures/cycle3_decomposed_agent.png" alt="Decomposed agent"></div>
+    <div class="wide">
+      <ul>
+        <li>3.2 retrievals, 4.2 LLM calls; best evidence of all systems (both gold 94%)</li>
+        <li>Retrieval failures halve (28 → 14, dev), but a wrong hop-1 answer misleads the rest (reasoning 44 → 61)</li>
+        <li><b>Test 0.533 vs 0.537</b>: no gain at 4× calls and latency</li>
+      </ul>
+      <table>
+        <tr><th>Bridge (dev)</th><th class="num">n</th><th class="num">Decomposed</th><th class="num">Checked</th></tr>
+        <tr><td>Hop-1 answer right</td><td class="num">82</td><td class="num">0.634</td><td class="num">0.561</td></tr>
+        <tr><td>Hop-1 answer wrong</td><td class="num">96</td><td class="num">0.438</td><td class="num">0.417</td></tr>
+      </table>
+      <div class="case">
+        <b>Required case: the agent was unnecessary</b><br>
+        Tokarev → Cycle 2c answers <b>1755</b> in 1 call. The agent asks "What university…?" → <i>Moscow State University</i> → "In what year was MSU founded?" → <b>1755</b>: same answer, 4 calls. Happens on <b>66 of 151</b> questions 2c already gets right: no "enough evidence" exit.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="slide">
+  <div class="section">8 · Multi-agent (Cycle 4)</div>
+  <h2>Two investigators that fail differently, a judge on disagreements</h2>
+  <div class="cols">
+    <div class="fig narrow"><img src="figures/cycle4_team.png" alt="Team"></div>
+    <div class="wide">
+      <p><b>Hypothesis (dev):</b> the agents agree on 70% (EM 0.72) and disagree on 30%; always picking the right one would give 0.673. A verifier that reads both answers' evidence should capture part of that.</p>
+      <table>
+        <tr><th>System (dev)</th><th class="num">EM</th><th class="num">vs checked</th></tr>
+        <tr><td>Checked agent, Llama 8B</td><td class="num">0.583</td><td class="num">–</td></tr>
+        <tr><td>Self-consistency, 5 samples</td><td class="num">0.587</td><td class="num">4 / 3</td></tr>
+        <tr><td>Team, 8B judge</td><td class="num">0.600</td><td class="num">6 / 1</td></tr>
+        <tr class="hl"><td>Team, Qwen 14B judge</td><td class="num">0.627</td><td class="num">16 / 3</td></tr>
+        <tr><td>Checked agent, Qwen 14B alone</td><td class="num">0.583</td><td class="num">25 / 25</td></tr>
+      </table>
+      <ul>
+        <li>8B judge: position bias (first answer in both orders, 35 of 91) and leniency</li>
+        <li><b>Test:</b> team 0.580, beats checked (16 / 3) and self-consistency (24 / 8), but <b>ties Qwen 14B alone</b> (0.573; 26 / 24)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="slide">
+  <div class="section">8 · Multi-agent (Cycle 4)</div>
+  <h2>Where the team added little or failed</h2>
+  <div class="cols">
+    <div>
+      <div class="case ko">
+        <b>Required case: multi-agent failed</b><br>
+        <span class="q">"Repertoire of Plácido Domingo appeared in an opera written by whom which was based on a play by William Shakespeare?"</span> Gold: <b>Giuseppe Verdi</b>
+        <ul>
+          <li>Direct investigator: <span class="ok-t">Giuseppe Verdi</span></li>
+          <li>Chain investigator: hop 1 → <i>The Enchanted Island</i> (wrong bridge) → <span class="ko-t">Jeremy Sams</span></li>
+          <li>Qwen 14B judge picks the chain answer in <b>both</b> orders → team <span class="ko-t">wrong</span></li>
+          <li>7 calls, 27 s; Qwen 14B alone: <span class="ok-t">Verdi</span> in 1 call</li>
+        </ul>
+      </div>
+      <div class="case">
+        <b>Undecided judge:</b> the two orders disagree on 24 of 92 disagreements → fall back to the direct answer. <span class="q">"Douglas D. Scott … a battle that occurred in what year?"</span>: chain had <b>1876</b> (Little Bighorn); team answered "mid-1980s".
+      </div>
+    </div>
+    <div class="narrow">
+      <h3>In aggregate</h3>
+      <div class="kpi"><div><b>26 / 24</b>team vs Qwen 14B alone (test), p = 0.89</div></div>
+      <div class="kpi"><div><b>6 vs 1.2</b>LLM calls per question</div></div>
+      <div class="kpi"><div><b>9.5 s vs 2.7 s</b>median latency (p95 32.6 s vs 8.0 s)</div></div>
+      <p>The gain came from <b>model capacity</b>, not from the multi-agent structure.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="slide">
+  <div class="section">9 · Comparison</div>
+  <h2>Mandatory final comparison (300 test questions)</h2>
+  <table>
+    <tr><th>Metric</th><th>Baseline<br><span class="muted small">Cycle 1 BGE</span></th><th>Improved<br><span class="muted small">Cycle 2c</span></th><th>Single agent<br><span class="muted small">checked</span></th><th>Single agent<br><span class="muted small">iterative</span></th><th>Multi-agent<br><span class="muted small">team, 14B judge</span></th></tr>
+    <tr><td>Main quality: EM / F1</td><td>0.383 / 0.527</td><td>0.503 / 0.654</td><td class="hl"><b>0.537 / 0.676</b></td><td>0.533 / 0.686</td><td><b>0.580 / 0.719</b></td></tr>
+    <tr><td>Evidence: both gold in context</td><td>68%</td><td>80%</td><td>84%</td><td><b>94%</b></td><td>87%</td></tr>
+    <tr><td>Unsupported answers</td><td>18.7%</td><td>6.0%</td><td>3.0%</td><td><b>2.3%</b></td><td>3.3%</td></tr>
+    <tr><td>Avg retrieval calls</td><td>1</td><td>1</td><td>1</td><td>3.2</td><td>4.2</td></tr>
+    <tr><td>Avg LLM calls</td><td>1</td><td>1</td><td>1.11</td><td>4.24</td><td>5.96</td></tr>
+    <tr><td>Prompt tokens / $ per 1k</td><td>716 / $0.036</td><td><b>281 / $0.014</b></td><td>357 / $0.018</td><td>1,438 / $0.076</td><td>2,213 / $0.254</td></tr>
+    <tr><td>Latency p50 / p95</td><td>3.0 / 4.4 s</td><td><b>1.5 / 2.0 s</b></td><td>1.6 / 4.1 s</td><td>6.6 / 10.0 s</td><td>9.5 / 32.6 s</td></tr>
+    <tr><td>Complexity / debuggability</td><td>1 component</td><td>2 trained rankers; each stage measured</td><td>+ 2 rule steps; ≤ 2 calls; all logged</td><td>plan + ≤ 3 hops; errors propagate</td><td>2 agents + judge, 2 models, memory swaps</td></tr>
+  </table>
+  <p class="small muted">Sign tests: improved vs baseline 43 / 13 (paragraphs) · checked vs improved 13 / 3 (p = 0.02) · team vs checked 16 / 3 (p = 0.004) · team vs Qwen 14B alone 26 / 24. Latency: clean single-session benchmark, 50 questions; resolution ~20%.</p>
+</section>
+
+<!-- 14 -->
+<section class="slide">
+  <div class="section">9 · Comparison</div>
+  <h2>Accuracy vs latency: where the extra cost goes</h2>
+  <div class="cols">
+    <div class="fig wide" id="scatter"></div>
+    <div class="narrow">
+      <ul>
+        <li><b>Retrieval</b> moved EM the most (0.383 → 0.503) while <i>cutting</i> latency</li>
+        <li>The <b>checked agent</b> adds +3.4 EM at the same median latency</li>
+        <li><b>Iteration</b> (decomposed) and <b>self-consistency</b> add calls, not accuracy</li>
+        <li><b>Qwen 14B alone</b> reaches the team's accuracy at a third of its latency</li>
+        <li>Dashed line: Llama with the gold paragraphs (0.577)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 15 -->
+<section class="slide">
+  <div class="section">9 · Comparison</div>
+  <h2>A remaining failure: perfect evidence, wrong reasoning</h2>
+  <div class="cols">
+    <div>
+      <div class="case ko">
+        <b>Required case: a remaining failure</b><br>
+        <span class="q">"Which film director is younger, Robert Z. Leonard or Sinclair Hill?"</span> Gold: <b>Sinclair Hill</b><br>
+        Evidence retrieved: <i>Robert Zigler Leonard (October 7, 1889 – …)</i>; <i>Sinclair Hill (1894–1945)</i><br>
+        Every system answers <span class="ko-t">Robert Z. Leonard</span>: Cycle 2, both agents, Qwen 14B, the team, even the oracle. "Younger" = born later is a comparison the models get wrong.
+      </div>
+      <ul>
+        <li><b>34</b> test questions are wrong in every system</li>
+        <li>Besides reasoning errors, many are <b>wording mismatches</b> EM rejects: "Bobby Hurley" vs <i>Robert Matthew Hurley</i>, "729" vs <i>729 at the 2010 census</i></li>
+        <li>Some gold labels are debatable (an answer "House of Fraser" matched the evidence better than the gold)</li>
+      </ul>
+    </div>
+    <div class="narrow">
+      <h3>The five required cases</h3>
+      <table>
+        <tr><th>Case</th><th>Example</th></tr>
+        <tr><td>Baseline failure fixed</td><td>Distribution of Industry act (link following)</td></tr>
+        <tr><td>Remaining failure</td><td>Leonard vs Hill (date comparison)</td></tr>
+        <tr><td>Agent helped</td><td>Simpsons 249th episode (type check + repair)</td></tr>
+        <tr><td>Agent unnecessary</td><td>Tokarev (4 calls for a 1-call answer)</td></tr>
+        <tr><td>Multi-agent failed</td><td>Plácido Domingo (judge picked the wrong hop)</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 16 -->
+<section class="slide">
+  <div class="section">9 · What I would NOT use</div>
+  <h2>Deliberately rejected technologies</h2>
+  <table>
+    <tr><th>Rejected</th><th>Evidence</th><th>Why</th></tr>
+    <tr><td><b>Free-form ReAct agent</b></td><td>not built</td><td>An 8B model plans tool calls and judges "enough evidence" unreliably; a fixed LangGraph flow is bounded, measurable and debuggable</td></tr>
+    <tr><td><b>BGE as the main retriever</b></td><td>best single search, 0.706</td><td>Fine-tuned on the HotpotQA train split; its lead vanishes inside LambdaMART (0.920 vs 0.924 clean)</td></tr>
+    <tr><td><b>RRF as the final ranker</b></td><td>0.576 vs 0.898</td><td>Ranks only, no interactions; a learned reranker on the same signals wins 48 / 2</td></tr>
+    <tr><td><b>Self-consistency</b></td><td>0.527 vs 0.537, 4.6× calls</td><td>Samples from one model share its mistakes</td></tr>
+    <tr><td><b>An 8B judge</b></td><td>test 0.563</td><td>Position bias and leniency: a verifier must be stronger than the workers</td></tr>
+    <tr><td><b>Decomposition as the main agent</b></td><td>0.533 vs 0.537, 4× calls</td><td>A wrong hop 1 propagates; kept only as the second investigator</td></tr>
+    <tr><td><b>Full-Wikipedia index</b></td><td>–</td><td>Beyond a laptop budget; a closed corpus keeps the research question</td></tr>
+  </table>
+</section>
+
+<!-- 17 -->
+<section class="slide">
+  <div class="section">10 · What I would deploy and why</div>
+  <h2>The checked agent on Llama 3.1 8B, on the Cycle 2/2c retrieval</h2>
+  <div class="fig" style="flex:0 0 17%"><img src="figures/winning_pipeline.png" alt="Winning pipeline"></div>
+  <div class="kpi">
+    <div><b>0.537</b>EM (F1 0.676)</div>
+    <div><b>3%</b>unsupported answers</div>
+    <div><b>1.1</b>LLM calls</div>
+    <div><b>$0.018</b>per 1,000 questions</div>
+    <div><b>1.6 s</b>median (p95 4.1 s)</div>
+  </div>
+  <ul>
+    <li><b>Why:</b> plain-RAG operating profile (one call for 87% of questions), significantly better answers, half the unsupported answers, every decision logged</li>
+    <li><b>If accuracy matters more than cost:</b> Qwen 14B in the same agent (0.573, 2.7 s, 8× cost), not the team</li>
+    <li><b>The team</b> only when a strong verifier can be called on the 30% of disagreements but not on every question</li>
+    <li><b>Next:</b> sentence-selector recall (0.576 EM when all support is kept), a verified hop 1, a 1,000-question evaluation</li>
+  </ul>
+</section>
+
+<!-- Backup: questions -->
+<section class="slide title-slide">
+  <div class="section">Backup</div>
+  <h1>Questions you must be able to answer</h1>
+  <ol class="big">
+    <li>Why RAG? Why not a direct LLM?</li>
+    <li>Why this retriever and Top-K?</li>
+    <li>When does BM25 beat dense retrieval?</li>
+    <li>Why rerank?</li>
+    <li>Why did improved RAG still fail?</li>
+    <li>What exactly makes the system an agent?</li>
+    <li>Why multi-agent instead of one agent with multiple tools?</li>
+    <li>How do you stop loops and debug decisions?</li>
+    <li>When would you deploy normal RAG instead?</li>
+  </ol>
+</section>
+
+<section class="slide">
+  <div class="section">Backup · Q1–Q2</div>
+  <div class="cols">
+    <div>
+      <h2>Why RAG? Why not a direct LLM?</h2>
+      <ul>
+        <li>The model doesn't <i>know</i> the facts but can <i>read</i> them: closed book 0.24 → RAG 0.37 on the same 100 questions; final system 0.537</li>
+        <li>Closed book invents confidently ("1880" for Moscow State University; correct 1755)</li>
+        <li><b>Verifiable:</b> answers point to evidence; 97% of the checked agent's answers are found in what it read</li>
+        <li>Corpus can be updated or kept private without training (no LLM training allowed)</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Why this retriever and Top-K?</h2>
+      <ul>
+        <li><b>Chunk</b> = paragraph + title: short (gold median 62 words), one entity each</li>
+        <li><b>K = 5</b>: both-gold 46% → 71% from K = 2 to 5, only +9 at K = 10 for 2× tokens; distractors cost ~6 EM</li>
+        <li><b>LambdaMART + Contriever-MSMARCO:</b> best both@5 (0.924), hop 2 found 93%, no HotpotQA training in the dense model, 59 ms, trains in 1 s</li>
+        <li>Then <b>top 5 sentences</b>: same quality, 57% fewer tokens</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="section">Backup · Q3–Q4</div>
+  <div class="cols">
+    <div>
+      <h2>When does BM25 beat dense retrieval?</h2>
+      <ul>
+        <li><b>BM25</b>: exact term overlap × rarity (IDF), length-normalized; wins on <b>rare exact strings</b> (names, titles, numbers, codes, jargon), out of domain, with no training</li>
+        <li><b>Dense (bi-encoder)</b>: wins on paraphrase and indirect descriptions ("the university where X was a professor")</li>
+        <li>Here: BM25 0.544 beats <b>unsupervised</b> Contriever 0.470, loses to Contriever-MSMARCO 0.602 and BGE 0.706</li>
+        <li>Comparison questions name both entities → lexical/title signals do well</li>
+        <li>Best: <b>hybrid</b>; the reranker learns per question which to trust</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Why rerank?</h2>
+      <ul>
+        <li>Two jobs: <b>recall</b> (cheap, wide pool: both gold in 99.2% of ~93) vs <b>order</b> (the LLM reads 5)</li>
+        <li>A reranker affords rich features on a small pool: 33 features; RRF 0.806 → LambdaMART 0.898 (48 / 2); both@2 0.47 → 0.71</li>
+        <li><b>Bi-encoder</b> (separate encodings, fast, for search) vs <b>cross-encoder</b> (reads the pair jointly, accurate, one pass per pair, only for short lists)</li>
+        <li>Our LambdaMART can use cross-paragraph link features a pairwise cross-encoder can't see; 0.6 ms inference</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="section">Backup · Q5–Q6</div>
+  <div class="cols">
+    <div>
+      <h2>Why did improved RAG still fail?</h2>
+      <ul>
+        <li><b>Bottleneck moved to the LLM:</b> retrieval failures 24% → 5%, reasoning 20% → 29%</li>
+        <li>Even with gold paragraphs Llama 8B misses 42% (oracle 0.577)</li>
+        <li>Distractors: 0.50 with 5 paragraphs vs 0.56 with the 2 gold</li>
+        <li>Sentence selection drops evidence for 25% (EM 0.289 there vs 0.576)</li>
+        <li>Wrong hop / wrong type, comparisons and dates, format mismatches → motivated the Cycle 3 checks</li>
+      </ul>
+    </div>
+    <div>
+      <h2>What exactly makes it an agent?</h2>
+      <ul>
+        <li><b>The next retrieval depends on evidence observed at runtime:</b> the decomposed agent's hop-2 query ("In what year was Moscow State University founded?") exists only after hop 1 is answered; 3.2 retrievals per question</li>
+        <li>The checked agent's <b>route</b> depends on runtime checks of its own draft: repair with different evidence and feedback (13%)</li>
+        <li><b>Not</b> free-form ReAct: hops are planned up front and sufficiency is judged by code, deliberately (an 8B model judges its own evidence poorly); the cost: no early exit (Tokarev case)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="section">Backup · Q7–Q8</div>
+  <div class="cols">
+    <div>
+      <h2>Why multi-agent, not one agent with more tools?</h2>
+      <ul>
+        <li><b>Independence:</b> one agent anchors on its own steps; two strategies fail on different questions (agree 70%, EM 0.72; disagree 30%; oracle pick 0.673)</li>
+        <li><b>Separated roles:</b> investigators answer, the judge only verifies, with a clean context</li>
+        <li><b>Different models per role:</b> the 14B judge only on the 30% of disagreements</li>
+        <li><b>Honest result:</b> beats every Llama-only system (16 / 3) but ties <b>one agent with the bigger model</b> (26 / 24)</li>
+      </ul>
+    </div>
+    <div>
+      <h2>How do you stop loops and debug decisions?</h2>
+      <ul>
+        <li><b>Bounded by construction</b> (LangGraph): ≤ 3 hops, ≤ 1 repair, exactly 2 judge calls; hard caps 2 / 6 / 10 LLM calls (checked / decomposed / team)</li>
+        <li>Stopping and routing decided by <b>code</b> (checks, consensus, order-swap rule), not the LLM</li>
+        <li><b>Every decision logged</b> per question: draft, failed checks, trim rules, repair output, sub-questions and hop answers, judge picks in both orders</li>
+        <li>Temperature 0 + LLM cache → exact replay; one run yields the ablation</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="section">Backup · Q9</div>
+  <h2>When would you deploy normal RAG instead?</h2>
+  <div class="cols">
+    <div>
+      <ul class="big">
+        <li><b>Single-hop questions</b>, or evidence in one document: one retrieval finds it; an agent only adds latency</li>
+        <li><b>When retrieval already brings both documents:</b> comparison questions (both@5 99% already in Cycle 1)</li>
+        <li><b>Strict latency or cost budgets:</b> Cycle 2c gives 0.503 at 1.5 s / 2.0 s and $0.014 per 1k with one call; iteration costs 4× latency for no EM gain, the team 6×</li>
+        <li><b>In practice the checked agent is "RAG plus rules":</b> one call for 87% of questions and the same median latency, so it's a safe default; heavier agents only when hop 2 is often missed and accuracy is worth 4–6× the latency</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let current = 0;
+  slides.forEach((s, i) => {
+    const f = document.createElement('div');
+    f.className = 'footer';
+    f.innerHTML = '<span>HotpotQA: From RAG to Multi-Agent Investigation</span><span>' + (i + 1) + ' / ' + slides.length + '</span>';
+    s.appendChild(f);
+  });
+  function show(i) {
+    current = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s, j) => s.classList.toggle('active', j === current));
+    document.getElementById('progress').style.width = ((current + 1) / slides.length * 100) + '%';
+    history.replaceState(null, '', '#' + (current + 1));
+  }
+  document.addEventListener('keydown', e => {
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); show(current + 1); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); show(current - 1); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key.toLowerCase() === 'p') window.print();
+  });
+  document.getElementById('deck').addEventListener('click', e => {
+    if (e.target.closest('a')) return;
+    show(current + (e.clientX > window.innerWidth / 2 ? 1 : -1));
+  });
+  show((parseInt(location.hash.slice(1)) || 1) - 1);
+
+  // Accuracy vs median latency (clean benchmark), 300 test questions
+  (function scatter() {
+    const pts = [
+      ['Cycle 1 baseline', 3.0, 0.383, '#7f8c8d'],
+      ['Cycle 2 paragraphs', 3.7, 0.483, '#5b8def'],
+      ['Cycle 2c sentences', 1.5, 0.503, '#2f6fdb'],
+      ['Checked agent', 1.6, 0.537, '#f08c00'],
+      ['Self-consistency', 2.3, 0.527, '#b07cc6'],
+      ['Decomposed agent', 6.6, 0.533, '#c0392b'],
+      ['Qwen 14B checked', 2.7, 0.573, '#2e8b57'],
+      ['Team, 8B judge', 7.0, 0.563, '#8e44ad'],
+      ['Team, 14B judge', 9.5, 0.580, '#6c3483'],
+    ];
+    const W = 640, H = 400, L = 60, R = 20, T = 20, B = 50;
+    const x = v => L + (v / 10) * (W - L - R), y = v => T + (0.60 - v) / (0.60 - 0.36) * (H - T - B);
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" font-family="Helvetica, Arial" font-size="13">`;
+    for (let v = 0; v <= 10; v += 2) s += `<line x1="${x(v)}" y1="${T}" x2="${x(v)}" y2="${H - B}" stroke="#eef1f5"/><text x="${x(v)}" y="${H - B + 18}" text-anchor="middle" fill="#5d6677">${v} s</text>`;
+    for (let v = 0.36; v <= 0.601; v += 0.04) s += `<line x1="${L}" y1="${y(v)}" x2="${W - R}" y2="${y(v)}" stroke="#eef1f5"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" fill="#5d6677">${v.toFixed(2)}</text>`;
+    s += `<line x1="${L}" y1="${y(0.577)}" x2="${W - R}" y2="${y(0.577)}" stroke="#999" stroke-dasharray="5,4"/><text x="${x(0.1)}" y="${y(0.577) - 5}" text-anchor="start" fill="#777" font-size="11">oracle, gold paragraphs (0.577)</text>`;
+    s += `<text x="${(L + W - R) / 2}" y="${H - 10}" text-anchor="middle" fill="#1d2433">median latency per question (clean benchmark)</text>`;
+    s += `<text transform="translate(16 ${(T + H - B) / 2}) rotate(-90)" text-anchor="middle" fill="#1d2433">EM (300 test questions)</text>`;
+    const off = {'Checked agent': [-10, -10], 'Cycle 2c sentences': [10, 14], 'Self-consistency': [10, 4], 'Qwen 14B checked': [10, 16], 'Team, 14B judge': [-10, -10], 'Team, 8B judge': [10, 14], 'Decomposed agent': [10, 4]};
+    for (const [n, lx, ly, c] of pts) {
+      const [dx, dy] = off[n] || [10, 4];
+      s += `<circle cx="${x(lx)}" cy="${y(ly)}" r="7" fill="${c}"/><text x="${x(lx) + dx}" y="${y(ly) + dy}" text-anchor="${dx < 0 ? 'end' : 'start'}" fill="#1d2433">${n}</text>`;
+    }
+    document.getElementById('scatter').innerHTML = s + '</svg>';
+  })();
+</script>
+</body>
+</html>

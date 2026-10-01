@@ -1,6 +1,6 @@
 # Cycle 0: Exploratory data analysis
 
-[← Overview](../README.md) · **EDA** · [Candidates and reranking](02_candidates_and_reranking.md) · [Answer extraction](03_answer_extraction.md)
+[← Overview](../README.md) · **EDA** · [Candidates and reranking](02_candidates_and_reranking.md) · [Answer extraction](03_answer_extraction.md) · [Final presentation](04_final_presentation.md)
 
 **Goal:** understand the data well enough that every later decision (chunking, top-K, retriever, metrics, agent design) rests on something measured. Source: `notebooks/00_eda.ipynb`.
 
