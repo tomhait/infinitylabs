@@ -23,7 +23,7 @@ flowchart LR
 | | Winner: checked agent (Llama 8B) | Cycle 1 basic RAG | Upgrade: checked agent (Qwen 14B) | Most accurate: team, Qwen 14B judge |
 |---|---|---|---|---|
 | EM / F1 (300 test questions) | **0.537 / 0.676** | 0.383 / 0.527 | 0.573 / 0.722 | 0.580 / 0.719 |
-| EM on dev (300 questions) | 0.583 | – | 0.583 | 0.627 |
+| EM on dev (300 design questions, separate from test; see §3) | 0.583 | – | 0.583 | 0.627 |
 | Unsupported answers | **3.0%** | 18.7% | 5.0% | 3.3% |
 | LLM calls per question | **1.1** | 1 | 1.2 | 6.0 |
 | Cost per 1,000 questions | **$0.018** | $0.036 | $0.148 | $0.254 |
